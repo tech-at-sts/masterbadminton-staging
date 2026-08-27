@@ -1,6 +1,10 @@
 FROM php:8.2-apache
 
-RUN a2enmod rewrite
+# mod_php requires the non-threaded prefork MPM; some php:apache image
+# builds ship with mpm_event also enabled, which makes Apache refuse to
+# start with "More than one MPM loaded." Force prefork explicitly.
+RUN a2dismod mpm_event || true \
+    && a2enmod mpm_prefork rewrite
 
 COPY docker/apache/vhost.conf /etc/apache2/sites-available/000-default.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
