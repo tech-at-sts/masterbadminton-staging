@@ -42,12 +42,16 @@ final class ContentExtractor
         $main = $xpath->query('//div[@id="main"]')->item(0)
             ?? $xpath->query('//div[@id="primary"]')->item(0);
 
+        $this->stripSidebar($xpath);
+        $this->stripHomeCategoryColumn($dom, $xpath);
+        $pageStyle = $this->extractPageStyle($xpath);
+
         $content = $main instanceof \DOMNode ? $this->innerHtml($dom, $main) : '';
 
         return new PageContent(
             $title !== null && $title !== '' ? $title : self::DEFAULT_TITLE,
             $description ?? '',
-            $content,
+            $pageStyle . $content,
         );
     }
 
@@ -78,5 +82,64 @@ final class ContentExtractor
         }
 
         return $html;
+    }
+
+    /**
+     * Every legacy page embeds a left-hand category sidebar (<aside
+     * id="left-sidebar">) inside its own content. It's now replaced by the
+     * unified navigation bar in templates/header.php, so it's stripped here
+     * — the one place all legacy content passes through — rather than
+     * editing every exported page.
+     */
+    private function stripSidebar(\DOMXPath $xpath): void
+    {
+        $sidebar = $xpath->query('//aside[@id="left-sidebar"]')->item(0);
+
+        $sidebar?->parentNode?->removeChild($sidebar);
+    }
+
+    /**
+     * The homepage (and a couple of pages that reused its layout) carries a
+     * "side-home-tw" column repeating the same Playing the Game / Equipment
+     * / Resources / Just for Fun links now covered by the unified nav bar.
+     * Drop it and let its sibling column take the freed-up width.
+     */
+    private function stripHomeCategoryColumn(\DOMDocument $dom, \DOMXPath $xpath): void
+    {
+        $column = $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " side-home-tw ")]')->item(0);
+
+        if (!$column instanceof \DOMElement) {
+            return;
+        }
+
+        $row = $column->parentNode;
+        $column->parentNode?->removeChild($column);
+
+        if (!$row instanceof \DOMElement) {
+            return;
+        }
+
+        foreach ($xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " vc_col-sm-9 ")]', $row) as $sibling) {
+            if ($sibling instanceof \DOMElement) {
+                $sibling->setAttribute(
+                    'class',
+                    trim(str_replace('vc_col-sm-9', 'vc_col-sm-12', ' ' . $sibling->getAttribute('class') . ' ')),
+                );
+            }
+        }
+    }
+
+    /**
+     * WPBakery renders a per-page <style id="js_composer_front-inline-css">
+     * block in <head> for the shortcode layouts actually used on that page
+     * (icon grids, category boxes, etc.). Extraction only keeps #main, so
+     * without this the page-specific layout CSS is silently lost. Pull it
+     * along with the content so each page keeps its own look.
+     */
+    private function extractPageStyle(\DOMXPath $xpath): string
+    {
+        $style = $xpath->query('//style[@id="js_composer_front-inline-css"]')->item(0);
+
+        return $style instanceof \DOMNode ? $style->ownerDocument->saveHTML($style) : '';
     }
 }

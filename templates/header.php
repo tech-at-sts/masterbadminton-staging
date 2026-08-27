@@ -8,6 +8,60 @@
  */
 
 declare(strict_types=1);
+
+$navItems = [
+	['label' => 'Home', 'href' => '/'],
+	['label' => 'Blog', 'href' => '/how-to-play-badminton-blog.html'],
+	[
+		'label' => 'Playing the Game',
+		'children' => [
+			['label' => 'Rules', 'href' => '/badminton-rules.html'],
+			['label' => 'Badminton Basics', 'href' => '/category/badminton-videos/badminton-basics.html'],
+			['label' => 'Badminton Strokes', 'href' => '/badminton-strokes.html'],
+			['label' => 'Techniques and Shots', 'href' => '/badminton-techniques.html'],
+			['label' => 'Net Play', 'href' => '/badminton-net-play.html'],
+			['label' => 'Smashing', 'href' => '/badminton-smash-technique.html'],
+			['label' => 'Advanced Skills', 'href' => '/advanced-badminton-techniques.html'],
+		],
+	],
+	[
+		'label' => 'Equipment',
+		'children' => [
+			['label' => 'Rackets', 'href' => '/badminton-racket.html'],
+			['label' => 'Equipments', 'href' => '/badminton-equipment.html'],
+		],
+	],
+	[
+		'label' => 'Resources',
+		'children' => [
+			['label' => 'Badminton Articles', 'href' => '/badminton-articles.html'],
+			['label' => 'Badminton Tips', 'href' => '/badminton-tips.html'],
+			['label' => 'Professional Players', 'href' => '/professional-badminton-interview.html'],
+			['label' => 'Places to Play in UK', 'href' => '/uk-badminton-places-to-play.html'],
+		],
+	],
+	[
+		'label' => 'Just for Fun',
+		'children' => [
+			['label' => 'Top Players', 'href' => '/badminton-players.html'],
+			['label' => 'Videos', 'href' => '/badminton-videos.html'],
+			['label' => 'News', 'href' => '/badminton-news.html'],
+		],
+	],
+	['label' => 'Contact', 'href' => '/contact.html'],
+	['label' => 'Ask a Question', 'href' => 'https://masterbadminton.com/badminton-questions.html'],
+	['label' => 'Store', 'href' => 'https://masterbadmintonshop.com/', 'target' => '_blank'],
+];
+
+$normalizedPath = '/' . trim((string) parse_url($currentPath, PHP_URL_PATH), '/');
+
+$isLinkActive = static function (string $href) use ($normalizedPath): bool {
+	if ($href === '/') {
+		return $normalizedPath === '/';
+	}
+
+	return str_starts_with($href, '/') && rtrim($href, '/') === rtrim($normalizedPath, '/');
+};
 ?>
 <!DOCTYPE html>
 <html lang="en-US">
@@ -29,14 +83,71 @@ declare(strict_types=1);
 	<link rel='stylesheet' href='https://masterbadminto.wpenginepowered.com/wp-content/themes/gon/css/font-awesome.css' media='all' />
 	<link rel='stylesheet' href='https://masterbadminto.wpenginepowered.com/wp-content/themes/gon/css/responsive.css' media='all' />
 	<link rel='stylesheet' href='https://masterbadminto.wpenginepowered.com/wp-content/uploads/gonchild.css' media='all' />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Raleway:wght@700;800&display=swap" rel="stylesheet" />
 	<style>
 		.page-container{padding-top:2px;padding-left:0 !important;padding-right:0 !important;}
-		.vertical-menu-wrapper{display:none;}
 		li{color:#454545;}
-		.has-vertical-menu .ts-menu > .pc-menu{margin-left:0 !important;}
+		#main-content.ts-col-18{width:100% !important;}
 		@media only screen and (max-width: 767px){
-			header.ts-header.has-sticky .header-container .cat-head-custom{display:block !important;}
 			.side-home-tw.wpb_column.vc_column_container.vc_col-sm-3{display:none;}
+		}
+
+		/* Site header / navigation */
+		.site-header{font-family:'Lato',Arial,sans-serif;}
+		.site-header a{text-decoration:none;}
+		.topbar{background:#3a3a3a;}
+		.topbar-inner{max-width:1140px;margin:0 auto;padding:9px 20px;display:flex;align-items:center;gap:8px;}
+		.topbar-inner img{width:18px;height:18px;opacity:.85;}
+		.beginner-link{color:#b8b8b8;font-size:13px;font-weight:700;letter-spacing:.2px;}
+		.beginner-link:hover{color:#fff;}
+
+		.header-middle{background:#fff;box-shadow:0 1px 0 rgba(0,0,0,.05);}
+		.header-middle-inner{max-width:1140px;margin:0 auto;padding:22px 20px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;}
+		.site-logo img{width:190px;display:block;}
+		.site-search{position:relative;width:300px;max-width:100%;display:flex;}
+		.site-search input[type="text"]{background:#f4f4f5;border:1px solid transparent;border-radius:24px;padding:12px 44px 12px 18px;width:100%;font-size:14px;color:#444;font-family:'Lato',sans-serif;outline:none;}
+		.site-search input[type="text"]:focus{border-color:#eb7d2e;background:#fff;}
+		.site-search button{position:absolute;right:4px;top:4px;bottom:4px;width:38px;background:transparent;border:0;color:#b0b0b0;font-size:15px;cursor:pointer;}
+
+		.main-nav{background:#1f1f1f;}
+		.nav-toggle-checkbox{display:none;}
+		.nav-toggle-btn{display:none;}
+		.nav-list{max-width:1140px;margin:0 auto;padding:0 20px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;list-style:none;}
+		.nav-item{position:relative;}
+		.nav-item > a,
+		.nav-item summary{color:#fff;font-family:'Raleway',Arial,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:16px 9px;white-space:nowrap;display:flex;align-items:center;gap:4px;border-bottom:2px solid transparent;cursor:pointer;list-style:none;}
+		.nav-item summary::-webkit-details-marker{display:none;}
+		.nav-item > a:hover,
+		.nav-item summary:hover,
+		.nav-item.is-active > a{color:#ff9d5c;border-bottom-color:#eb7d2e;}
+		.nav-item.is-active > a{color:#eb7d2e;}
+		.nav-item summary::after{content:'▾';font-size:9px;opacity:.7;}
+		.nav-item details[open] > summary{color:#ff9d5c;border-bottom-color:#eb7d2e;}
+
+		.nav-dropdown{list-style:none;background:#fff;border-radius:10px;box-shadow:0 12px 28px rgba(0,0,0,.16);padding:8px;margin:4px 0 0;min-width:230px;}
+		.nav-item a{color:inherit;}
+		.nav-dropdown li a{display:block;padding:10px 14px;border-radius:6px;color:#3f3f3f;font-size:14px;font-family:'Lato',sans-serif;font-weight:400;}
+		.nav-dropdown li a:hover{background:#fbeee2;color:#eb7d2e;}
+
+		@media (min-width: 768px){
+			.nav-item details{position:static;}
+			.nav-item summary{list-style:none;}
+			.nav-dropdown{position:absolute;top:100%;left:0;z-index:30;}
+		}
+
+		@media (max-width: 767px){
+			.header-middle-inner{padding:14px 20px;}
+			.site-search{width:auto;flex:1;}
+			.nav-list{flex-direction:column;align-items:stretch;padding:0;max-height:0;overflow:hidden;transition:max-height .2s ease;}
+			.nav-toggle-checkbox:checked ~ .nav-list{max-height:2000px;}
+			.nav-toggle-btn{display:flex;flex-direction:column;justify-content:center;gap:4px;max-width:1140px;margin:0 auto;padding:14px 20px;cursor:pointer;}
+			.nav-toggle-btn span{display:block;width:22px;height:2px;background:#fff;}
+			.nav-item > a,.nav-item summary{padding:12px 20px;border-bottom:1px solid #2c2c2c;}
+			.nav-dropdown{background:#181818;box-shadow:none;border-radius:0;margin:0;padding:0;}
+			.nav-dropdown li a{color:#ccc;padding:10px 20px 10px 34px;}
+			.nav-dropdown li a:hover{background:#2c2c2c;color:#eb7d2e;}
 		}
 	</style>
 
@@ -45,172 +156,58 @@ declare(strict_types=1);
 <body class="wp-theme-gon wp-child-theme-gon-child header-v2 wide layout-fullwidth ts_desktop">
 <div id="page" class="hfeed site">
 
-	<header class="ts-header has-sticky">
-		<div class="header-container">
-			<div class="header-template header-v2 has-vertical-menu hidden-cart show-search">
-
-				<div class="header-top">
-					<div class="container">
-						<div class="header-top-left">
-							<div class="info-desc"><span class='info-begin'><i class='fa-wpbeginner'></i><a href="/category/badminton-videos/badminton-basics.html" style="font-weight:bold;"><span><img src="/wp-content/uploads/2016/09/icon-badminton-1.png" width="25px"/></span> Are you a beginner? Click Here</a></span></div>
-						</div>
-						<div class="header-top-right">
-							<span class="ts-mobile-menu-icon-toggle visible-phone"><i class="fa fa-bars"></i></span>
-						</div>
-					</div>
-				</div>
-
-				<div class="mobile-menu-wrapper">
-					<div class="menu-categories-container"><ul id="menu-categories" class="menu">
-						<li class="menu-item menu-item-has-children"><a href="#">Playing the Game</a>
-							<ul class="sub-menu">
-								<li><a href="/badminton-rules.html">Rules</a></li>
-								<li><a href="/category/badminton-videos/badminton-basics.html">Badminton Basics</a></li>
-								<li><a href="/badminton-strokes.html">Badminton Strokes</a></li>
-								<li><a href="/badminton-techniques.html">Techniques and Shots</a></li>
-								<li><a href="/badminton-net-play.html">Net Play</a></li>
-								<li><a href="/badminton-smash-technique.html">Smashing</a></li>
-								<li><a href="/advanced-badminton-techniques.html">Advanced Techniques</a></li>
-							</ul>
-						</li>
-						<li class="menu-item menu-item-has-children"><a href="#">Equipments</a>
-							<ul class="sub-menu">
-								<li><a href="/badminton-racket.html">Rackets</a></li>
-								<li><a href="/badminton-equipment.html">Equipments</a></li>
-							</ul>
-						</li>
-						<li class="menu-item menu-item-has-children"><a href="#">Resources</a>
-							<ul class="sub-menu">
-								<li><a href="/badminton-articles.html">Badminton Articles</a></li>
-								<li><a href="/badminton-tips.html">Badminton Tips and Advice</a></li>
-								<li><a href="/professional-badminton-interview.html">Professional Players</a></li>
-								<li><a href="/uk-badminton-places-to-play.html">Places to Play in UK</a></li>
-							</ul>
-						</li>
-						<li class="menu-item menu-item-has-children"><a href="#">Just for Fun</a>
-							<ul class="sub-menu">
-								<li><a href="/badminton-players.html">Top Players</a></li>
-								<li><a href="/badminton-videos.html">Videos</a></li>
-								<li><a href="/badminton-news.html">News</a></li>
-							</ul>
-						</li>
-					</ul></div>
-					<nav class="main-menu mobile-menu"><ul id="menu-main" class="menu">
-						<li><a href="/">Home</a></li>
-						<li><a href="/how-to-play-badminton-blog.html">Blog</a></li>
-						<li><a href="/contact.html">Contact</a></li>
-						<li><a href="https://masterbadminton.com/badminton-questions.html">Ask a Question</a></li>
-						<li><a target="_blank" href="https://masterbadmintonshop.com/">Store</a></li>
-					</ul></nav>
-					<div class="cat-head-custom">
-						<span class="cat-sp-cus" id="catcl">CATEGORIES</span>
-					</div>
-					<a class="mob-csa" href="/category/badminton-videos/badminton-basics.html" style="font-weight:bold;"><span><img src="/wp-content/uploads/2016/09/icon-badminton-1.png" width="25px"/></span> Are you a beginner? Click Here</a>
-				</div>
-
-				<div class="header-middle">
-					<div class="container">
-						<div class="search-wrapper hidden-phone">
-							<div class="ts-search-by-category"><form method="get" action="/" id="searchform-447">
-								<div class="search-table">
-									<div class="search-field search-content">
-										<input type="text" value="" name="s" id="s-447" placeholder="Search" autocomplete="off" />
-									</div>
-									<div class="search-button">
-										<input type="submit" id="searchsubmit-447" value="Search" />
-									</div>
-								</div>
-							</form></div>
-						</div>
-
-						<div class="logo-wrapper">
-							<div class="logo">
-								<a href="/">
-									<img src="https://masterbadminto.wpenginepowered.com/wp-content/uploads/2016/05/masw.png" alt="Master Badminton" title="Master Badminton" class="normal-logo" />
-									<img src="https://masterbadminto.wpenginepowered.com/wp-content/uploads/2016/05/masw.png" alt="Master Badminton" title="Master Badminton" class="normal-logo mobile-logo" />
-									<img src="https://masterbadminto.wpenginepowered.com/wp-content/uploads/2016/05/masw.png" alt="Master Badminton" title="Master Badminton" class="normal-logo sticky-logo" />
-								</a>
-							</div>
-						</div>
-
-						<div class="search-wrapper visible-phone">
-							<div class="ts-search-by-category"><form method="get" action="/" id="searchform-430">
-								<div class="search-table">
-									<div class="search-field search-content">
-										<input type="text" value="" name="s" id="s-430" placeholder="Search" autocomplete="off" />
-									</div>
-									<div class="search-button">
-										<input type="submit" id="searchsubmit-430" value="Search" />
-									</div>
-								</div>
-							</form></div>
-						</div>
-					</div>
-				</div>
-
-				<div class="header-bottom header-sticky">
-					<div class="container">
-						<div class="menu-wrapper hidden-phone">
-							<div class="ts-menu">
-								<div class="vertical-menu-wrapper">
-									<div class="vertical-menu-heading">CATEGORIES</div>
-									<nav class="vertical-menu pc-menu ts-mega-menu-wrapper"><ul id="menu-categories-2" class="menu">
-										<li class="menu-item menu-item-has-children ts-normal-menu parent">
-											<a href="#"><span class="menu-label">Playing the Game</span></a><span class="ts-menu-drop-icon"></span>
-											<ul class="sub-menu">
-												<li><a href="/badminton-rules.html"><span class="menu-label">Rules</span></a></li>
-												<li><a href="/category/badminton-videos/badminton-basics.html"><span class="menu-label">Badminton Basics</span></a></li>
-												<li><a href="/badminton-strokes.html"><span class="menu-label">Badminton Strokes</span></a></li>
-												<li><a href="/badminton-techniques.html"><span class="menu-label">Techniques and Shots</span></a></li>
-												<li><a href="/badminton-net-play.html"><span class="menu-label">Net Play</span></a></li>
-												<li><a href="/badminton-smash-technique.html"><span class="menu-label">Smashing</span></a></li>
-												<li><a href="/advanced-badminton-techniques.html"><span class="menu-label">Advanced Techniques</span></a></li>
-											</ul>
-										</li>
-										<li class="menu-item menu-item-has-children ts-normal-menu parent">
-											<a href="#"><span class="menu-label">Equipments</span></a><span class="ts-menu-drop-icon"></span>
-											<ul class="sub-menu">
-												<li><a href="/badminton-racket.html"><span class="menu-label">Rackets</span></a></li>
-												<li><a href="/badminton-equipment.html"><span class="menu-label">Equipments</span></a></li>
-											</ul>
-										</li>
-										<li class="menu-item menu-item-has-children ts-normal-menu parent">
-											<a href="#"><span class="menu-label">Resources</span></a><span class="ts-menu-drop-icon"></span>
-											<ul class="sub-menu">
-												<li><a href="/badminton-articles.html"><span class="menu-label">Badminton Articles</span></a></li>
-												<li><a href="/badminton-tips.html"><span class="menu-label">Badminton Tips and Advice</span></a></li>
-												<li><a href="/professional-badminton-interview.html"><span class="menu-label">Professional Players</span></a></li>
-												<li><a href="/uk-badminton-places-to-play.html"><span class="menu-label">Places to Play in UK</span></a></li>
-											</ul>
-										</li>
-										<li class="menu-item menu-item-has-children ts-normal-menu parent">
-											<a href="#"><span class="menu-label">Just for Fun</span></a><span class="ts-menu-drop-icon"></span>
-											<ul class="sub-menu">
-												<li><a href="/badminton-players.html"><span class="menu-label">Top Players</span></a></li>
-												<li><a href="/badminton-videos.html"><span class="menu-label">Videos</span></a></li>
-												<li><a href="/badminton-news.html"><span class="menu-label">News</span></a></li>
-											</ul>
-										</li>
-									</ul></nav>
-								</div>
-								<nav class="main-menu pc-menu ts-mega-menu-wrapper"><ul id="menu-main-1" class="menu">
-									<li class="ts-normal-menu"><a href="/"><span class="menu-label">Home</span></a></li>
-									<li class="ts-normal-menu"><a href="/how-to-play-badminton-blog.html"><span class="menu-label">Blog</span></a></li>
-									<li class="ts-normal-menu"><a href="/contact.html"><span class="menu-label">Contact</span></a></li>
-									<li class="ts-normal-menu"><a href="https://masterbadminton.com/badminton-questions.html"><span class="menu-label">Ask a Question</span></a></li>
-									<li class="ts-normal-menu"><a target="_blank" href="https://masterbadmintonshop.com/"><span class="menu-label">Store</span></a></li>
-								</ul></nav>
-							</div>
-						</div>
-					</div>
-				</div>
+	<header class="site-header">
+		<div class="topbar">
+			<div class="topbar-inner">
+				<img src="/wp-content/uploads/2016/09/icon-badminton-1.png" alt="" />
+				<a class="beginner-link" href="/category/badminton-videos/badminton-basics.html">Are you a beginner? Click Here</a>
 			</div>
 		</div>
 
-		<div class="mobile-menu hidden-phone">
-			<div class="ic-menu-phone"></div>
-			<div class="mobile-menu-content"></div>
+		<div class="header-middle">
+			<div class="header-middle-inner">
+				<a class="site-logo" href="/">
+					<img src="https://masterbadminto.wpenginepowered.com/wp-content/uploads/2016/05/masw.png" alt="Master Badminton" title="Master Badminton" />
+				</a>
+				<form class="site-search" method="get" action="/">
+					<input type="text" value="" name="s" placeholder="Search" autocomplete="off" />
+					<button type="submit" aria-label="Search">&#128269;</button>
+				</form>
+			</div>
 		</div>
+
+		<input type="checkbox" id="nav-toggle" class="nav-toggle-checkbox" />
+		<nav class="main-nav">
+			<label for="nav-toggle" class="nav-toggle-btn" aria-label="Toggle navigation menu"><span></span><span></span><span></span></label>
+			<ul class="nav-list">
+				<?php foreach ($navItems as $item): ?>
+					<?php $hasChildren = !empty($item['children']); ?>
+					<?php
+						$active = $hasChildren
+							? array_reduce(
+								$item['children'],
+								static fn (bool $carry, array $child): bool => $carry || $isLinkActive($child['href']),
+								false,
+							)
+							: $isLinkActive($item['href']);
+					?>
+					<li class="nav-item<?= $active ? ' is-active' : '' ?><?= $hasChildren ? ' has-children' : '' ?>">
+						<?php if ($hasChildren): ?>
+							<details>
+								<summary><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></summary>
+								<ul class="nav-dropdown">
+									<?php foreach ($item['children'] as $child): ?>
+										<li><a href="<?= htmlspecialchars($child['href'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($child['label'], ENT_QUOTES, 'UTF-8') ?></a></li>
+									<?php endforeach; ?>
+								</ul>
+							</details>
+						<?php else: ?>
+							<a href="<?= htmlspecialchars($item['href'], ENT_QUOTES, 'UTF-8') ?>"<?= isset($item['target']) ? ' target="' . htmlspecialchars($item['target'], ENT_QUOTES, 'UTF-8') . '"' : '' ?>><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></a>
+						<?php endif; ?>
+					</li>
+				<?php endforeach; ?>
+			</ul>
+		</nav>
 	</header>
 
 	<div id="main" class="wrapper">
