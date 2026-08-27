@@ -67,7 +67,13 @@ $isLinkActive = static function (string $href) use ($normalizedPath): bool {
 // with the English tree. Point the language switcher at the mirror of the
 // page actually being viewed when it exists, falling back to that
 // language's homepage otherwise, rather than always sending readers to /.
-$siteRoot = dirname(__DIR__);
+// realpath() the root too, not just each candidate: if the document root
+// is itself reached through a symlink (common with release-based deploys),
+// comparing a resolved candidate path against an unresolved root would fail
+// the prefix check below for every single path, silently forcing every
+// language-switch link back to the homepage. Router::safeFile() resolves
+// both sides the same way for the same reason.
+$siteRoot = realpath(dirname(__DIR__)) ?: dirname(__DIR__);
 $pathResolves = static function (string $path) use ($siteRoot): bool {
 	$trimmed = trim($path, '/');
 	$candidates = $trimmed === '' ? ['index.html'] : [$trimmed . '/index.html', $trimmed];
