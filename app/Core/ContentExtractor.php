@@ -42,6 +42,8 @@ final class ContentExtractor
         $main = $xpath->query('//div[@id="main"]')->item(0)
             ?? $xpath->query('//div[@id="primary"]')->item(0);
 
+        $this->stripSidebar($xpath);
+
         $content = $main instanceof \DOMNode ? $this->innerHtml($dom, $main) : '';
 
         return new PageContent(
@@ -78,5 +80,19 @@ final class ContentExtractor
         }
 
         return $html;
+    }
+
+    /**
+     * Every legacy page embeds a left-hand category sidebar (<aside
+     * id="left-sidebar">) inside its own content. It's now replaced by the
+     * unified navigation bar in templates/header.php, so it's stripped here
+     * — the one place all legacy content passes through — rather than
+     * editing every exported page.
+     */
+    private function stripSidebar(\DOMXPath $xpath): void
+    {
+        $sidebar = $xpath->query('//aside[@id="left-sidebar"]')->item(0);
+
+        $sidebar?->parentNode?->removeChild($sidebar);
     }
 }
