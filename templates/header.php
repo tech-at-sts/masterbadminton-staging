@@ -62,6 +62,41 @@ $isLinkActive = static function (string $href) use ($normalizedPath): bool {
 
 	return str_starts_with($href, '/') && rtrim($href, '/') === rtrim($normalizedPath, '/');
 };
+
+// The legacy tree keeps a full Chinese mirror under /zh/, page-for-page
+// with the English tree. Point the language switcher at the mirror of the
+// page actually being viewed when it exists, falling back to that
+// language's homepage otherwise, rather than always sending readers to /.
+$siteRoot = dirname(__DIR__);
+$pathResolves = static function (string $path) use ($siteRoot): bool {
+	$trimmed = trim($path, '/');
+	$candidates = $trimmed === '' ? ['index.html'] : [$trimmed . '/index.html', $trimmed];
+
+	foreach ($candidates as $candidate) {
+		$full = realpath($siteRoot . '/' . $candidate);
+
+		if (
+			$full !== false
+			&& is_file($full)
+			&& str_starts_with($full, $siteRoot . DIRECTORY_SEPARATOR)
+			&& strtolower(pathinfo($full, PATHINFO_EXTENSION)) === 'html'
+		) {
+			return true;
+		}
+	}
+
+	return false;
+};
+
+if ($normalizedPath === '/zh' || str_starts_with($normalizedPath, '/zh/')) {
+	$counterpart = $normalizedPath === '/zh' ? '/' : substr($normalizedPath, 3);
+	$langHref = $pathResolves($counterpart) ? $counterpart : '/';
+	$langLabel = 'English';
+} else {
+	$counterpart = $normalizedPath === '/' ? '/zh' : '/zh' . $normalizedPath;
+	$langHref = $pathResolves($counterpart) ? $counterpart : '/zh';
+	$langLabel = '中文';
+}
 ?>
 <!DOCTYPE html>
 <html lang="en-US">
@@ -85,7 +120,7 @@ $isLinkActive = static function (string $href) use ($normalizedPath): bool {
 	<link rel='stylesheet' href='https://masterbadminto.wpenginepowered.com/wp-content/uploads/gonchild.css' media='all' />
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-	<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Raleway:wght@700;800&display=swap" rel="stylesheet" />
+	<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Raleway:wght@700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
 	<style>
 		.page-container{padding-top:2px;padding-left:0 !important;padding-right:0 !important;}
 		li{color:#454545;}
@@ -150,21 +185,39 @@ $isLinkActive = static function (string $href) use ($normalizedPath): bool {
 			.nav-dropdown li a:hover{background:#2c2c2c;color:#eb7d2e;}
 		}
 
-		/* "All Categories" accordion */
-		.vc_row.wpb_row.vc_inner.vc_row-fluid.catfrbn .vc_column_container > .vc_column-inner{min-height:auto !important;max-height:none !important;overflow:visible !important;border:0 !important;padding:0 !important;}
-		.cat-accordion{background:#fff;border:1px solid #ececec;border-radius:10px;margin-bottom:14px;overflow:hidden;}
-		.cat-accordion summary{list-style:none;cursor:pointer;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:'Raleway',Arial,sans-serif;font-weight:700;font-size:15px;color:#1c1c1c;}
+		.lang-switch{position:fixed;bottom:16px;right:16px;background:#2a2a2a;color:#fff;font-size:12px;font-family:'Lato',sans-serif;padding:9px 16px;border-radius:24px;display:flex;align-items:center;gap:6px;box-shadow:0 6px 18px rgba(0,0,0,.25);z-index:40;text-decoration:none;}
+		.lang-switch:hover{background:#1a1a1a;color:#fff;}
+
+		/* "All Categories" section */
+		.cat-section{background:#faf5ea;border-radius:20px;padding:44px 40px;margin:36px 0;box-sizing:border-box;}
+		.cat-section-title{text-align:center;font-family:'Playfair Display',serif;font-size:34px;font-weight:800;color:#1c2541;margin:0 0 6px;}
+		.cat-section-subtitle{text-align:center;font-size:14px;color:#9a9186;margin:0 0 26px;font-family:'Lato',sans-serif;}
+		.cat-section-controls{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;}
+		.cat-search-wrap{position:relative;flex:1;min-width:200px;}
+		.cat-search-icon{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:#b0a894;font-size:14px;}
+		.cat-search-input{width:100%;box-sizing:border-box;background:#fff;border:1px solid #e9e1d1;border-radius:10px;padding:13px 16px 13px 40px;font-size:14px;color:#4a3a26;font-family:'Lato',sans-serif;outline:none;}
+		.cat-search-input:focus{border-color:#eb7d2e;}
+		.cat-expand-all{background:#fff;border:1px solid #e9e1d1;border-radius:10px;padding:13px 20px;font-size:14px;font-weight:700;color:#1c2541;font-family:'Lato',sans-serif;cursor:pointer;white-space:nowrap;}
+		.cat-expand-all:hover{border-color:#eb7d2e;color:#eb7d2e;}
+		.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+		.cat-accordion{background:#fff;border-radius:14px;box-shadow:0 2px 6px rgba(28,37,65,.05);overflow:hidden;align-self:start;}
+		.cat-accordion summary{list-style:none;cursor:pointer;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:'Playfair Display',serif;font-weight:700;font-size:16px;color:#1c2541;}
 		.cat-accordion summary::-webkit-details-marker{display:none;}
-		.cat-accordion[open] summary{border-bottom:1px solid #ececec;}
-		.cat-accordion-meta{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+		.cat-accordion-meta{display:flex;align-items:center;gap:12px;flex-shrink:0;}
 		.cat-accordion-count{background:#f6dfc4;color:#c1602a;font-size:12px;font-weight:700;border-radius:999px;padding:3px 11px;font-family:'Lato',sans-serif;}
-		.cat-accordion-chevron{color:#b0a894;transition:transform .15s;display:inline-block;}
+		.cat-accordion-chevron{color:#b0a894;font-size:15px;transition:transform .15s;display:inline-block;}
 		.cat-accordion[open] .cat-accordion-chevron{transform:rotate(90deg);}
-		.cat-accordion-body{padding:6px 20px 18px;}
-		.cat-accordion-body ul{list-style:none !important;margin:0;padding:0;}
-		.cat-accordion-body li{padding:5px 0;}
-		.cat-accordion-body a{color:#505050;text-decoration:none;}
-		.cat-accordion-body a:hover{color:#eb7d2e;text-decoration:underline;}
+		.cat-accordion-body{padding:0 22px 20px;border-top:1px solid #f3ede1;padding-top:14px;}
+		.cat-accordion-body ul{list-style:none !important;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;}
+		.cat-accordion-body li{padding:0;}
+		.cat-accordion-body a{color:#8a5a3b;text-decoration:none;font-size:13px;font-weight:600;font-family:'Lato',sans-serif;}
+		.cat-accordion-body a:hover{color:#c1602a;text-decoration:underline;}
+
+		@media (max-width: 640px){
+			.cat-section{padding:28px 20px;}
+			.cat-section-title{font-size:26px;}
+			.cat-grid{grid-template-columns:1fr;}
+		}
 	</style>
 
 	<script src="https://masterbadminto.wpenginepowered.com/wp-includes/js/jquery/jquery.min.js"></script>
@@ -223,5 +276,7 @@ $isLinkActive = static function (string $href) use ($normalizedPath): bool {
 			</ul>
 		</nav>
 	</header>
+
+	<a class="lang-switch" href="<?= htmlspecialchars($langHref, ENT_QUOTES, 'UTF-8') ?>">🌐 <?= htmlspecialchars($langLabel, ENT_QUOTES, 'UTF-8') ?></a>
 
 	<div id="main" class="wrapper">

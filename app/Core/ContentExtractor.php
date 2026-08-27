@@ -16,6 +16,40 @@ final class ContentExtractor
 {
     private const DEFAULT_TITLE = 'Master Badminton';
 
+    /** Powers the search filter and "Expand all" toggle on .cat-section blocks. */
+    private const CATEGORY_SECTION_SCRIPT = <<<'HTML'
+        <script>
+        (function () {
+            document.querySelectorAll('.cat-section').forEach(function (section) {
+                var searchInput = section.querySelector('[data-cat-search]');
+                var expandBtn = section.querySelector('[data-cat-expand-all]');
+                var cards = Array.prototype.slice.call(section.querySelectorAll('.cat-accordion'));
+
+                if (searchInput) {
+                    searchInput.addEventListener('input', function () {
+                        var query = searchInput.value.trim().toLowerCase();
+                        cards.forEach(function (card) {
+                            var matches = query === '' || card.textContent.toLowerCase().indexOf(query) !== -1;
+                            card.style.display = matches ? '' : 'none';
+                            if (query !== '' && matches) {
+                                card.open = true;
+                            }
+                        });
+                    });
+                }
+
+                if (expandBtn) {
+                    expandBtn.addEventListener('click', function () {
+                        var allOpen = cards.every(function (card) { return card.open; });
+                        cards.forEach(function (card) { card.open = !allOpen; });
+                        expandBtn.textContent = allOpen ? 'Expand all' : 'Collapse all';
+                    });
+                }
+            });
+        })();
+        </script>
+        HTML;
+
     public function extract(string $filePath): PageContent
     {
         $html = file_get_contents($filePath);
@@ -44,7 +78,7 @@ final class ContentExtractor
 
         $this->stripSidebar($xpath);
         $this->stripHomeCategoryColumn($dom, $xpath);
-        $this->convertCategoryGridToAccordion($dom, $xpath);
+        $hasCategorySections = $this->convertCategoryGridToAccordion($dom, $xpath);
         $pageStyle = $this->extractPageStyle($xpath);
 
         $content = $main instanceof \DOMNode ? $this->innerHtml($dom, $main) : '';
@@ -52,7 +86,7 @@ final class ContentExtractor
         return new PageContent(
             $title !== null && $title !== '' ? $title : self::DEFAULT_TITLE,
             $description ?? '',
-            $pageStyle . $content,
+            $pageStyle . $content . ($hasCategorySections ? self::CATEGORY_SECTION_SCRIPT : ''),
         );
     }
 
@@ -131,71 +165,155 @@ final class ContentExtractor
     }
 
     /**
-     * The "All Categories" grid (rows carrying the "catfrbn" class) is a set
-     * of fixed-height, clipped-overflow boxes in the legacy markup — really
-     * just a preview, not an accordion. Rebuild each box as a real <details>
-     * disclosure so category lists actually expand and collapse.
+     * The "All Categories" grid is a set of fixed-height, clipped-overflow
+     * boxes in the legacy markup — really just a preview, not an accordion.
+     * WPBakery also splits it across more than one row carrying the
+     * "catfrbn" class (four columns per inner row rather than one row of
+     * eight), so every such row on the page is treated as one logical grid:
+     * cards from all of them are collected and rendered as a single
+     * section — one heading, one search box, one "expand all" toggle, and
+     * a two-column grid of <details> cards that actually expand and
+     * collapse. Returns whether a section was built, so the caller knows
+     * whether to attach the small script that drives search/expand-all.
      */
-    private function convertCategoryGridToAccordion(\DOMDocument $dom, \DOMXPath $xpath): void
+    private function convertCategoryGridToAccordion(\DOMDocument $dom, \DOMXPath $xpath): bool
     {
-        $columns = $xpath->query(
-            '//*[contains(concat(" ", normalize-space(@class), " "), " catfrbn ")]'
-            . '//*[contains(concat(" ", normalize-space(@class), " "), " vc_column-inner ")]',
-        );
+        $rows = iterator_to_array($xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " catfrbn ")]'));
 
-        foreach ($columns as $inner) {
-            if (!$inner instanceof \DOMElement) {
-                continue;
-            }
-
-            $heading = $xpath->query('.//h2[contains(concat(" ", normalize-space(@class), " "), " vc_custom_heading ")]', $inner)->item(0);
-            $list = $xpath->query('.//ul', $inner)->item(0);
-
-            if (!$heading instanceof \DOMElement || !$list instanceof \DOMElement) {
-                continue;
-            }
-
-            $count = $xpath->query('./li', $list)->length;
-
-            $details = $dom->createElement('details');
-            $details->setAttribute('class', 'cat-accordion');
-
-            $summary = $dom->createElement('summary');
-
-            $title = $dom->createElement('span');
-            $title->setAttribute('class', 'cat-accordion-title');
-            $title->textContent = trim($heading->textContent);
-            $summary->appendChild($title);
-
-            $meta = $dom->createElement('span');
-            $meta->setAttribute('class', 'cat-accordion-meta');
-
-            $countBadge = $dom->createElement('span');
-            $countBadge->setAttribute('class', 'cat-accordion-count');
-            $countBadge->textContent = (string) $count;
-            $meta->appendChild($countBadge);
-
-            $chevron = $dom->createElement('span');
-            $chevron->setAttribute('class', 'cat-accordion-chevron');
-            $chevron->textContent = '›';
-            $meta->appendChild($chevron);
-
-            $summary->appendChild($meta);
-            $details->appendChild($summary);
-
-            $body = $dom->createElement('div');
-            $body->setAttribute('class', 'cat-accordion-body');
-
-            $list->parentNode?->removeChild($list);
-            $body->appendChild($list);
-            $details->appendChild($body);
-
-            while ($inner->firstChild !== null) {
-                $inner->removeChild($inner->firstChild);
-            }
-
-            $inner->appendChild($details);
+        if ($rows === []) {
+            return false;
         }
+
+        $cards = [];
+
+        foreach ($rows as $row) {
+            if (!$row instanceof \DOMElement) {
+                continue;
+            }
+
+            foreach ($xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " vc_column-inner ")]', $row) as $inner) {
+                if (!$inner instanceof \DOMElement) {
+                    continue;
+                }
+
+                $heading = $xpath->query('.//h2[contains(concat(" ", normalize-space(@class), " "), " vc_custom_heading ")]', $inner)->item(0);
+                $list = $xpath->query('.//ul', $inner)->item(0);
+
+                if (!$heading instanceof \DOMElement || !$list instanceof \DOMElement) {
+                    continue;
+                }
+
+                $count = $xpath->query('./li', $list)->length;
+
+                $details = $dom->createElement('details');
+                $details->setAttribute('class', 'cat-accordion');
+
+                $summary = $dom->createElement('summary');
+
+                $cardTitle = $dom->createElement('span');
+                $cardTitle->setAttribute('class', 'cat-accordion-title');
+                $cardTitle->textContent = trim($heading->textContent);
+                $summary->appendChild($cardTitle);
+
+                $meta = $dom->createElement('span');
+                $meta->setAttribute('class', 'cat-accordion-meta');
+
+                $countBadge = $dom->createElement('span');
+                $countBadge->setAttribute('class', 'cat-accordion-count');
+                $countBadge->textContent = (string) $count;
+                $meta->appendChild($countBadge);
+
+                $chevron = $dom->createElement('span');
+                $chevron->setAttribute('class', 'cat-accordion-chevron');
+                $chevron->textContent = '›';
+                $meta->appendChild($chevron);
+
+                $summary->appendChild($meta);
+                $details->appendChild($summary);
+
+                $body = $dom->createElement('div');
+                $body->setAttribute('class', 'cat-accordion-body');
+
+                $list->parentNode?->removeChild($list);
+                $body->appendChild($list);
+                $details->appendChild($body);
+
+                $cards[] = $details;
+            }
+        }
+
+        if ($cards === []) {
+            return false;
+        }
+
+        $firstRow = $rows[0];
+
+        // Drop the legacy "ALL CATEGORIES" WPBakery heading right before the
+        // first row — the new section renders its own heading/subtitle.
+        $oldHeading = $xpath->query(
+            'preceding-sibling::h2[contains(concat(" ", normalize-space(@class), " "), " vc_custom_heading ")][1]',
+            $firstRow,
+        )->item(0);
+        $oldHeading?->parentNode?->removeChild($oldHeading);
+
+        $section = $dom->createElement('div');
+        $section->setAttribute('class', 'cat-section');
+
+        $sectionTitle = $dom->createElement('h2');
+        $sectionTitle->setAttribute('class', 'cat-section-title');
+        $sectionTitle->textContent = 'All Categories';
+        $section->appendChild($sectionTitle);
+
+        $subtitle = $dom->createElement('p');
+        $subtitle->setAttribute('class', 'cat-section-subtitle');
+        $subtitle->textContent = count($cards) . ' categories · click to expand';
+        $section->appendChild($subtitle);
+
+        $controls = $dom->createElement('div');
+        $controls->setAttribute('class', 'cat-section-controls');
+
+        $searchWrap = $dom->createElement('div');
+        $searchWrap->setAttribute('class', 'cat-search-wrap');
+
+        $searchIcon = $dom->createElement('span');
+        $searchIcon->setAttribute('class', 'cat-search-icon');
+        $searchIcon->textContent = '🔍';
+        $searchWrap->appendChild($searchIcon);
+
+        $searchInput = $dom->createElement('input');
+        $searchInput->setAttribute('type', 'text');
+        $searchInput->setAttribute('class', 'cat-search-input');
+        $searchInput->setAttribute('placeholder', 'Search categories or topics…');
+        $searchInput->setAttribute('data-cat-search', '');
+        $searchWrap->appendChild($searchInput);
+
+        $controls->appendChild($searchWrap);
+
+        $expandBtn = $dom->createElement('button');
+        $expandBtn->setAttribute('type', 'button');
+        $expandBtn->setAttribute('class', 'cat-expand-all');
+        $expandBtn->setAttribute('data-cat-expand-all', '');
+        $expandBtn->textContent = 'Expand all';
+        $controls->appendChild($expandBtn);
+
+        $section->appendChild($controls);
+
+        $grid = $dom->createElement('div');
+        $grid->setAttribute('class', 'cat-grid');
+
+        foreach ($cards as $card) {
+            $grid->appendChild($card);
+        }
+
+        $section->appendChild($grid);
+
+        $firstRow->parentNode?->replaceChild($section, $firstRow);
+
+        foreach (array_slice($rows, 1) as $extraRow) {
+            $extraRow?->parentNode?->removeChild($extraRow);
+        }
+
+        return true;
     }
 
     /**
