@@ -44,6 +44,7 @@ final class ContentExtractor
 
         $this->stripSidebar($xpath);
         $this->stripHomeCategoryColumn($dom, $xpath);
+        $this->convertCategoryGridToAccordion($dom, $xpath);
         $pageStyle = $this->extractPageStyle($xpath);
 
         $content = $main instanceof \DOMNode ? $this->innerHtml($dom, $main) : '';
@@ -126,6 +127,74 @@ final class ContentExtractor
                     trim(str_replace('vc_col-sm-9', 'vc_col-sm-12', ' ' . $sibling->getAttribute('class') . ' ')),
                 );
             }
+        }
+    }
+
+    /**
+     * The "All Categories" grid (rows carrying the "catfrbn" class) is a set
+     * of fixed-height, clipped-overflow boxes in the legacy markup — really
+     * just a preview, not an accordion. Rebuild each box as a real <details>
+     * disclosure so category lists actually expand and collapse.
+     */
+    private function convertCategoryGridToAccordion(\DOMDocument $dom, \DOMXPath $xpath): void
+    {
+        $columns = $xpath->query(
+            '//*[contains(concat(" ", normalize-space(@class), " "), " catfrbn ")]'
+            . '//*[contains(concat(" ", normalize-space(@class), " "), " vc_column-inner ")]',
+        );
+
+        foreach ($columns as $inner) {
+            if (!$inner instanceof \DOMElement) {
+                continue;
+            }
+
+            $heading = $xpath->query('.//h2[contains(concat(" ", normalize-space(@class), " "), " vc_custom_heading ")]', $inner)->item(0);
+            $list = $xpath->query('.//ul', $inner)->item(0);
+
+            if (!$heading instanceof \DOMElement || !$list instanceof \DOMElement) {
+                continue;
+            }
+
+            $count = $xpath->query('./li', $list)->length;
+
+            $details = $dom->createElement('details');
+            $details->setAttribute('class', 'cat-accordion');
+
+            $summary = $dom->createElement('summary');
+
+            $title = $dom->createElement('span');
+            $title->setAttribute('class', 'cat-accordion-title');
+            $title->textContent = trim($heading->textContent);
+            $summary->appendChild($title);
+
+            $meta = $dom->createElement('span');
+            $meta->setAttribute('class', 'cat-accordion-meta');
+
+            $countBadge = $dom->createElement('span');
+            $countBadge->setAttribute('class', 'cat-accordion-count');
+            $countBadge->textContent = (string) $count;
+            $meta->appendChild($countBadge);
+
+            $chevron = $dom->createElement('span');
+            $chevron->setAttribute('class', 'cat-accordion-chevron');
+            $chevron->textContent = '›';
+            $meta->appendChild($chevron);
+
+            $summary->appendChild($meta);
+            $details->appendChild($summary);
+
+            $body = $dom->createElement('div');
+            $body->setAttribute('class', 'cat-accordion-body');
+
+            $list->parentNode?->removeChild($list);
+            $body->appendChild($list);
+            $details->appendChild($body);
+
+            while ($inner->firstChild !== null) {
+                $inner->removeChild($inner->firstChild);
+            }
+
+            $inner->appendChild($details);
         }
     }
 
