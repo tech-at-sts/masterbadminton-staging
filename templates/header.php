@@ -114,28 +114,26 @@ $isLinkActive = static function (string $href) use ($normalizedPath): bool {
 		.main-nav{background:#1f1f1f;}
 		.nav-toggle-checkbox{display:none;}
 		.nav-toggle-btn{display:none;}
-		.nav-list{max-width:1140px;margin:0 auto;padding:0 20px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;list-style:none;}
+		.nav-list,
+		.nav-list .nav-item,
+		.nav-dropdown,
+		.nav-dropdown li{list-style:none !important;list-style-type:none !important;margin:0;padding:0;}
+		.nav-list{max-width:1140px;margin:0 auto;padding:0 20px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;}
 		.nav-item{position:relative;}
 		.nav-item > a,
-		.nav-item summary{color:#fff;font-family:'Raleway',Arial,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:16px 9px;white-space:nowrap;display:flex;align-items:center;gap:4px;border-bottom:2px solid transparent;cursor:pointer;list-style:none;}
-		.nav-item summary::-webkit-details-marker{display:none;}
+		.nav-item > .nav-parent{color:#fff;font-family:'Raleway',Arial,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:16px 9px;white-space:nowrap;display:flex;align-items:center;gap:4px;border-bottom:2px solid transparent;cursor:pointer;}
 		.nav-item > a:hover,
-		.nav-item summary:hover,
-		.nav-item.is-active > a{color:#ff9d5c;border-bottom-color:#eb7d2e;}
-		.nav-item.is-active > a{color:#eb7d2e;}
-		.nav-item summary::after{content:'▾';font-size:9px;opacity:.7;}
-		.nav-item details[open] > summary{color:#ff9d5c;border-bottom-color:#eb7d2e;}
+		.nav-item > .nav-parent:hover,
+		.nav-item:hover > .nav-parent,
+		.nav-item:focus-within > .nav-parent,
+		.nav-item.is-active > a{border-bottom-color:#eb7d2e;}
+		.has-children > .nav-parent::after{content:'▾';font-size:9px;opacity:.7;}
 
-		.nav-dropdown{list-style:none;background:#fff;border-radius:10px;box-shadow:0 12px 28px rgba(0,0,0,.16);padding:8px;margin:4px 0 0;min-width:230px;}
-		.nav-item a{color:inherit;}
+		.nav-dropdown{display:none;position:absolute;top:100%;left:0;z-index:30;background:#fff;border-radius:10px;box-shadow:0 12px 28px rgba(0,0,0,.16);padding:8px;margin-top:4px !important;min-width:230px;}
+		.nav-item:hover > .nav-dropdown,
+		.nav-item:focus-within > .nav-dropdown{display:block;}
 		.nav-dropdown li a{display:block;padding:10px 14px;border-radius:6px;color:#3f3f3f;font-size:14px;font-family:'Lato',sans-serif;font-weight:400;}
 		.nav-dropdown li a:hover{background:#fbeee2;color:#eb7d2e;}
-
-		@media (min-width: 768px){
-			.nav-item details{position:static;}
-			.nav-item summary{list-style:none;}
-			.nav-dropdown{position:absolute;top:100%;left:0;z-index:30;}
-		}
 
 		@media (max-width: 767px){
 			.header-middle-inner{padding:14px 20px;}
@@ -144,11 +142,29 @@ $isLinkActive = static function (string $href) use ($normalizedPath): bool {
 			.nav-toggle-checkbox:checked ~ .nav-list{max-height:2000px;}
 			.nav-toggle-btn{display:flex;flex-direction:column;justify-content:center;gap:4px;max-width:1140px;margin:0 auto;padding:14px 20px;cursor:pointer;}
 			.nav-toggle-btn span{display:block;width:22px;height:2px;background:#fff;}
-			.nav-item > a,.nav-item summary{padding:12px 20px;border-bottom:1px solid #2c2c2c;}
-			.nav-dropdown{background:#181818;box-shadow:none;border-radius:0;margin:0;padding:0;}
+			.nav-item > a,.nav-item > .nav-parent{padding:12px 20px;border-bottom:1px solid #2c2c2c;}
+			.nav-dropdown,
+			.nav-item:hover > .nav-dropdown,
+			.nav-item:focus-within > .nav-dropdown{display:block;position:static;background:#181818;box-shadow:none;border-radius:0;margin:0 !important;padding:0;}
 			.nav-dropdown li a{color:#ccc;padding:10px 20px 10px 34px;}
 			.nav-dropdown li a:hover{background:#2c2c2c;color:#eb7d2e;}
 		}
+
+		/* "All Categories" accordion */
+		.vc_row.wpb_row.vc_inner.vc_row-fluid.catfrbn .vc_column_container > .vc_column-inner{min-height:auto !important;max-height:none !important;overflow:visible !important;border:0 !important;padding:0 !important;}
+		.cat-accordion{background:#fff;border:1px solid #ececec;border-radius:10px;margin-bottom:14px;overflow:hidden;}
+		.cat-accordion summary{list-style:none;cursor:pointer;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:'Raleway',Arial,sans-serif;font-weight:700;font-size:15px;color:#1c1c1c;}
+		.cat-accordion summary::-webkit-details-marker{display:none;}
+		.cat-accordion[open] summary{border-bottom:1px solid #ececec;}
+		.cat-accordion-meta{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+		.cat-accordion-count{background:#f6dfc4;color:#c1602a;font-size:12px;font-weight:700;border-radius:999px;padding:3px 11px;font-family:'Lato',sans-serif;}
+		.cat-accordion-chevron{color:#b0a894;transition:transform .15s;display:inline-block;}
+		.cat-accordion[open] .cat-accordion-chevron{transform:rotate(90deg);}
+		.cat-accordion-body{padding:6px 20px 18px;}
+		.cat-accordion-body ul{list-style:none !important;margin:0;padding:0;}
+		.cat-accordion-body li{padding:5px 0;}
+		.cat-accordion-body a{color:#505050;text-decoration:none;}
+		.cat-accordion-body a:hover{color:#eb7d2e;text-decoration:underline;}
 	</style>
 
 	<script src="https://masterbadminto.wpenginepowered.com/wp-includes/js/jquery/jquery.min.js"></script>
@@ -176,8 +192,8 @@ $isLinkActive = static function (string $href) use ($normalizedPath): bool {
 			</div>
 		</div>
 
-		<input type="checkbox" id="nav-toggle" class="nav-toggle-checkbox" />
 		<nav class="main-nav">
+			<input type="checkbox" id="nav-toggle" class="nav-toggle-checkbox" />
 			<label for="nav-toggle" class="nav-toggle-btn" aria-label="Toggle navigation menu"><span></span><span></span><span></span></label>
 			<ul class="nav-list">
 				<?php foreach ($navItems as $item): ?>
@@ -193,14 +209,12 @@ $isLinkActive = static function (string $href) use ($normalizedPath): bool {
 					?>
 					<li class="nav-item<?= $active ? ' is-active' : '' ?><?= $hasChildren ? ' has-children' : '' ?>">
 						<?php if ($hasChildren): ?>
-							<details>
-								<summary><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></summary>
-								<ul class="nav-dropdown">
-									<?php foreach ($item['children'] as $child): ?>
-										<li><a href="<?= htmlspecialchars($child['href'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($child['label'], ENT_QUOTES, 'UTF-8') ?></a></li>
-									<?php endforeach; ?>
-								</ul>
-							</details>
+							<a href="#" class="nav-parent" aria-haspopup="true"><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></a>
+							<ul class="nav-dropdown">
+								<?php foreach ($item['children'] as $child): ?>
+									<li><a href="<?= htmlspecialchars($child['href'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($child['label'], ENT_QUOTES, 'UTF-8') ?></a></li>
+								<?php endforeach; ?>
+							</ul>
 						<?php else: ?>
 							<a href="<?= htmlspecialchars($item['href'], ENT_QUOTES, 'UTF-8') ?>"<?= isset($item['target']) ? ' target="' . htmlspecialchars($item['target'], ENT_QUOTES, 'UTF-8') . '"' : '' ?>><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></a>
 						<?php endif; ?>
