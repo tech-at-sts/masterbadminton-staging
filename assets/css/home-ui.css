@@ -542,9 +542,13 @@
 	.nav-list-utility { border-top: 1px solid #333; }
 	.nav-list-utility::before { display: none; }
 
+	/* The mega panel's own "display:none" outranks the generic
+	 * ".nav-dropdown{display:block}" above, which left every child of the
+	 * only mega group unreachable on phones. Restate display here. */
 	.nav-dropdown.nav-dropdown-mega,
 	.nav-item:hover > .nav-dropdown.nav-dropdown-mega,
 	.nav-item:focus-within > .nav-dropdown.nav-dropdown-mega {
+		display: block;
 		columns: 1;
 		min-width: 0;
 		padding: 0;

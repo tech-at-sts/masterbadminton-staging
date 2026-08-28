@@ -1,0 +1,535 @@
+/*
+ * Homepage visual language: heavy condensed display type, two-tone
+ * headings, pill navigation, a teal hero, and rounded cards on a light
+ * grey field.
+ *
+ * Scoped entirely under body.home-v2, which templates/header.php sets only
+ * on the homepage, so the 1,600+ article pages keep the existing look. To
+ * roll this out sitewide, drop the $isHome condition on the body class.
+ *
+ * Loaded after home-ui.css, so it wins ties against it. Rules that also
+ * have to beat the per-page WPBakery CSS (re-emitted inside <body>, i.e.
+ * later in document order) carry an extra class of specificity.
+ *
+ * This layer changes no copy. Two-tone headings are produced by wrapping
+ * the existing words in spans, never by editing them.
+ */
+
+body.home-v2 {
+	--v2-teal-deep: #14413a;
+	--v2-teal: #2c6a5e;
+	--v2-teal-light: #3f8b79;
+	--v2-ink: #0d0d0d;
+	--v2-grey: #b4b4b4;
+	--v2-body: #5f6360;
+	--v2-field: #eeeeec;
+	--v2-line: #e2e2df;
+
+	background: var(--v2-field);
+	font-family: 'Outfit', 'Lato', Arial, sans-serif;
+}
+
+/* ---------------------------------------------------------------------
+ * Hero - teal field, pill nav floated on top, CTA as the focal element.
+ *
+ * The nav is taken out of flow so the hero starts at the top of the page
+ * and the bar sits over it, as in the reference. The hero's own padding
+ * reserves the space the bar occupies.
+ * ------------------------------------------------------------------ */
+/* The hero band is a child of .site-header, so the header itself carries
+ * the teal surface and the logo, nav and CTA simply sit on it in normal
+ * flow. Nothing needs taking out of flow, which keeps the mobile stack
+ * and the sticky quick-nav below it behaving normally.
+ *
+ * The background is a layered gradient plus a court-line motif drawn as an
+ * inline SVG data URI: the repository has no hero-grade photography, and
+ * this stays crisp at every width. Swap the first background layer for
+ * url(...) to drop a real photo in. */
+body.home-v2 .site-header {
+	position: relative;
+	isolation: isolate;
+	overflow: hidden;
+	box-shadow: none;
+	background:
+		radial-gradient(120% 90% at 78% 4%, rgba(94, 190, 165, .38) 0%, rgba(94, 190, 165, 0) 55%),
+		radial-gradient(90% 70% at 10% 98%, rgba(9, 46, 39, .82) 0%, rgba(9, 46, 39, 0) 62%),
+		linear-gradient(158deg, var(--v2-teal-light) 0%, var(--v2-teal) 42%, var(--v2-teal-deep) 100%);
+}
+
+body.home-v2 .site-header::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 600' preserveAspectRatio='xMidYMax slice'><g fill='none' stroke='%23ffffff' stroke-opacity='0.16' stroke-width='2'><path d='M180 600 L470 210 L730 210 L1020 600 Z'/><path d='M262 490 L938 490'/><path d='M600 210 L600 600'/><path d='M348 372 L852 372'/></g><g fill='none' stroke='%23ffffff' stroke-opacity='0.1' stroke-width='2'><path d='M60 250 C 220 170, 320 330, 470 250'/></g></svg>");
+	background-repeat: no-repeat;
+	background-position: center bottom;
+	background-size: 100% auto;
+	z-index: -1;
+	pointer-events: none;
+}
+
+body.home-v2 .header-middle {
+	background: transparent;
+	box-shadow: none;
+}
+
+body.home-v2 .header-middle-inner {
+	max-width: 1240px;
+	padding: 26px 34px 0;
+}
+
+body.home-v2 .site-logo img {
+	width: 168px;
+	filter: brightness(0) invert(1);
+}
+
+body.home-v2 .site-search input[type="text"] {
+	background: rgba(255, 255, 255, .14);
+	border: 1px solid rgba(255, 255, 255, .22);
+	color: #fff;
+	backdrop-filter: blur(6px);
+}
+
+body.home-v2 .site-search input[type="text"]::placeholder { color: rgba(255, 255, 255, .7); }
+body.home-v2 .site-search input[type="text"]:focus { background: rgba(255, 255, 255, .2); border-color: rgba(255, 255, 255, .5); }
+body.home-v2 .site-search button { color: rgba(255, 255, 255, .85); }
+
+/* The nav bar itself: a translucent pill floating on the hero. */
+body.home-v2 .main-nav {
+	background: transparent;
+	max-width: 1240px;
+	margin: 14px auto 0;
+	padding: 0 34px;
+}
+
+body.home-v2 .main-nav .nav-groups {
+	background: rgba(10, 42, 36, .5);
+	border: 1px solid rgba(255, 255, 255, .16);
+	backdrop-filter: blur(14px);
+	-webkit-backdrop-filter: blur(14px);
+	border-radius: 999px;
+	padding: 6px 14px;
+	max-width: none;
+}
+
+body.home-v2 .main-nav .nav-item > a,
+body.home-v2 .main-nav .nav-item > .nav-parent {
+	font-family: 'Outfit', Arial, sans-serif;
+	font-size: 14px;
+	font-weight: 400;
+	text-transform: none;
+	letter-spacing: 0;
+	color: rgba(255, 255, 255, .88);
+	padding: 12px 14px;
+	border-bottom: 0;
+	border-radius: 999px;
+}
+
+body.home-v2 .main-nav .nav-item > a:hover,
+body.home-v2 .main-nav .nav-item:hover > .nav-parent,
+body.home-v2 .main-nav .nav-item.is-active > a {
+	background: rgba(255, 255, 255, .14);
+	border-bottom: 0;
+	color: #fff;
+}
+
+body.home-v2 .nav-list-utility::before { background: rgba(255, 255, 255, .22); }
+
+body.home-v2 .nav-item-store > a {
+	background: #fff;
+	color: var(--v2-ink) !important;
+	border-color: #fff;
+	font-weight: 600;
+}
+
+body.home-v2 .nav-item-store > a:hover { background: #fff; color: var(--v2-ink) !important; }
+
+body.home-v2 .nav-dropdown {
+	border-radius: 18px;
+	padding: 10px;
+	box-shadow: 0 24px 48px rgba(0, 0, 0, .28);
+}
+
+body.home-v2 .nav-dropdown li a {
+	font-family: 'Outfit', Arial, sans-serif;
+	border-radius: 10px;
+}
+
+body.home-v2 .hero-cta {
+	position: relative;
+	background: transparent;
+	border-bottom: 0;
+}
+
+body.home-v2 .hero-cta-inner {
+	max-width: 1240px;
+	padding: 84px 34px 104px;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 26px;
+	text-align: left;
+}
+
+body.home-v2 .hero-cta-icon {
+	width: 60px;
+	height: 60px;
+	filter: brightness(0) invert(1);
+	opacity: .9;
+}
+
+body.home-v2 .hero-cta-btn {
+	background: #fff;
+	color: var(--v2-ink);
+	font-family: 'Outfit', Arial, sans-serif;
+	font-size: 17px;
+	font-weight: 600;
+	letter-spacing: 0;
+	padding: 18px 20px 18px 34px;
+	gap: 16px;
+	box-shadow: 0 18px 40px rgba(0, 0, 0, .22);
+}
+
+/* The arrow becomes a filled disc, as in the reference. */
+body.home-v2 .hero-cta-btn::after {
+	content: '\2197';
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 38px;
+	height: 38px;
+	border-radius: 50%;
+	background: var(--v2-ink);
+	color: #fff;
+	font-size: 17px;
+}
+
+body.home-v2 .hero-cta-btn:hover,
+body.home-v2 .hero-cta-btn:focus {
+	background: #fff;
+	color: var(--v2-ink);
+	transform: translateY(-2px);
+	box-shadow: 0 24px 50px rgba(0, 0, 0, .3);
+}
+
+/* ---------------------------------------------------------------------
+ * Content shell - one rounded white panel lifted onto the grey field.
+ * ------------------------------------------------------------------ */
+body.home-v2 #main.wrapper {
+	max-width: 1240px;
+	margin: -56px auto 0;
+	position: relative;
+	z-index: 5;
+	background: #fff;
+	border-radius: 34px;
+	padding: 18px 34px 40px;
+	box-shadow: 0 30px 80px rgba(20, 40, 36, .12);
+	box-sizing: border-box;
+}
+
+body.home-v2 .page-container { padding-top: 0 !important; }
+
+/* ---------------------------------------------------------------------
+ * Display headings. .v2-head-lead is every word but the last (grey),
+ * .v2-head-key is the last word (ink) - the two-tone treatment.
+ * ------------------------------------------------------------------ */
+body.home-v2 .home-intro h2,
+body.home-v2 .cat-directory .cat-section-title {
+	font-family: 'Anton', 'Raleway', Impact, sans-serif;
+	font-weight: 400;
+	text-transform: uppercase;
+	letter-spacing: -0.5px;
+	line-height: .96;
+	color: var(--v2-ink);
+}
+
+body.home-v2 .home-intro h2 {
+	font-size: clamp(38px, 6vw, 86px);
+	/* the source heading carries an inline text-align that only !important beats */
+	text-align: left !important;
+	margin: 34px 0 30px;
+}
+
+body.home-v2 .v2-head-lead { color: var(--v2-grey); }
+body.home-v2 .v2-head-key { color: var(--v2-ink); }
+
+/* ---------------------------------------------------------------------
+ * Intro prose and feature cards
+ * ------------------------------------------------------------------ */
+body.home-v2 .home-intro-prose p,
+body.home-v2 .home-intro-lead,
+body.home-v2 .home-intro-list li {
+	font-family: 'Outfit', 'Lato', Arial, sans-serif;
+}
+
+body.home-v2 .home-intro-prose p {
+	color: var(--v2-body);
+	font-size: 16px;
+	line-height: 1.8;
+}
+
+body.home-v2 .home-intro.wpb_text_column .home-intro-lead,
+body.home-v2 .home-intro-lead {
+	color: var(--v2-ink);
+	border-left-color: var(--v2-teal);
+	font-size: 18px;
+}
+
+body.home-v2 .home-intro-list li {
+	background: var(--v2-field);
+	border: 0;
+	border-radius: 20px;
+	padding: 24px 26px;
+	color: var(--v2-body);
+}
+
+body.home-v2 .home-intro-list li strong {
+	font-family: 'Outfit', Arial, sans-serif;
+	font-weight: 600;
+	color: var(--v2-ink);
+	margin-bottom: 6px;
+}
+
+/* ---------------------------------------------------------------------
+ * Quick-nav - the sticky tab bar, restyled as a pill rail.
+ * Extra specificity so it beats both home-ui.css and the legacy
+ * "ul#thct li a" rule in the page-level WPBakery CSS.
+ * ------------------------------------------------------------------ */
+body.home-v2 .quick-nav {
+	background: #fff;
+	border: 0;
+	box-shadow: none;
+	margin: 8px 0 0;
+	padding: 10px 0;
+}
+
+body.home-v2 .quick-nav-inner {
+	background: var(--v2-field);
+	border-radius: 999px;
+	padding: 8px;
+	max-width: 100%;
+}
+
+body.home-v2 .quick-nav #thct { gap: 2px; }
+
+body.home-v2 .quick-nav #thct li .quick-nav-link {
+	border-radius: 999px;
+	border-bottom: 0;
+	padding: 12px 6px 11px;
+	gap: 7px;
+}
+
+body.home-v2 .quick-nav #thct li .quick-nav-icon {
+	width: 38px;
+	height: 38px;
+	background: #fff;
+}
+
+body.home-v2 .quick-nav #thct li .quick-nav-label {
+	font-family: 'Outfit', Arial, sans-serif;
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: .2px;
+	text-transform: uppercase;
+	color: var(--v2-body);
+}
+
+body.home-v2 .quick-nav #thct li .quick-nav-link:hover,
+body.home-v2 .quick-nav #thct li .quick-nav-link:focus {
+	background: #e2e2df;
+	border-bottom: 0;
+}
+
+body.home-v2 .quick-nav #thct li .quick-nav-link:hover .quick-nav-icon,
+body.home-v2 .quick-nav #thct li .quick-nav-link:focus .quick-nav-icon { background: #fff; transform: none; }
+
+body.home-v2 .quick-nav #thct li .quick-nav-link:hover .quick-nav-label { color: var(--v2-ink); }
+
+body.home-v2 .quick-nav #thct li.is-active .quick-nav-link {
+	background: var(--v2-ink);
+	border-bottom: 0;
+}
+
+body.home-v2 .quick-nav #thct li.is-active .quick-nav-icon { background: #fff; }
+body.home-v2 .quick-nav #thct li.is-active .quick-nav-label { color: #fff; }
+
+/* ---------------------------------------------------------------------
+ * All Categories directory
+ * ------------------------------------------------------------------ */
+body.home-v2 .cat-section.cat-directory {
+	background: var(--v2-field);
+	border: 0;
+	border-radius: 30px;
+	box-shadow: none;
+	margin: 40px 0;
+}
+
+body.home-v2 .cat-directory-head {
+	background: transparent;
+	border-bottom: 0;
+	padding: 40px 40px 24px;
+}
+
+body.home-v2 .cat-directory .cat-section-title { font-size: clamp(30px, 4.4vw, 58px); margin-bottom: 8px; }
+
+body.home-v2 .cat-directory .cat-section-subtitle {
+	font-family: 'Outfit', Arial, sans-serif;
+	color: var(--v2-body);
+	margin-bottom: 24px;
+}
+
+body.home-v2 .cat-directory .cat-search-input {
+	background: #fff;
+	border: 0;
+	font-family: 'Outfit', Arial, sans-serif;
+	padding: 16px 18px 16px 44px;
+}
+
+body.home-v2 .cat-directory .cat-expand-all {
+	background: var(--v2-ink);
+	border-color: var(--v2-ink);
+	font-family: 'Outfit', Arial, sans-serif;
+	font-weight: 600;
+	padding: 16px 26px;
+}
+
+body.home-v2 .cat-directory .cat-expand-all:hover { background: var(--v2-teal); border-color: var(--v2-teal); }
+
+body.home-v2 .cat-directory .cat-accordion {
+	border: 0;
+	border-radius: 20px;
+	box-shadow: none;
+}
+
+body.home-v2 .cat-directory .cat-accordion:hover,
+body.home-v2 .cat-directory .cat-accordion[open] {
+	border: 0;
+	box-shadow: 0 10px 26px rgba(20, 40, 36, .09);
+}
+
+body.home-v2 .cat-directory .cat-accordion.is-targeted {
+	box-shadow: 0 0 0 2px var(--v2-teal);
+}
+
+body.home-v2 .cat-accordion summary {
+	font-family: 'Outfit', Arial, sans-serif;
+	font-weight: 600;
+	font-size: 17px;
+	color: var(--v2-ink);
+	padding: 22px 26px;
+}
+
+body.home-v2 .cat-accordion-count {
+	background: var(--v2-ink);
+	color: #fff;
+	font-family: 'Outfit', Arial, sans-serif;
+}
+
+body.home-v2 .cat-accordion-body { border-top-color: #ececea; padding: 14px 26px 22px; }
+
+body.home-v2 .cat-accordion-body a {
+	font-family: 'Outfit', Arial, sans-serif;
+	color: var(--v2-body);
+	font-weight: 500;
+}
+
+body.home-v2 .cat-accordion-body a:hover { color: var(--v2-teal); }
+
+/* ---------------------------------------------------------------------
+ * Facebook module
+ * ------------------------------------------------------------------ */
+body.home-v2 .home-social {
+	background: var(--v2-field);
+	border: 0;
+	border-radius: 24px;
+	padding: 26px 26px 28px;
+}
+
+body.home-v2 .home-social h2 {
+	font-family: 'Outfit', Arial, sans-serif;
+	font-weight: 600;
+	color: var(--v2-ink) !important;
+	letter-spacing: .6px;
+}
+
+/* ---------------------------------------------------------------------
+ * Footer - the black closing band from the reference.
+ * ------------------------------------------------------------------ */
+body.home-v2 #colophon {
+	background: var(--v2-ink);
+	border-radius: 34px 34px 0 0;
+	margin-top: 54px;
+	padding: 20px 0 8px;
+}
+
+body.home-v2 #colophon .menu {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 6px 28px;
+}
+
+body.home-v2 #colophon .menu li { list-style: none; margin: 0; }
+
+body.home-v2 #colophon .menu li a {
+	font-size: 14px;
+	opacity: .85;
+	text-decoration: none;
+}
+
+body.home-v2 #colophon .menu li a:hover { opacity: 1; }
+
+body.home-v2 #colophon .textwidget { text-align: center; margin-top: 14px; }
+
+body.home-v2 #colophon .menu li a,
+body.home-v2 #colophon .textwidget,
+body.home-v2 #colophon .textwidget a {
+	font-family: 'Outfit', Arial, sans-serif;
+	color: #fff;
+}
+
+body.home-v2 .lang-switch {
+	font-family: 'Outfit', Arial, sans-serif;
+	background: var(--v2-ink);
+	border-radius: 999px;
+}
+
+/* ---------------------------------------------------------------------
+ * Responsive
+ * ------------------------------------------------------------------ */
+@media (max-width: 900px) {
+	body.home-v2 #main.wrapper { border-radius: 24px; padding: 14px 18px 30px; margin-top: -40px; }
+	body.home-v2 .hero-cta-inner { padding: 60px 20px 78px; }
+	body.home-v2 .cat-directory-head { padding: 28px 22px 18px; }
+}
+
+@media (max-width: 767px) {
+	body.home-v2 .main-nav { padding: 0 18px; margin-top: 8px; }
+	/* Collapsed, the pill would still paint its background and padding as a
+	 * thin bar under the toggle; it only becomes a panel once opened. */
+	body.home-v2 .main-nav .nav-groups {
+		background: transparent;
+		border-color: transparent;
+		backdrop-filter: none;
+		-webkit-backdrop-filter: none;
+		padding: 0;
+	}
+
+	body.home-v2 .nav-toggle-checkbox:checked ~ .nav-groups {
+		background: rgba(10, 42, 36, .62);
+		border-color: rgba(255, 255, 255, .16);
+		backdrop-filter: blur(14px);
+		-webkit-backdrop-filter: blur(14px);
+		border-radius: 22px;
+		padding: 8px;
+	}
+	body.home-v2 .header-middle-inner { padding: 18px 18px 0; }
+	/* The header stays teal at every width, so the logo keeps its white
+	 * silhouette and the search field its translucent treatment. */
+	body.home-v2 .nav-toggle-btn { padding: 12px 18px; }
+	body.home-v2 .hero-cta-inner { padding: 44px 20px 54px; }
+	body.home-v2 .hero-cta-btn { font-size: 15px; padding: 12px 12px 12px 24px; }
+	body.home-v2 .hero-cta-btn::after { width: 32px; height: 32px; }
+}
