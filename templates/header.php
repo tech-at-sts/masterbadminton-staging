@@ -123,7 +123,7 @@ if ($normalizedPath === '/zh' || str_starts_with($normalizedPath, '/zh/')) {
 	<link rel='stylesheet' href='https://masterbadminto.wpenginepowered.com/wp-content/uploads/gonchild.css' media='all' />
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-	<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Raleway:wght@700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
+	<link href="https://fonts.googleapis.com/css2?family=Anton&family=Lato:wght@400;700&family=Outfit:wght@300;400;500;600;700&family=Raleway:wght@700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
 	<style>
 		.page-container{padding-top:2px;padding-left:0 !important;padding-right:0 !important;}
 		li{color:#454545;}
@@ -225,10 +225,14 @@ if ($normalizedPath === '/zh' || str_starts_with($normalizedPath, '/zh/')) {
 
 	<!-- Homepage UI layer. Loaded last so it wins ties against the rules above. -->
 	<link rel="stylesheet" href="/assets/css/home-ui.css" media="all" />
+	<?php if ($isHome): ?>
+	<!-- Homepage visual language. Scoped to body.home-v2; see the file header. -->
+	<link rel="stylesheet" href="/assets/css/home-v2.css" media="all" />
+	<?php endif; ?>
 
 	<script src="https://masterbadminto.wpenginepowered.com/wp-includes/js/jquery/jquery.min.js"></script>
 </head>
-<body class="wp-theme-gon wp-child-theme-gon-child header-v2 wide layout-fullwidth ts_desktop">
+<body class="wp-theme-gon wp-child-theme-gon-child header-v2 wide layout-fullwidth ts_desktop<?= $isHome ? ' home-v2' : '' ?>">
 <div id="page" class="hfeed site">
 
 	<header class="site-header">

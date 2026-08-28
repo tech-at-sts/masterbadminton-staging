@@ -45,6 +45,59 @@ final class HomepageLayout
         $this->buildQuickNav($dom, $xpath, $sections);
         $this->reflowIntro($dom, $xpath);
         $this->relocateSocialModule($dom, $xpath);
+        $this->splitDisplayHeadings($xpath);
+    }
+
+    /**
+     * Wrap each display heading's words in two spans so the stylesheet can
+     * render the last word in ink against the rest in grey.
+     *
+     * Only the markup changes: the words, their order and the space between
+     * them are the heading's own, so the rendered text is byte-for-byte what
+     * it was. Headings that already contain markup (a link, an emphasis) are
+     * left alone rather than flattened.
+     */
+    private function splitDisplayHeadings(\DOMXPath $xpath): void
+    {
+        $headings = $xpath->query(
+            '//*[contains(concat(" ", normalize-space(@class), " "), " home-intro ")]//h2'
+            . ' | //*[contains(concat(" ", normalize-space(@class), " "), " cat-section-title ")]',
+        );
+
+        foreach (iterator_to_array($headings) as $heading) {
+            if (!$heading instanceof \DOMElement) {
+                continue;
+            }
+
+            // A single text child is the only shape that is safe to re-wrap.
+            if ($heading->childNodes->length !== 1 || !$heading->firstChild instanceof \DOMText) {
+                continue;
+            }
+
+            $text = $heading->firstChild->nodeValue ?? '';
+            $words = preg_split('/\s+/u', trim($text), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+            if (count($words) < 2) {
+                continue;
+            }
+
+            $key = array_pop($words);
+            $dom = $heading->ownerDocument;
+
+            $heading->removeChild($heading->firstChild);
+
+            $lead = $dom->createElement('span');
+            $lead->setAttribute('class', 'v2-head-lead');
+            $lead->textContent = implode(' ', $words);
+            $heading->appendChild($lead);
+
+            $heading->appendChild($dom->createTextNode(' '));
+
+            $keySpan = $dom->createElement('span');
+            $keySpan->setAttribute('class', 'v2-head-key');
+            $keySpan->textContent = $key;
+            $heading->appendChild($keySpan);
+        }
     }
 
     /**
