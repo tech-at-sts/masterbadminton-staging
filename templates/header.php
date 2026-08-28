@@ -48,12 +48,24 @@ $navItems = [
 			['label' => 'News', 'href' => '/badminton-news.html'],
 		],
 	],
-	['label' => 'Contact', 'href' => '/contact.html'],
-	['label' => 'Ask a Question', 'href' => 'https://masterbadminton.com/badminton-questions.html'],
-	['label' => 'Store', 'href' => 'https://masterbadmintonshop.com/', 'target' => '_blank'],
+	['label' => 'Contact', 'href' => '/contact.html', 'group' => 'utility'],
+	['label' => 'Ask a Question', 'href' => 'https://masterbadminton.com/badminton-questions.html', 'group' => 'utility'],
+	['label' => 'Store', 'href' => 'https://masterbadmintonshop.com/', 'target' => '_blank', 'group' => 'utility', 'variant' => 'store'],
+];
+
+// Same items, same order, same labels - only split into two visual groups
+// so the content sections read apart from the utility links.
+$navGroups = [
+	'primary' => array_values(array_filter($navItems, static fn (array $item): bool => ($item['group'] ?? 'primary') === 'primary')),
+	'utility' => array_values(array_filter($navItems, static fn (array $item): bool => ($item['group'] ?? 'primary') === 'utility')),
 ];
 
 $normalizedPath = '/' . trim((string) parse_url($currentPath, PHP_URL_PATH), '/');
+
+// The homepage - English or the Chinese mirror - is the only page with a
+// hero region, so it gets the prominent beginner call-to-action band; every
+// other page keeps the same link in the slim top strip.
+$isHome = in_array($normalizedPath, ['/', '/zh'], true);
 
 $isLinkActive = static function (string $href) use ($normalizedPath): bool {
 	if ($href === '/') {
@@ -226,18 +238,23 @@ if ($normalizedPath === '/zh' || str_starts_with($normalizedPath, '/zh/')) {
 		}
 	</style>
 
+	<!-- Homepage UI layer. Loaded last so it wins ties against the rules above. -->
+	<link rel="stylesheet" href="/assets/css/home-ui.css" media="all" />
+
 	<script src="https://masterbadminto.wpenginepowered.com/wp-includes/js/jquery/jquery.min.js"></script>
 </head>
 <body class="wp-theme-gon wp-child-theme-gon-child header-v2 wide layout-fullwidth ts_desktop">
 <div id="page" class="hfeed site">
 
 	<header class="site-header">
+		<?php if (!$isHome): ?>
 		<div class="topbar">
 			<div class="topbar-inner">
 				<img src="/wp-content/uploads/2016/09/icon-badminton-1.png" alt="" />
 				<a class="beginner-link" href="/category/badminton-videos/badminton-basics.html">Are you a beginner? Click Here</a>
 			</div>
 		</div>
+		<?php endif; ?>
 
 		<div class="header-middle">
 			<div class="header-middle-inner">
@@ -254,8 +271,11 @@ if ($normalizedPath === '/zh' || str_starts_with($normalizedPath, '/zh/')) {
 		<nav class="main-nav">
 			<input type="checkbox" id="nav-toggle" class="nav-toggle-checkbox" />
 			<label for="nav-toggle" class="nav-toggle-btn" aria-label="Toggle navigation menu"><span></span><span></span><span></span></label>
-			<ul class="nav-list">
-				<?php foreach ($navItems as $item): ?>
+			<div class="nav-groups">
+			<?php foreach ($navGroups as $groupName => $groupItems): ?>
+				<?php if ($groupItems === []) { continue; } ?>
+				<ul class="nav-list nav-list-<?= htmlspecialchars($groupName, ENT_QUOTES, 'UTF-8') ?>">
+				<?php foreach ($groupItems as $item): ?>
 					<?php $hasChildren = !empty($item['children']); ?>
 					<?php
 						$active = $hasChildren
@@ -266,10 +286,11 @@ if ($normalizedPath === '/zh' || str_starts_with($normalizedPath, '/zh/')) {
 							)
 							: $isLinkActive($item['href']);
 					?>
-					<li class="nav-item<?= $active ? ' is-active' : '' ?><?= $hasChildren ? ' has-children' : '' ?>">
+					<?php $isMega = $hasChildren && count($item['children']) > 4; ?>
+					<li class="nav-item<?= $active ? ' is-active' : '' ?><?= $hasChildren ? ' has-children' : '' ?><?= isset($item['variant']) ? ' nav-item-' . htmlspecialchars($item['variant'], ENT_QUOTES, 'UTF-8') : '' ?>">
 						<?php if ($hasChildren): ?>
 							<a href="#" class="nav-parent" aria-haspopup="true"><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></a>
-							<ul class="nav-dropdown">
+							<ul class="nav-dropdown<?= $isMega ? ' nav-dropdown-mega' : '' ?>">
 								<?php foreach ($item['children'] as $child): ?>
 									<li><a href="<?= htmlspecialchars($child['href'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($child['label'], ENT_QUOTES, 'UTF-8') ?></a></li>
 								<?php endforeach; ?>
@@ -279,8 +300,19 @@ if ($normalizedPath === '/zh' || str_starts_with($normalizedPath, '/zh/')) {
 						<?php endif; ?>
 					</li>
 				<?php endforeach; ?>
-			</ul>
+				</ul>
+			<?php endforeach; ?>
+			</div>
 		</nav>
+
+		<?php if ($isHome): ?>
+		<section class="hero-cta">
+			<div class="hero-cta-inner">
+				<img class="hero-cta-icon" src="/wp-content/uploads/2016/09/icon-badminton-1.png" alt="" />
+				<a class="hero-cta-btn" href="/category/badminton-videos/badminton-basics.html">Are you a beginner? Click Here</a>
+			</div>
+		</section>
+		<?php endif; ?>
 	</header>
 
 	<a class="lang-switch" href="<?= htmlspecialchars($langHref, ENT_QUOTES, 'UTF-8') ?>">🌐 <?= htmlspecialchars($langLabel, ENT_QUOTES, 'UTF-8') ?></a>

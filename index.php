@@ -34,7 +34,7 @@ if ($sourceFile === null) {
     exit;
 }
 
-$cache = new ContentCache(__DIR__ . '/storage/cache');
+$cache = new ContentCache(__DIR__ . '/storage/cache', ContentExtractor::fingerprint());
 $extractor = new ContentExtractor();
 
 $page = $cache->remember($sourceFile, static fn (): PageContent => $extractor->extract($sourceFile));
