@@ -41,31 +41,23 @@ body.home-v2 {
  * flow. Nothing needs taking out of flow, which keeps the mobile stack
  * and the sticky quick-nav below it behaving normally.
  *
- * The background is a layered gradient plus a court-line motif drawn as an
- * inline SVG data URI: the repository has no hero-grade photography, and
- * this stays crisp at every width. Swap the first background layer for
- * url(...) to drop a real photo in. */
+ * The background is the hero photograph - a racket and shuttles on a
+ * court-lined field - read through a teal scrim so the white logo, nav and
+ * CTA keep their contrast over it. The three gradient layers are the scrim
+ * and stack above the photo; the flat teal underneath covers the band while
+ * the JPEG is still loading. This replaced an inline-SVG court-line motif
+ * that stood in for photography before. */
 body.home-v2 .site-header {
 	position: relative;
 	isolation: isolate;
 	overflow: hidden;
 	box-shadow: none;
 	background:
-		radial-gradient(120% 90% at 78% 4%, rgba(94, 190, 165, .38) 0%, rgba(94, 190, 165, 0) 55%),
-		radial-gradient(90% 70% at 10% 98%, rgba(9, 46, 39, .82) 0%, rgba(9, 46, 39, 0) 62%),
-		linear-gradient(158deg, var(--v2-teal-light) 0%, var(--v2-teal) 42%, var(--v2-teal-deep) 100%);
-}
-
-body.home-v2 .site-header::before {
-	content: '';
-	position: absolute;
-	inset: 0;
-	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 600' preserveAspectRatio='xMidYMax slice'><g fill='none' stroke='%23ffffff' stroke-opacity='0.16' stroke-width='2'><path d='M180 600 L470 210 L730 210 L1020 600 Z'/><path d='M262 490 L938 490'/><path d='M600 210 L600 600'/><path d='M348 372 L852 372'/></g><g fill='none' stroke='%23ffffff' stroke-opacity='0.1' stroke-width='2'><path d='M60 250 C 220 170, 320 330, 470 250'/></g></svg>");
-	background-repeat: no-repeat;
-	background-position: center bottom;
-	background-size: 100% auto;
-	z-index: -1;
-	pointer-events: none;
+		radial-gradient(120% 90% at 78% 4%, rgba(94, 190, 165, .30) 0%, rgba(94, 190, 165, 0) 55%),
+		radial-gradient(90% 70% at 10% 98%, rgba(9, 46, 39, .72) 0%, rgba(9, 46, 39, 0) 62%),
+		linear-gradient(158deg, rgba(63, 139, 121, .70) 0%, rgba(30, 82, 72, .80) 48%, rgba(13, 46, 39, .90) 100%),
+		url("/assets/images/hero-racket-shuttles.jpg") center / cover no-repeat,
+		var(--v2-teal-deep);
 }
 
 body.home-v2 .header-middle {

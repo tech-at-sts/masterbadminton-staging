@@ -12,6 +12,10 @@ declare(strict_types=1);
 $navItems = [
 	['label' => 'Home', 'href' => '/'],
 	['label' => 'Blog', 'href' => '/how-to-play-badminton-blog.html'],
+	// The /techniques listing, served by Router's alias off the Techniques
+	// category archive. Top level rather than inside "Playing the Game", so
+	// the section index is one click from every page.
+	['label' => 'Techniques', 'href' => '/techniques'],
 	[
 		'label' => 'Playing the Game',
 		'children' => [
