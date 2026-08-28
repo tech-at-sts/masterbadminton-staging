@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Core;
 
+use App\Content\HomepageLayout;
+
 /**
  * Pulls the page <title>, meta description, and main content region out of
  * a legacy exported HTML file. Every page in the legacy tree shares the
@@ -50,6 +52,29 @@ final class ContentExtractor
         </script>
         HTML;
 
+    /**
+     * Fingerprint of the extraction logic itself.
+     *
+     * ContentCache keys entries on the source file and compares mtimes
+     * against it, but the exported *.html files never change - only this
+     * code does. Without folding a code fingerprint into the cache key, a
+     * deployment with a persisted storage/cache keeps serving HTML that was
+     * extracted by an older version of this class (which is how the retired
+     * TranslatePress floater survived alongside the header's own language
+     * switcher, rendering two stacked bubbles).
+     */
+    public static function fingerprint(): string
+    {
+        $sources = [__FILE__, dirname(__DIR__) . '/Content/HomepageLayout.php'];
+        $parts = [];
+
+        foreach ($sources as $source) {
+            $parts[] = is_file($source) ? (string) filemtime($source) : '0';
+        }
+
+        return substr(sha1(implode('|', $parts)), 0, 12);
+    }
+
     public function extract(string $filePath): PageContent
     {
         $html = file_get_contents($filePath);
@@ -77,8 +102,10 @@ final class ContentExtractor
             ?? $xpath->query('//div[@id="primary"]')->item(0);
 
         $this->stripSidebar($xpath);
+        $this->stripLegacyLanguageSwitcher($xpath);
         $this->stripHomeCategoryColumn($dom, $xpath);
         $hasCategorySections = $this->convertCategoryGridToAccordion($dom, $xpath);
+        (new HomepageLayout())->apply($dom, $xpath);
         $pageStyle = $this->extractPageStyle($xpath);
 
         $content = $main instanceof \DOMNode ? $this->innerHtml($dom, $main) : '';
@@ -131,6 +158,25 @@ final class ContentExtractor
         $sidebar = $xpath->query('//aside[@id="left-sidebar"]')->item(0);
 
         $sidebar?->parentNode?->removeChild($sidebar);
+    }
+
+    /**
+     * The exported pages still embed the retired TranslatePress floating
+     * language switcher (#trp-floater-ls, pinned bottom-right) inside their
+     * own content. templates/header.php now renders the site's single
+     * switcher, so leaving the legacy one in place stacks a second bubble in
+     * the same corner. Strip it here, where all legacy content passes
+     * through, rather than editing 1,400+ exported files.
+     */
+    private function stripLegacyLanguageSwitcher(\DOMXPath $xpath): void
+    {
+        $query = '//*[@id="trp-floater-ls"]'
+            . ' | //*[contains(concat(" ", normalize-space(@class), " "), " trp-language-switcher-container ")]'
+            . ' | //*[contains(concat(" ", normalize-space(@class), " "), " trp_language_switcher_shortcode ")]';
+
+        foreach (iterator_to_array($xpath->query($query)) as $node) {
+            $node->parentNode?->removeChild($node);
+        }
     }
 
     /**

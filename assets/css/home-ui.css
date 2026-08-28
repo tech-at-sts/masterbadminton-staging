@@ -1,0 +1,554 @@
+/*
+ * Homepage UI/UX layer.
+ *
+ * Loaded after the inline <style> block in templates/header.php so equal
+ * specificity resolves in this file's favour. Selectors that have to beat
+ * the per-page WPBakery CSS (which ContentExtractor re-emits inside <body>,
+ * i.e. later in document order) are deliberately written with an extra
+ * class of specificity - see .quick-nav #thct and .home-social .content-front.
+ *
+ * Nothing here changes copy: every rule is layout, spacing or colour.
+ */
+
+:root {
+	--mb-orange: #eb7d2e;
+	--mb-orange-dark: #c1602a;
+	--mb-navy: #1c2541;
+	--mb-cream: #faf5ea;
+	--mb-line: #e9e1d1;
+	--mb-muted: #9a9186;
+}
+
+/* ---------------------------------------------------------------------
+ * 3. Hero call-to-action ("Are you a beginner? Click Here")
+ * Replaces the thin grey top strip on the homepage with a real hero band.
+ * ------------------------------------------------------------------ */
+.hero-cta {
+	background: linear-gradient(135deg, #1c2541 0%, #2d3a63 100%);
+	border-bottom: 3px solid var(--mb-orange);
+}
+
+.hero-cta-inner {
+	max-width: 1140px;
+	margin: 0 auto;
+	padding: 38px 20px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 18px;
+	flex-wrap: wrap;
+}
+
+.hero-cta-icon {
+	width: 46px;
+	height: 46px;
+	flex-shrink: 0;
+}
+
+.hero-cta-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	background: var(--mb-orange);
+	color: #fff;
+	font-family: 'Raleway', Arial, sans-serif;
+	font-size: 17px;
+	font-weight: 800;
+	letter-spacing: .3px;
+	text-decoration: none;
+	padding: 17px 38px;
+	border-radius: 999px;
+	box-shadow: 0 8px 22px rgba(235, 125, 46, .35);
+	transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
+}
+
+.hero-cta-btn::after {
+	content: '\2192';
+	font-size: 19px;
+	line-height: 1;
+}
+
+.hero-cta-btn:hover,
+.hero-cta-btn:focus {
+	background: #f28c3f;
+	color: #fff;
+	transform: translateY(-2px);
+	box-shadow: 0 12px 28px rgba(235, 125, 46, .45);
+}
+
+@media (max-width: 640px) {
+	.hero-cta-inner { padding: 26px 18px; gap: 14px; }
+	.hero-cta-btn { font-size: 15px; padding: 14px 26px; text-align: center; }
+	.hero-cta-icon { width: 36px; height: 36px; }
+}
+
+/* ---------------------------------------------------------------------
+ * 4. Sticky quick-nav tab bar (the 8-icon category strip)
+ * The legacy markup is ul#thct with floated 130px <li>s; those rules live
+ * in the per-page WPBakery <style> that is emitted inside <body>, so every
+ * selector below carries the .quick-nav class to outrank them.
+ * ------------------------------------------------------------------ */
+.quick-nav {
+	position: -webkit-sticky;
+	position: sticky;
+	top: 0;
+	z-index: 25;
+	background: #fff;
+	border-top: 1px solid #ededed;
+	border-bottom: 1px solid #e2e2e2;
+	box-shadow: 0 4px 14px rgba(0, 0, 0, .06);
+	margin: 28px 0 0;
+}
+
+.quick-nav-inner {
+	max-width: 1140px;
+	margin: 0 auto;
+	padding: 0 12px;
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+	scrollbar-width: thin;
+}
+
+.quick-nav #thct {
+	display: flex;
+	align-items: stretch;
+	justify-content: center;
+	gap: 4px;
+	width: 100%;
+	max-width: none;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.quick-nav #thct li {
+	float: none;
+	display: flex;
+	list-style-type: none;
+	border: 0;
+	width: auto;
+	max-width: none;
+	flex: 1 1 0;
+	min-width: 92px;
+	padding: 0;
+	text-align: center;
+	position: relative;
+	background: transparent;
+	/* li#rle7 sets border-right with !important in the legacy page CSS. */
+	border: 0 !important;
+}
+
+.quick-nav #thct li:hover {
+	background: transparent;
+	border-top: 0;
+}
+
+/*
+ * These carry .quick-nav + #thct + li so they outrank the legacy
+ * "ul#thct li a" rule (1 id, 2 elements) in the page-level WPBakery CSS,
+ * which would otherwise force the link back to display:block and leave the
+ * icons hugging the left edge of each tab.
+ */
+.quick-nav #thct li .quick-nav-link {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 8px;
+	width: 100%;
+	height: auto;
+	padding: 14px 6px 12px;
+	text-decoration: none;
+	border-bottom: 3px solid transparent;
+	border-radius: 10px 10px 0 0;
+	transition: background .15s ease, border-color .15s ease;
+}
+
+.quick-nav #thct li .quick-nav-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 42px;
+	height: 42px;
+	border-radius: 50%;
+	background: var(--mb-cream);
+	transition: background .15s ease, transform .15s ease;
+}
+
+/* Consistent icon sizing: the source PNGs vary, so box them identically. */
+.quick-nav #thct li img {
+	display: block;
+	width: 24px;
+	height: 24px;
+	max-width: 24px;
+	object-fit: contain;
+}
+
+.quick-nav #thct li .quick-nav-label {
+	font-family: 'Raleway', Arial, sans-serif;
+	font-size: 11px;
+	font-weight: 700;
+	line-height: 1.25;
+	letter-spacing: .4px;
+	text-transform: uppercase;
+	color: #4a4a4a;
+	transition: color .15s ease;
+}
+
+.quick-nav #thct li .quick-nav-link:hover,
+.quick-nav #thct li .quick-nav-link:focus {
+	background: #fdf6ee;
+	border-bottom-color: #f3c9a3;
+	outline: none;
+}
+
+.quick-nav #thct li .quick-nav-link:hover .quick-nav-icon,
+.quick-nav #thct li .quick-nav-link:focus .quick-nav-icon {
+	background: #f8e3cd;
+	transform: translateY(-2px);
+}
+
+.quick-nav #thct li .quick-nav-link:hover .quick-nav-label,
+.quick-nav #thct li .quick-nav-link:focus .quick-nav-label {
+	color: var(--mb-orange-dark);
+}
+
+.quick-nav #thct li.is-active .quick-nav-link {
+	background: #fdf1e5;
+	border-bottom-color: var(--mb-orange);
+}
+
+.quick-nav #thct li.is-active .quick-nav-icon {
+	background: var(--mb-orange);
+}
+
+.quick-nav #thct li.is-active .quick-nav-label {
+	color: var(--mb-orange-dark);
+}
+
+@media (max-width: 900px) {
+	.quick-nav #thct { justify-content: flex-start; }
+	.quick-nav #thct li { flex: 0 0 auto; min-width: 84px; }
+	.quick-nav-label { font-size: 10px; }
+}
+
+/* ---------------------------------------------------------------------
+ * 5. "All Categories" directory panel
+ * Reframed as a bordered browse tool so it reads differently from the
+ * quick-nav tab bar above it.
+ * ------------------------------------------------------------------ */
+.cat-section.cat-directory {
+	background: #fff;
+	border: 1px solid var(--mb-line);
+	border-radius: 22px;
+	padding: 0;
+	margin: 46px 0;
+	overflow: hidden;
+	box-shadow: 0 10px 34px rgba(28, 37, 65, .07);
+}
+
+.cat-directory-head {
+	background: var(--mb-cream);
+	border-bottom: 1px solid var(--mb-line);
+	padding: 34px 40px 28px;
+}
+
+.cat-directory .cat-section-title {
+	text-align: left;
+	font-size: 30px;
+	margin: 0 0 4px;
+}
+
+.cat-directory .cat-section-subtitle {
+	text-align: left;
+	margin: 0 0 22px;
+}
+
+.cat-directory .cat-section-controls {
+	margin-bottom: 0;
+}
+
+.cat-directory .cat-search-input {
+	border-radius: 999px;
+	padding-left: 44px;
+}
+
+.cat-directory .cat-expand-all {
+	border-radius: 999px;
+	background: var(--mb-navy);
+	border-color: var(--mb-navy);
+	color: #fff;
+}
+
+.cat-directory .cat-expand-all:hover {
+	background: var(--mb-orange);
+	border-color: var(--mb-orange);
+	color: #fff;
+}
+
+.cat-directory .cat-grid {
+	padding: 26px 40px 36px;
+	gap: 16px;
+}
+
+.cat-directory .cat-accordion {
+	border: 1px solid #efe9dc;
+	box-shadow: none;
+	transition: border-color .15s ease, box-shadow .15s ease;
+	scroll-margin-top: 104px;
+}
+
+.cat-directory .cat-accordion:hover,
+.cat-directory .cat-accordion[open] {
+	border-color: #f0cfaa;
+	box-shadow: 0 6px 18px rgba(28, 37, 65, .08);
+}
+
+/* Brief highlight when a quick-nav tab jumps to this card. */
+.cat-directory .cat-accordion.is-targeted {
+	border-color: var(--mb-orange);
+	box-shadow: 0 0 0 3px rgba(235, 125, 46, .18);
+}
+
+@media (max-width: 640px) {
+	.cat-directory-head { padding: 24px 20px 20px; }
+	.cat-directory .cat-grid { padding: 18px 20px 26px; }
+	.cat-directory .cat-section-title { font-size: 24px; }
+}
+
+/* ---------------------------------------------------------------------
+ * 6. "How To Play Badminton" intro reflow
+ * ------------------------------------------------------------------ */
+.home-intro .wpb_wrapper > h2,
+.home-intro h2 {
+	font-family: 'Playfair Display', serif;
+	font-size: 36px;
+	font-weight: 800;
+	color: var(--mb-navy);
+	margin: 0 0 26px;
+	text-align: center;
+}
+
+.home-intro-prose {
+	columns: 2;
+	column-gap: 56px;
+	margin-bottom: 26px;
+}
+
+.home-intro-prose p {
+	break-inside: avoid;
+	-webkit-column-break-inside: avoid;
+	page-break-inside: avoid;
+	font-size: 16px;
+	line-height: 1.75;
+	margin: 0 0 1.15em;
+}
+
+.home-intro-lead {
+	font-size: 17px;
+	line-height: 1.7;
+	font-weight: 700;
+	color: var(--mb-navy);
+	margin: 0 0 20px;
+	padding-left: 14px;
+	border-left: 4px solid var(--mb-orange);
+}
+
+.home-intro-list {
+	list-style: none !important;
+	margin: 0 0 10px;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 16px;
+}
+
+.home-intro-list li {
+	list-style: none;
+	background: var(--mb-cream);
+	border: 1px solid #f0e9da;
+	border-radius: 14px;
+	padding: 18px 20px;
+	font-size: 15px;
+	line-height: 1.65;
+}
+
+.home-intro-list li strong {
+	display: block;
+	color: var(--mb-navy);
+	margin-bottom: 4px;
+}
+
+@media (max-width: 900px) {
+	.home-intro-prose { columns: 1; }
+	.home-intro-list { grid-template-columns: 1fr; }
+	.home-intro h2 { font-size: 27px; }
+}
+
+/* ---------------------------------------------------------------------
+ * 7. Facebook module, demoted from a full-width band to a compact card
+ * .home-social .content-front outranks the page-level .content-front rule.
+ * ------------------------------------------------------------------ */
+.home-social {
+	display: block;
+	max-width: 420px;
+	margin: 46px 0 10px auto;
+	padding: 20px 22px 24px;
+	background: #f7f9fc;
+	border: 1px solid #e3e9f1;
+	border-radius: 16px;
+	box-sizing: border-box;
+}
+
+.home-social .content-front {
+	width: 100%;
+	max-width: 100%;
+	margin: 0;
+}
+
+.home-social h2 {
+	font-size: 15px !important;
+	font-family: 'Raleway', Arial, sans-serif;
+	font-weight: 800;
+	text-align: left !important;
+	letter-spacing: .4px;
+	text-transform: uppercase;
+	margin: 0 0 12px;
+}
+
+.home-social h2 + .wpb_raw_code {
+	margin-bottom: 18px;
+}
+
+.home-social iframe,
+.home-social .fb-comments,
+.home-social .fb-comments span,
+.home-social .fb-comments iframe {
+	max-width: 100% !important;
+	width: 100% !important;
+}
+
+.home-social .wpb_raw_code > .wpb_wrapper > div {
+	max-width: 100% !important;
+}
+
+.home-social .adsbygoogle {
+	max-width: 100%;
+}
+
+@media (max-width: 900px) {
+	.home-social { max-width: 100%; margin: 34px 0 10px; }
+}
+
+/* ---------------------------------------------------------------------
+ * 8. Top navigation grouping (primary content vs. utility links)
+ * ------------------------------------------------------------------ */
+.nav-groups {
+	max-width: 1140px;
+	margin: 0 auto;
+	padding: 0 20px;
+	display: flex;
+	align-items: stretch;
+	justify-content: space-between;
+	gap: 18px;
+	flex-wrap: wrap;
+}
+
+.nav-groups .nav-list {
+	max-width: none;
+	margin: 0;
+	padding: 0;
+	justify-content: flex-start;
+}
+
+.nav-list-utility {
+	position: relative;
+	gap: 2px;
+}
+
+/* Divider marking where content links end and utility links begin. */
+.nav-list-utility::before {
+	content: '';
+	position: absolute;
+	left: -9px;
+	top: 22%;
+	bottom: 22%;
+	width: 1px;
+	background: rgba(255, 255, 255, .18);
+}
+
+.nav-list-utility .nav-item > a {
+	color: #cfcfcf;
+	font-size: 11px;
+}
+
+.nav-list-utility .nav-item > a:hover {
+	color: #fff;
+}
+
+.nav-item-store > a {
+	border: 1px solid rgba(235, 125, 46, .8);
+	border-radius: 999px;
+	color: #f6a768 !important;
+	padding: 7px 16px !important;
+	margin-left: 8px;
+	border-bottom-width: 1px !important;
+}
+
+.nav-item-store > a:hover {
+	background: var(--mb-orange);
+	color: #fff !important;
+	border-color: var(--mb-orange);
+}
+
+/* Mega-menu panel for the wider groups. */
+.nav-dropdown.nav-dropdown-mega {
+	display: none;
+	min-width: 460px;
+	padding: 14px;
+	columns: 2;
+	column-gap: 10px;
+}
+
+.nav-item:hover > .nav-dropdown.nav-dropdown-mega,
+.nav-item:focus-within > .nav-dropdown.nav-dropdown-mega {
+	display: block;
+}
+
+.nav-dropdown.nav-dropdown-mega li {
+	break-inside: avoid;
+}
+
+/* Keep the right-hand panels inside the viewport. */
+.nav-list-utility .nav-dropdown,
+.nav-item:last-child .nav-dropdown {
+	left: auto;
+	right: 0;
+}
+
+@media (max-width: 767px) {
+	.nav-groups {
+		display: block;
+		padding: 0;
+		max-height: 0;
+		overflow: hidden;
+		transition: max-height .2s ease;
+	}
+
+	.nav-toggle-checkbox:checked ~ .nav-groups { max-height: 2000px; }
+
+	.nav-groups .nav-list { max-height: none; overflow: visible; }
+
+	.nav-list-utility { border-top: 1px solid #333; }
+	.nav-list-utility::before { display: none; }
+
+	.nav-dropdown.nav-dropdown-mega,
+	.nav-item:hover > .nav-dropdown.nav-dropdown-mega,
+	.nav-item:focus-within > .nav-dropdown.nav-dropdown-mega {
+		columns: 1;
+		min-width: 0;
+		padding: 0;
+	}
+
+	.nav-item-store > a { margin-left: 20px; display: inline-flex; }
+}

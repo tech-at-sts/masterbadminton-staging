@@ -44,5 +44,6 @@ declare(strict_types=1);
 <script src="https://masterbadminto.wpenginepowered.com/wp-content/themes/gon/js/include_scripts.js"></script>
 <script src="https://masterbadminto.wpenginepowered.com/wp-content/themes/gon/js/main.js"></script>
 <script src="https://masterbadminto.wpenginepowered.com/wp-content/themes/gon/js/select2.min.js"></script>
+<script src="/assets/js/home-ui.js" defer></script>
 </body>
 </html>
