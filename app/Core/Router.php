@@ -14,6 +14,26 @@ namespace App\Core;
  */
 final class Router
 {
+    /**
+     * Live URLs that have no counterpart of their own in the exported tree,
+     * mapped to the file that already holds the same content.
+     *
+     * These are only consulted after the normal candidates miss, so dropping
+     * a real export in later silently takes precedence over the alias.
+     *
+     * techniques: the live site publishes a page at /techniques (WordPress
+     * page id 1260) whose body is a WPBakery masonry post grid. The grid's
+     * tiles are fetched at runtime from admin-ajax.php, so the static export
+     * captured nothing but an empty grid container and the page never made
+     * it into the tree. The category archive is that same listing - the same
+     * ten Techniques posts, with the same excerpts and links - so it supplies
+     * the content for this URL.
+     */
+    private const ALIASES = [
+        'techniques' => 'category/badminton-techniques-shots-and-skills/index.html',
+        'zh/techniques' => 'zh/category/badminton-techniques-shots-and-skills/index.html',
+    ];
+
     public function __construct(private readonly string $baseDir)
     {
     }
@@ -25,6 +45,10 @@ final class Router
         $candidates = $path === ''
             ? ['index.html']
             : [$path . '/index.html', $path];
+
+        if (isset(self::ALIASES[$path])) {
+            $candidates[] = self::ALIASES[$path];
+        }
 
         foreach ($candidates as $candidate) {
             $resolved = $this->safeFile($candidate);

@@ -79,32 +79,17 @@ $isLinkActive = static function (string $href) use ($normalizedPath): bool {
 // with the English tree. Point the language switcher at the mirror of the
 // page actually being viewed when it exists, falling back to that
 // language's homepage otherwise, rather than always sending readers to /.
-// realpath() the root too, not just each candidate: if the document root
-// is itself reached through a symlink (common with release-based deploys),
-// comparing a resolved candidate path against an unresolved root would fail
-// the prefix check below for every single path, silently forcing every
-// language-switch link back to the homepage. Router::safeFile() resolves
-// both sides the same way for the same reason.
+//
+// "Exists" is asked of the Router rather than re-implemented here. This
+// file used to carry its own copy of the candidate lookup, and the two
+// drifted: the Router also resolves aliases for live URLs with no exported
+// file of their own (/techniques), which the private copy could not see, so
+// the switcher fell back to the language's homepage for exactly those
+// pages. The Router is also the side that handles a document root reached
+// through a symlink, by realpath()ing the root as well as each candidate.
 $siteRoot = realpath(dirname(__DIR__)) ?: dirname(__DIR__);
-$pathResolves = static function (string $path) use ($siteRoot): bool {
-	$trimmed = trim($path, '/');
-	$candidates = $trimmed === '' ? ['index.html'] : [$trimmed . '/index.html', $trimmed];
-
-	foreach ($candidates as $candidate) {
-		$full = realpath($siteRoot . '/' . $candidate);
-
-		if (
-			$full !== false
-			&& is_file($full)
-			&& str_starts_with($full, $siteRoot . DIRECTORY_SEPARATOR)
-			&& strtolower(pathinfo($full, PATHINFO_EXTENSION)) === 'html'
-		) {
-			return true;
-		}
-	}
-
-	return false;
-};
+$linkRouter = new \App\Core\Router($siteRoot);
+$pathResolves = static fn (string $path): bool => $linkRouter->resolve($path) !== null;
 
 if ($normalizedPath === '/zh' || str_starts_with($normalizedPath, '/zh/')) {
 	$counterpart = $normalizedPath === '/zh' ? '/' : substr($normalizedPath, 3);
