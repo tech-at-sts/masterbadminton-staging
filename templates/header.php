@@ -12,10 +12,14 @@ declare(strict_types=1);
 $navItems = [
 	['label' => 'Home', 'href' => '/'],
 	['label' => 'Blog', 'href' => '/how-to-play-badminton-blog.html'],
-	// The /techniques listing, served by Router's alias off the Techniques
-	// category archive. Top level rather than inside "Playing the Game", so
-	// the section index is one click from every page.
-	['label' => 'Techniques', 'href' => '/techniques'],
+	// The category directory, built by App\Content\CategoryDirectory from the
+	// homepage's own "All Categories" grid. Top level rather than inside
+	// "Playing the Game", so the full topic index is one click from every
+	// page. (This slot used to hold a "Techniques" link to /techniques; that
+	// URL still resolves through the Router alias, it just no longer takes a
+	// top-level nav slot - Techniques is one of the eight cards here, and
+	// "Techniques and Shots" remains under Playing the Game.)
+	['label' => 'Category', 'href' => '/categories'],
 	[
 		'label' => 'Playing the Game',
 		'children' => [
@@ -66,10 +70,19 @@ $navGroups = [
 
 $normalizedPath = '/' . trim((string) parse_url($currentPath, PHP_URL_PATH), '/');
 
-// The homepage - English or the Chinese mirror - is the only page with a
-// hero region, so it gets the prominent beginner call-to-action band; every
-// other page keeps the same link in the slim top strip.
+// The homepage - English or the Chinese mirror - gets the prominent
+// beginner call-to-action band; every page that keeps the plain white
+// header carries the same link in the slim top strip instead.
 $isHome = in_array($normalizedPath, ['/', '/zh'], true);
+
+// The category directory (/categories, /zh/categories) is built by
+// App\Content\CategoryDirectory rather than pulled from the legacy tree,
+// and is designed in the homepage's visual language - so it opts into the
+// same body class and stylesheet, with its own hero band in place of the
+// beginner call-to-action.
+$isCategoryIndex = \App\Content\CategoryDirectory::handles($normalizedPath);
+$categoryHero = $isCategoryIndex ? \App\Content\CategoryDirectory::hero($normalizedPath) : null;
+$usesHomeVisual = $isHome || $isCategoryIndex;
 
 $isLinkActive = static function (string $href) use ($normalizedPath): bool {
 	if ($href === '/') {
@@ -93,7 +106,8 @@ $isLinkActive = static function (string $href) use ($normalizedPath): bool {
 // through a symlink, by realpath()ing the root as well as each candidate.
 $siteRoot = realpath(dirname(__DIR__)) ?: dirname(__DIR__);
 $linkRouter = new \App\Core\Router($siteRoot);
-$pathResolves = static fn (string $path): bool => $linkRouter->resolve($path) !== null;
+$pathResolves = static fn (string $path): bool => $linkRouter->resolve($path) !== null
+	|| \App\Content\CategoryDirectory::handles($path);
 
 if ($normalizedPath === '/zh' || str_starts_with($normalizedPath, '/zh/')) {
 	$counterpart = $normalizedPath === '/zh' ? '/' : substr($normalizedPath, 3);
@@ -229,18 +243,22 @@ if ($normalizedPath === '/zh' || str_starts_with($normalizedPath, '/zh/')) {
 
 	<!-- Homepage UI layer. Loaded last so it wins ties against the rules above. -->
 	<link rel="stylesheet" href="/assets/css/home-ui.css" media="all" />
-	<?php if ($isHome): ?>
+	<?php if ($usesHomeVisual): ?>
 	<!-- Homepage visual language. Scoped to body.home-v2; see the file header. -->
 	<link rel="stylesheet" href="/assets/css/home-v2.css" media="all" />
+	<?php endif; ?>
+	<?php if ($isCategoryIndex): ?>
+	<!-- Category directory layer. Scoped to body.cat-directory-page; builds on home-v2. -->
+	<link rel="stylesheet" href="/assets/css/category-page.css" media="all" />
 	<?php endif; ?>
 
 	<script src="https://masterbadminto.wpenginepowered.com/wp-includes/js/jquery/jquery.min.js"></script>
 </head>
-<body class="wp-theme-gon wp-child-theme-gon-child header-v2 wide layout-fullwidth ts_desktop<?= $isHome ? ' home-v2' : '' ?>">
+<body class="wp-theme-gon wp-child-theme-gon-child header-v2 wide layout-fullwidth ts_desktop<?= $usesHomeVisual ? ' home-v2' : '' ?><?= $isCategoryIndex ? ' cat-directory-page' : '' ?>">
 <div id="page" class="hfeed site">
 
 	<header class="site-header">
-		<?php if (!$isHome): ?>
+		<?php if (!$usesHomeVisual): ?>
 		<div class="topbar">
 			<div class="topbar-inner">
 				<img src="/wp-content/uploads/2016/09/icon-badminton-1.png" alt="" />
@@ -297,6 +315,16 @@ if ($normalizedPath === '/zh' || str_starts_with($normalizedPath, '/zh/')) {
 			<?php endforeach; ?>
 			</div>
 		</nav>
+
+		<?php if ($categoryHero !== null): ?>
+		<section class="page-hero">
+			<div class="page-hero-inner">
+				<p class="page-hero-eyebrow"><?= htmlspecialchars($categoryHero['eyebrow'], ENT_QUOTES, 'UTF-8') ?></p>
+				<h1 class="page-hero-title"><span class="v2-head-lead"><?= htmlspecialchars($categoryHero['lead'], ENT_QUOTES, 'UTF-8') ?></span> <span class="v2-head-key"><?= htmlspecialchars($categoryHero['key'], ENT_QUOTES, 'UTF-8') ?></span></h1>
+				<p class="page-hero-blurb"><?= htmlspecialchars($categoryHero['blurb'], ENT_QUOTES, 'UTF-8') ?></p>
+			</div>
+		</section>
+		<?php endif; ?>
 
 		<?php if ($isHome): ?>
 		<section class="hero-cta">
