@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Content;
 
 use App\Core\PageContent;
+use App\Core\Router;
 
 /**
  * Builds the standalone category directory page served at /categories (and
@@ -18,13 +19,19 @@ use App\Core\PageContent;
  * refreshed - this class reads the homepage export and re-presents the very
  * same data as a full page.
  *
- * Nothing here writes category copy. Category names, link labels and link
- * targets are the homepage's own DOM nodes, moved across as-is; the only
- * thing rewritten is the *form* of an href or an icon src (see
- * normaliseHref), so that links written relative to the homepage still
- * resolve from a page that lives at a different URL. The page's own
- * furniture - title, hero, search placeholder, counts - is the one thing
- * authored here, in COPY.
+ * The page follows the shape of the live /techniques listing: a sidebar of
+ * sections beside a grid of picture cards, one card per guide. Each card's
+ * artwork is that guide's own og:image, read from the guide's exported
+ * page; guides that never had a featured image fall back to a plain tile
+ * carrying their category's icon, which is what the live listing does too.
+ *
+ * Nothing here writes category copy. Category names and guide titles are
+ * the text of the homepage's own nodes, and every link target is the
+ * homepage's own href - only the *form* of a link is rewritten (see
+ * normaliseHref), so links written relative to the homepage still resolve
+ * from a page that lives at a different URL. The page's own furniture -
+ * title, hero, search placeholder, counts - is the one thing authored
+ * here, in COPY.
  */
 final class CategoryDirectory
 {
@@ -48,14 +55,13 @@ final class CategoryDirectory
             'search' => 'Search categories or guides…',
             'guides_one' => '%d guide',
             'guides_many' => '%d guides',
-            'summary_one' => '%d category',
-            'summary_many' => '%d categories',
-            'empty' => 'No categories match that search.',
+            'empty' => 'No guides match that search.',
             'hero_eyebrow' => 'Browse the site',
             'hero_lead' => 'All',
             'hero_key' => 'Categories',
             'hero_blurb' => 'Every badminton topic on Master Badminton in one place - pick a category and go straight to the guide you need.',
-            'view_all' => 'View all',
+            'sidebar' => 'Categories',
+            'view_all' => 'View section',
         ],
         '/zh/categories' => [
             'title' => '所有羽毛球分类 - Master Badminton',
@@ -63,16 +69,26 @@ final class CategoryDirectory
             'search' => '搜索分类或教程…',
             'guides_one' => '%d 篇教程',
             'guides_many' => '%d 篇教程',
-            'summary_one' => '%d 个分类',
-            'summary_many' => '%d 个分类',
-            'empty' => '没有符合的分类。',
+            'empty' => '没有符合的教程。',
             'hero_eyebrow' => '浏览网站',
             'hero_lead' => '所有',
             'hero_key' => '分类',
             'hero_blurb' => 'Master Badminton 的所有羽毛球主题都在这里 - 选择一个分类，直接前往你需要的教程。',
-            'view_all' => '查看全部',
+            'sidebar' => '分类',
+            'view_all' => '查看该分类',
         ],
     ];
+
+    private ?Router $router = null;
+
+    /**
+     * Featured image per guide path, for the life of one build. A handful
+     * of guides are listed under two categories (the jump smash is both a
+     * Technique and a Smash), and their page should be opened once.
+     *
+     * @var array<string, string|null>
+     */
+    private array $images = [];
 
     public function __construct(private readonly string $baseDir)
     {
@@ -176,9 +192,7 @@ final class CategoryDirectory
         libxml_clear_errors();
         libxml_use_internal_errors($previous);
 
-        $xpath = new \DOMXPath($dom);
-
-        $categories = $this->collectCategories($xpath, $source);
+        $categories = $this->collectCategories(new \DOMXPath($dom), $source);
 
         if ($categories === []) {
             return $empty;
@@ -186,51 +200,27 @@ final class CategoryDirectory
 
         $copy = self::COPY[$path];
 
-        return new PageContent(
-            $copy['title'],
-            $copy['description'],
-            $this->render($dom, $categories, $copy),
-        );
+        return new PageContent($copy['title'], $copy['description'], $this->render($categories, $copy));
     }
 
     /**
-     * Pull the category cards out of the homepage's WPBakery markup.
+     * Pull the categories out of the homepage's WPBakery markup.
      *
      * The grid is split across one or more rows carrying the "catfrbn"
      * class, each column holding a heading and a link list - the same shape
      * ContentExtractor turns into the homepage accordion. The eight-icon
-     * strip (ul#thct) sits above the grid in the same order, so its images
-     * pair up with the cards positionally.
+     * strip (ul#thct) sits above the grid in the same order, so its short
+     * tab labels, artwork and section links pair up with the categories
+     * positionally.
      *
-     * @return list<array{id: string, title: string, label: string, href: string, icon: ?\DOMElement, items: list<\DOMElement>}>
+     * @return list<array{
+     *     id: string, title: string, label: string, href: string, icon: ?string,
+     *     guides: list<array{href: string, title: string, image: ?string}>
+     * }>
      */
     private function collectCategories(\DOMXPath $xpath, string $source): array
     {
-        // The strip carries three things the grid below it does not: a short
-        // tab label ("Basics" where the card heading reads "Badminton
-        // Basics"), the artwork, and a link to the section's own archive
-        // page. All three are the page's own, and all three pair up with
-        // the cards positionally.
-        $tabs = [];
-
-        foreach ($xpath->query('//ul[@id="thct"]/li') as $tab) {
-            if (!$tab instanceof \DOMElement) {
-                continue;
-            }
-
-            // Each <li> holds two links to the same target: one around the
-            // label, one around the icon. The label is the one without an
-            // image inside it.
-            $anchor = $xpath->query('.//a[not(.//img)]', $tab)->item(0);
-            $image = $xpath->query('.//img', $tab)->item(0);
-            $link = $anchor instanceof \DOMElement ? $anchor : $xpath->query('.//a[@href]', $tab)->item(0);
-
-            $tabs[] = [
-                'label' => $anchor instanceof \DOMElement ? trim($anchor->textContent) : '',
-                'href' => $link instanceof \DOMElement ? $link->getAttribute('href') : '',
-                'icon' => $image instanceof \DOMElement ? $image : null,
-            ];
-        }
+        $tabs = $this->collectTabs($xpath, $source);
 
         $categories = [];
         $used = [];
@@ -252,45 +242,161 @@ final class CategoryDirectory
                     continue;
                 }
 
-                $items = [];
+                $guides = $this->collectGuides($xpath, $list, $source);
 
-                foreach ($xpath->query('./li', $list) as $item) {
-                    if ($item instanceof \DOMElement) {
-                        $items[] = $item;
-                    }
-                }
-
-                if ($items === []) {
+                if ($guides === []) {
                     continue;
                 }
 
-                $title = trim($heading->textContent);
+                $title = $this->flatten($heading->textContent);
                 $index = count($categories);
-
                 $tab = $tabs[$index] ?? ['label' => '', 'href' => '', 'icon' => null];
 
                 $categories[] = [
                     'id' => $this->uniqueId($title, $index, $used),
                     'title' => $title,
                     'label' => $tab['label'] !== '' ? $tab['label'] : $title,
-                    'href' => $tab['href'] !== '' ? $this->normaliseHref($tab['href'], $source) : '',
+                    'href' => $tab['href'],
                     'icon' => $tab['icon'],
-                    'items' => $items,
+                    'guides' => $guides,
                 ];
             }
         }
 
-        foreach ($categories as $category) {
-            foreach ($category['items'] as $item) {
-                $this->rewriteLinks($xpath, $item, $source);
+        return $categories;
+    }
+
+    /**
+     * The icon strip carries three things the grid below it does not: a
+     * short tab label ("Basics" where the card heading reads "Badminton
+     * Basics"), the artwork, and a link to the section's own archive page.
+     *
+     * @return list<array{label: string, href: string, icon: ?string}>
+     */
+    private function collectTabs(\DOMXPath $xpath, string $source): array
+    {
+        $tabs = [];
+
+        foreach ($xpath->query('//ul[@id="thct"]/li') as $tab) {
+            if (!$tab instanceof \DOMElement) {
+                continue;
             }
 
-            if ($category['icon'] instanceof \DOMElement) {
-                $this->rewriteIcon($category['icon'], $source);
-            }
+            // Each <li> holds two links to the same target: one around the
+            // label, one around the icon. The label is the one without an
+            // image inside it.
+            $anchor = $xpath->query('.//a[not(.//img)]', $tab)->item(0);
+            $link = $anchor instanceof \DOMElement ? $anchor : $xpath->query('.//a[@href]', $tab)->item(0);
+            $image = $xpath->query('.//img[@src]', $tab)->item(0);
+
+            $tabs[] = [
+                'label' => $anchor instanceof \DOMElement ? $this->flatten($anchor->textContent) : '',
+                'href' => $link instanceof \DOMElement ? $this->normaliseHref($link->getAttribute('href'), $source) : '',
+                'icon' => $image instanceof \DOMElement
+                    ? $this->normaliseHref($image->getAttribute('src'), $source)
+                    : null,
+            ];
         }
 
-        return $categories;
+        return $tabs;
+    }
+
+    /**
+     * One entry per <li> in a category's list.
+     *
+     * The title is the list item's own text rather than the anchor's: the
+     * homepage has one row whose label straddles the link ("Defensive High
+     * Clear/lo</a>b"), and reading the row keeps that word whole.
+     *
+     * @return list<array{href: string, title: string, image: ?string}>
+     */
+    private function collectGuides(\DOMXPath $xpath, \DOMElement $list, string $source): array
+    {
+        $guides = [];
+
+        foreach ($xpath->query('./li', $list) as $item) {
+            if (!$item instanceof \DOMElement) {
+                continue;
+            }
+
+            $anchor = $xpath->query('.//a[@href]', $item)->item(0);
+            $title = $this->flatten($item->textContent);
+
+            if (!$anchor instanceof \DOMElement || $title === '') {
+                continue;
+            }
+
+            $href = $this->normaliseHref($anchor->getAttribute('href'), $source);
+
+            $guides[] = [
+                'href' => $href,
+                'title' => $title,
+                'image' => $this->featuredImage($href),
+            ];
+        }
+
+        return $guides;
+    }
+
+    /**
+     * A guide's own featured image, as the exported page declares it.
+     *
+     * The Router resolves the link to the file that serves it, so this
+     * follows the same candidates a request would (page.html, its
+     * directory's index.html, the aliases). Only the first 64KB is read,
+     * cut at </head>, and only for the og:image tag - the alternative, a
+     * DOMDocument per guide, would parse forty full articles to pull forty
+     * strings out of their <head>s.
+     *
+     * Null means the guide never had a featured image, and its card falls
+     * back to the category-icon tile.
+     */
+    private function featuredImage(string $href): ?string
+    {
+        // Only pages in this tree have an export to read. Anything that
+        // still points off-site after normaliseHref (the shop, say) is not
+        // looked up: its path could collide with a local file's.
+        if (!str_starts_with($href, '/')) {
+            return null;
+        }
+
+        $path = (string) parse_url($href, PHP_URL_PATH);
+
+        if (array_key_exists($path, $this->images)) {
+            return $this->images[$path];
+        }
+
+        $this->images[$path] = null;
+        $this->router ??= new Router($this->baseDir);
+        $file = $this->router->resolve($path);
+
+        if ($file === null) {
+            return null;
+        }
+
+        $handle = @fopen($file, 'rb');
+
+        if ($handle === false) {
+            return null;
+        }
+
+        $head = (string) fread($handle, 65536);
+        fclose($handle);
+
+        $end = stripos($head, '</head>');
+
+        if ($end !== false) {
+            $head = substr($head, 0, $end);
+        }
+
+        if (preg_match('/<meta[^>]+og:image[^>]+content=["\']([^"\']+)["\']/i', $head, $match) !== 1
+            && preg_match('/<meta[^>]+content=["\']([^"\']+)["\'][^>]+og:image/i', $head, $match) !== 1) {
+            return null;
+        }
+
+        $url = trim(html_entity_decode($match[1], ENT_QUOTES, 'UTF-8'));
+
+        return $this->images[$path] = ($url === '' ? null : $url);
     }
 
     /**
@@ -315,23 +421,6 @@ final class CategoryDirectory
         $used[$id] = true;
 
         return $id;
-    }
-
-    private function rewriteLinks(\DOMXPath $xpath, \DOMElement $item, string $source): void
-    {
-        foreach ($xpath->query('.//a[@href]', $item) as $anchor) {
-            if ($anchor instanceof \DOMElement) {
-                $anchor->setAttribute('href', $this->normaliseHref($anchor->getAttribute('href'), $source));
-            }
-        }
-    }
-
-    private function rewriteIcon(\DOMElement $image, string $source): void
-    {
-        $image->setAttribute('src', $this->normaliseHref($image->getAttribute('src'), $source));
-        $image->setAttribute('loading', 'lazy');
-        $image->removeAttribute('width');
-        $image->removeAttribute('height');
     }
 
     /**
@@ -428,121 +517,165 @@ final class CategoryDirectory
     }
 
     /**
-     * @param list<array{id: string, title: string, label: string, href: string, icon: ?\DOMElement, items: list<\DOMElement>}> $categories
+     * The page: a sticky sidebar of sections beside the sections
+     * themselves, each one a grid of picture cards.
+     *
+     * @param list<array{id: string, title: string, label: string, href: string, icon: ?string, guides: list<array{href: string, title: string, image: ?string}>}> $categories
      * @param array<string, string> $copy
      */
-    private function render(\DOMDocument $dom, array $categories, array $copy): string
+    private function render(array $categories, array $copy): string
     {
         $total = 0;
 
         foreach ($categories as $category) {
-            $total += count($category['items']);
+            $total += count($category['guides']);
         }
 
-        $html = '<div class="page-container cat-page">';
-        $html .= $this->renderQuickNav($dom, $categories);
-
-        $html .= '<div class="cat-page-toolbar">';
-        $html .= '<div class="cat-page-search"><span class="cat-page-search-icon" aria-hidden="true">🔍</span>'
-            . '<input type="search" class="cat-page-search-input" data-category-search'
-            . ' aria-label="' . $this->attr($copy['search']) . '"'
-            . ' placeholder="' . $this->attr($copy['search']) . '" /></div>';
-        // The singular form travels with the element: the filter script
-        // swaps the number inside this string as you type, and has no way
-        // to know how the language it is written in forms a plural.
-        $html .= '<p class="cat-page-tally" data-category-tally aria-live="polite"'
-            . ' data-tally-one="' . $this->attr($this->plural($copy, 'summary', 1)) . '">'
-            . $this->text($this->plural($copy, 'summary', count($categories)))
-            . '</p>';
-        $html .= '</div>';
-
-        $html .= '<div class="cat-page-grid" data-category-grid>';
+        $sections = '';
 
         foreach ($categories as $category) {
-            $html .= $this->renderCard($dom, $category, $copy);
+            $sections .= $this->renderSection($category, $copy);
         }
 
-        $html .= '</div>';
-
-        $html .= '<p class="cat-page-empty" data-category-empty hidden>' . $this->text($copy['empty']) . '</p>';
-        $html .= '<p class="cat-page-total">' . $this->text($this->plural($copy, 'guides', $total)) . '</p>';
-        $html .= '</div>';
-
-        return $html;
+        return '<div class="page-container catdir-page">'
+            . '<div class="catdir-layout">'
+            . $this->renderSidebar($categories, $copy)
+            . '<div class="catdir-main">'
+            . $this->renderToolbar($copy, $total)
+            . $sections
+            . '<p class="catdir-empty" data-category-empty hidden>' . $this->text($copy['empty']) . '</p>'
+            . '</div>'
+            . '</div>'
+            . '</div>';
     }
 
     /**
-     * The icon strip, rebuilt as the same sticky pill rail the homepage
-     * uses. The markup deliberately matches (.quick-nav + ul#thct), so
-     * assets/js/home-ui.js drives the jump links and active state here too.
-     *
-     * @param list<array{id: string, title: string, label: string, href: string, icon: ?\DOMElement, items: list<\DOMElement>}> $categories
+     * @param list<array{id: string, title: string, label: string, href: string, icon: ?string, guides: list<array{href: string, title: string, image: ?string}>}> $categories
+     * @param array<string, string> $copy
      */
-    private function renderQuickNav(\DOMDocument $dom, array $categories): string
+    private function renderSidebar(array $categories, array $copy): string
     {
-        $html = '<nav class="quick-nav" aria-label="Category quick navigation"><div class="quick-nav-inner"><ul id="thct">';
+        $html = '<aside class="catdir-sidebar"><nav class="catdir-sidebar-inner" aria-label="' . $this->attr($copy['sidebar']) . '">'
+            . '<h2 class="catdir-sidebar-title">' . $this->text($copy['sidebar']) . '</h2>'
+            . '<ul class="catdir-sidebar-list">';
 
         foreach ($categories as $category) {
-            $html .= '<li><a class="quick-nav-link" href="#' . $this->attr($category['id']) . '">'
-                . '<span class="quick-nav-icon">' . $this->icon($dom, $category['icon']) . '</span>'
-                . '<span class="quick-nav-label">' . $this->text($category['label']) . '</span>'
+            $html .= '<li class="catdir-sidebar-item" data-sidebar-item="' . $this->attr($category['id']) . '">'
+                . '<a href="#' . $this->attr($category['id']) . '">'
+                . $this->iconTag($category['icon'], 'catdir-sidebar-icon')
+                . '<span class="catdir-sidebar-label">' . $this->text($category['label']) . '</span>'
+                . '<span class="catdir-sidebar-count">' . count($category['guides']) . '</span>'
                 . '</a></li>';
         }
 
-        return $html . '</ul></div></nav>';
+        return $html . '</ul></nav></aside>';
+    }
+
+    /** @param array<string, string> $copy */
+    private function renderToolbar(array $copy, int $total): string
+    {
+        // The singular form travels with the element: the filter script
+        // swaps the number inside this string as you type, and has no way
+        // to know how the language it is written in forms a plural.
+        return '<div class="catdir-toolbar">'
+            . '<div class="catdir-search"><span class="catdir-search-icon" aria-hidden="true">🔍</span>'
+            . '<input type="search" class="catdir-search-input" data-category-search'
+            . ' aria-label="' . $this->attr($copy['search']) . '"'
+            . ' placeholder="' . $this->attr($copy['search']) . '" /></div>'
+            . '<p class="catdir-tally" data-category-tally aria-live="polite"'
+            . ' data-tally-one="' . $this->attr($this->plural($copy, 'guides', 1)) . '">'
+            . $this->text($this->plural($copy, 'guides', $total))
+            . '</p>'
+            . '</div>';
     }
 
     /**
-     * @param array{id: string, title: string, label: string, href: string, icon: ?\DOMElement, items: list<\DOMElement>} $category
+     * @param array{id: string, title: string, label: string, href: string, icon: ?string, guides: list<array{href: string, title: string, image: ?string}>} $category
      * @param array<string, string> $copy
      */
-    private function renderCard(\DOMDocument $dom, array $category, array $copy): string
+    private function renderSection(array $category, array $copy): string
     {
-        $items = '';
+        $cards = '';
 
-        foreach ($category['items'] as $item) {
-            $items .= $dom->saveHTML($item);
+        foreach ($category['guides'] as $guide) {
+            $cards .= $this->renderCard($guide, $category);
         }
 
-        return '<article class="cat-card" id="' . $this->attr($category['id']) . '" data-category-card'
-            . ' data-category-name="' . $this->attr($category['title'] . ' ' . $category['label']) . '">'
-            . '<div class="cat-card-head">'
-            . '<span class="cat-card-icon">' . $this->icon($dom, $category['icon']) . '</span>'
-            . '<h2 class="cat-card-title">' . $this->text($category['title']) . '</h2>'
-            . '<span class="cat-card-count">' . $this->text($this->plural($copy, 'guides', count($category['items']))) . '</span>'
+        $more = $category['href'] === '' ? '' :
+            '<a class="catdir-section-more" href="' . $this->attr($category['href']) . '">'
+            . $this->text($copy['view_all'])
+            . '<span class="catdir-sr"> ' . $this->text($category['title']) . '</span></a>';
+
+        return '<section class="catdir-section" id="' . $this->attr($category['id']) . '" data-category-section'
+            . ' data-category-name="' . $this->attr($this->haystack($category)) . '">'
+            . '<div class="catdir-section-head">'
+            . '<h2 class="catdir-section-title">' . $this->text($category['title']) . '</h2>'
+            . '<span class="catdir-section-count">' . $this->text($this->plural($copy, 'guides', count($category['guides']))) . '</span>'
+            . $more
             . '</div>'
-            . '<ul class="cat-card-list">' . $items . '</ul>'
-            . ($category['href'] === '' ? '' :
-                '<a class="cat-card-more" href="' . $this->attr($category['href']) . '">'
-                . $this->text($copy['view_all'])
-                . '<span class="cat-card-more-sr"> ' . $this->text($category['title']) . '</span></a>')
-            . '</article>';
+            . '<div class="catdir-grid">' . $cards . '</div>'
+            . '</section>';
     }
 
     /**
-     * The icon is decorative here: the card heading and the tab label sit
-     * right beside it and say the same thing, so it is hidden from
-     * assistive technology rather than given a duplicate alt.
+     * @param array{href: string, title: string, image: ?string} $guide
+     * @param array{id: string, title: string, label: string, href: string, icon: ?string, guides: list<array{href: string, title: string, image: ?string}>} $category
      */
-    private function icon(\DOMDocument $dom, ?\DOMElement $image): string
+    private function renderCard(array $guide, array $category): string
     {
-        if (!$image instanceof \DOMElement) {
+        // No featured image: the tile carries the category's icon instead,
+        // the way the live listing falls back to a plain placeholder.
+        $thumb = $guide['image'] !== null
+            ? '<img class="catdir-card-img" src="' . $this->attr($guide['image']) . '" alt="" loading="lazy" decoding="async" />'
+            : '<span class="catdir-card-fallback">' . $this->iconTag($category['icon'], 'catdir-card-fallback-icon') . '</span>';
+
+        return '<article class="catdir-card' . ($guide['image'] === null ? ' catdir-card-no-image' : '') . '"'
+            . ' data-category-card data-category-title="' . $this->attr($guide['title']) . '">'
+            . '<a class="catdir-card-link" href="' . $this->attr($guide['href']) . '">'
+            . '<span class="catdir-card-thumb">' . $thumb . '</span>'
+            . '<span class="catdir-card-title">' . $this->text($guide['title']) . '</span>'
+            . '</a></article>';
+    }
+
+    /**
+     * What a section is matched against when filtering: its heading plus
+     * the strip's short label, which are often but not always the same
+     * word ("Basics" for "Badminton Basics").
+     *
+     * @param array{title: string, label: string} $category
+     */
+    private function haystack(array $category): string
+    {
+        return $category['label'] === $category['title']
+            ? $category['title']
+            : $category['title'] . ' ' . $category['label'];
+    }
+
+    /**
+     * Category icons are decorative wherever they appear here: the label
+     * beside them in the sidebar, and the card title under them in a
+     * fallback tile, already say the same thing.
+     */
+    private function iconTag(?string $src, string $class): string
+    {
+        if ($src === null || $src === '') {
             return '';
         }
 
-        // Each card and its quick-nav tab show the same icon, so the node is
-        // cloned rather than moved.
-        $clone = $image->cloneNode(true);
-        $clone->setAttribute('alt', '');
-        $clone->setAttribute('aria-hidden', 'true');
-
-        return (string) $dom->saveHTML($clone);
+        return '<img class="' . $this->attr($class) . '" src="' . $this->attr($src)
+            . '" alt="" aria-hidden="true" loading="lazy" decoding="async" />';
     }
 
     /** @param array<string, string> $copy */
     private function plural(array $copy, string $key, int $count): string
     {
         return sprintf($copy[$count === 1 ? $key . '_one' : $key . '_many'], $count);
+    }
+
+    /** Collapse the export's line breaks inside a label to single spaces. */
+    private function flatten(string $text): string
+    {
+        return trim((string) preg_replace('/\s+/u', ' ', $text));
     }
 
     private function text(string $value): string
