@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/app/bootstrap.php';
 
+use App\Content\CategoryDirectory;
 use App\Core\ContentCache;
 use App\Core\ContentExtractor;
 use App\Core\PageContent;
@@ -14,6 +15,28 @@ use App\Layout\Layout;
 $request = new Request($_SERVER);
 $router = new Router(__DIR__);
 $layout = new Layout(__DIR__ . '/templates/header.php', __DIR__ . '/templates/footer.php');
+
+// The category directory has no exported file of its own: it is built
+// from the homepage's own category grid, so it is answered before the
+// legacy tree is consulted. A real /categories export dropped in later
+// would still lose to this - which is the intent, since the directory is
+// the page the "Category" nav item points at.
+if (CategoryDirectory::handles($request->path())) {
+    $directory = new CategoryDirectory(__DIR__);
+    $directorySource = $directory->sourceFile($request->path());
+
+    if ($directorySource !== null) {
+        $page = (new ContentCache(__DIR__ . '/storage/cache', CategoryDirectory::fingerprint()))
+            ->remember($directorySource, static fn (): PageContent => $directory->build($request->path()));
+
+        // Empty html means the homepage carries no category grid to build
+        // from; fall through to the normal lookup (and its 404) instead.
+        if ($page->html !== '') {
+            $layout->render($page, $request->path());
+            exit;
+        }
+    }
+}
 
 $sourceFile = $router->resolve($request->path());
 
