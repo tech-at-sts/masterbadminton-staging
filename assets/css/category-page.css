@@ -1,11 +1,11 @@
 /*
  * Category directory (/categories, /zh/categories).
  *
- * The page is designed in the homepage's visual language, so it loads
- * home-v2.css first (templates/header.php gives it the same body.home-v2
- * class) and this file only adds what the directory itself needs: the hero
- * band that replaces the homepage's beginner call-to-action, and the card
- * grid that replaces the homepage's accordion.
+ * Structure follows the live /techniques listing - a sidebar of sections
+ * beside a grid of picture cards - and the visual language is the
+ * homepage's, so home-v2.css loads first (templates/header.php gives the
+ * page the same body.home-v2 class) and this file adds only what the
+ * directory itself needs.
  *
  * Everything is scoped under body.cat-directory-page so no other page can
  * pick these rules up. Tokens (--v2-*) come from home-v2.css.
@@ -23,7 +23,7 @@ body.cat-directory-page .page-hero {
 body.cat-directory-page .page-hero-inner {
 	max-width: 1240px;
 	margin: 0 auto;
-	padding: 76px 34px 104px;
+	padding: 70px 34px 96px;
 }
 
 body.cat-directory-page .page-hero-eyebrow {
@@ -60,23 +60,123 @@ body.cat-directory-page .page-hero-blurb {
 }
 
 /* ---------------------------------------------------------------------
- * Toolbar - filter field and live tally, above the grid.
+ * Two-column shell: sidebar of sections, grid beside it.
  * ------------------------------------------------------------------ */
-body.cat-directory-page .cat-page-toolbar {
+/* The aside is left to stretch over the full grid row on purpose: a
+ * start-aligned column would be only as tall as the menu itself, and
+ * position:sticky inside it would have nothing to travel through. */
+body.cat-directory-page .catdir-layout {
+	display: grid;
+	grid-template-columns: 244px minmax(0, 1fr);
+	gap: 34px;
+	padding: 12px 0 10px;
+}
+
+body.cat-directory-page .catdir-main { min-width: 0; }
+
+/* ---------------------------------------------------------------------
+ * Sidebar - the reference's boxed section menu, as one rounded card that
+ * follows you down the page.
+ * ------------------------------------------------------------------ */
+body.cat-directory-page .catdir-sidebar-inner {
+	position: -webkit-sticky;
+	position: sticky;
+	top: 16px;
+	background: var(--v2-field);
+	border-radius: 24px;
+	padding: 22px 16px;
+}
+
+body.cat-directory-page .catdir-sidebar-title {
+	font-family: 'Outfit', Arial, sans-serif;
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 1.8px;
+	text-transform: uppercase;
+	color: var(--v2-body);
+	margin: 0 0 14px;
+	padding: 0 10px;
+}
+
+body.cat-directory-page .catdir-sidebar-list,
+body.cat-directory-page .catdir-sidebar-item {
+	list-style: none !important;
+	list-style-type: none !important;
+	margin: 0;
+	padding: 0;
+}
+
+body.cat-directory-page .catdir-sidebar-item a {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 9px 10px;
+	border-radius: 12px;
+	font-family: 'Outfit', Arial, sans-serif;
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--v2-body);
+	text-decoration: none;
+	transition: background .15s ease, color .15s ease;
+}
+
+body.cat-directory-page .catdir-sidebar-icon {
+	width: 20px;
+	height: 20px;
+	flex: 0 0 20px;
+	object-fit: contain;
+	opacity: .55;
+}
+
+body.cat-directory-page .catdir-sidebar-label {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+body.cat-directory-page .catdir-sidebar-count {
+	flex: 0 0 auto;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--v2-grey);
+}
+
+body.cat-directory-page .catdir-sidebar-item a:hover,
+body.cat-directory-page .catdir-sidebar-item a:focus {
+	background: #fff;
+	color: var(--v2-ink);
+}
+
+body.cat-directory-page .catdir-sidebar-item.is-active a {
+	background: var(--v2-ink);
+	color: #fff;
+}
+
+body.cat-directory-page .catdir-sidebar-item.is-active .catdir-sidebar-icon { filter: brightness(0) invert(1); opacity: .9; }
+body.cat-directory-page .catdir-sidebar-item.is-active .catdir-sidebar-count { color: rgba(255, 255, 255, .7); }
+
+body.cat-directory-page .catdir-sidebar-item[hidden] { display: none !important; }
+
+/* ---------------------------------------------------------------------
+ * Toolbar - filter field and live tally, above the first section.
+ * ------------------------------------------------------------------ */
+body.cat-directory-page .catdir-toolbar {
 	display: flex;
 	align-items: center;
 	gap: 16px;
 	flex-wrap: wrap;
-	margin: 26px 0 22px;
+	margin: 0 0 26px;
 }
 
-body.cat-directory-page .cat-page-search {
+body.cat-directory-page .catdir-search {
 	position: relative;
-	flex: 1 1 280px;
-	min-width: 220px;
+	flex: 1 1 260px;
+	min-width: 200px;
 }
 
-body.cat-directory-page .cat-page-search-icon {
+body.cat-directory-page .catdir-search-icon {
 	position: absolute;
 	left: 18px;
 	top: 50%;
@@ -86,13 +186,13 @@ body.cat-directory-page .cat-page-search-icon {
 	pointer-events: none;
 }
 
-body.cat-directory-page .cat-page-search-input {
+body.cat-directory-page .catdir-search-input {
 	width: 100%;
 	box-sizing: border-box;
 	background: var(--v2-field);
 	border: 1px solid transparent;
 	border-radius: 999px;
-	padding: 16px 20px 16px 46px;
+	padding: 15px 20px 15px 46px;
 	font-family: 'Outfit', Arial, sans-serif;
 	font-size: 15px;
 	color: var(--v2-ink);
@@ -101,15 +201,15 @@ body.cat-directory-page .cat-page-search-input {
 	appearance: none;
 }
 
-body.cat-directory-page .cat-page-search-input::placeholder { color: #9a9d9b; }
+body.cat-directory-page .catdir-search-input::placeholder { color: #9a9d9b; }
 
-body.cat-directory-page .cat-page-search-input:focus {
+body.cat-directory-page .catdir-search-input:focus {
 	background: #fff;
 	border-color: var(--v2-teal);
 	box-shadow: 0 0 0 4px rgba(44, 106, 94, .12);
 }
 
-body.cat-directory-page .cat-page-tally {
+body.cat-directory-page .catdir-tally {
 	font-family: 'Outfit', Arial, sans-serif;
 	font-size: 13px;
 	font-weight: 500;
@@ -120,85 +220,35 @@ body.cat-directory-page .cat-page-tally {
 }
 
 /* ---------------------------------------------------------------------
- * The grid itself - one card per category, everything visible. The
- * homepage collapses its categories because they sit under a page of
- * other content; here the directory is the page, so nothing is hidden
- * behind a click.
+ * Sections
  * ------------------------------------------------------------------ */
-body.cat-directory-page .cat-page-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
-	gap: 18px;
+body.cat-directory-page .catdir-section {
+	scroll-margin-top: 20px;
+	margin: 0 0 40px;
 }
 
-/* Cards fill their grid row, and the section link is pushed to the
- * bottom of each, so a row of cards holding different numbers of guides
- * still closes on one line. */
-body.cat-directory-page .cat-card {
+body.cat-directory-page .catdir-section-head {
 	display: flex;
-	flex-direction: column;
-	background: var(--v2-field);
-	border-radius: 24px;
-	padding: 26px 26px 22px;
-	box-sizing: border-box;
-	scroll-margin-top: 96px;
-	transition: background .18s ease, box-shadow .18s ease, transform .18s ease;
-}
-
-body.cat-directory-page .cat-card:hover {
-	background: #fff;
-	box-shadow: 0 16px 40px rgba(20, 40, 36, .10);
-	transform: translateY(-2px);
-}
-
-body.cat-directory-page .cat-card.is-targeted {
-	background: #fff;
-	box-shadow: 0 0 0 2px var(--v2-teal), 0 16px 40px rgba(20, 40, 36, .10);
-}
-
-/* nowrap, so a two-word category name wraps inside its own heading
- * rather than pushing the count badge onto a line of its own. */
-body.cat-directory-page .cat-card-head {
-	display: flex;
-	align-items: center;
+	align-items: baseline;
 	gap: 14px;
-	flex-wrap: nowrap;
-	padding-bottom: 18px;
+	flex-wrap: wrap;
+	padding-bottom: 14px;
+	margin-bottom: 20px;
 	border-bottom: 1px solid rgba(20, 40, 36, .10);
 }
 
-body.cat-directory-page .cat-card-icon {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 54px;
-	height: 54px;
-	flex: 0 0 54px;
-	border-radius: 50%;
-	background: #fff;
-	box-shadow: 0 4px 12px rgba(20, 40, 36, .08);
-}
-
-body.cat-directory-page .cat-card:hover .cat-card-icon { background: var(--v2-field); }
-
-body.cat-directory-page .cat-card-icon img {
-	width: 28px;
-	height: 28px;
-	display: block;
-}
-
-body.cat-directory-page .cat-card-title {
-	font-family: 'Outfit', Arial, sans-serif;
-	font-size: 20px;
-	font-weight: 600;
-	line-height: 1.2;
+body.cat-directory-page .catdir-section-title {
+	font-family: 'Anton', 'Raleway', Impact, sans-serif;
+	font-weight: 400;
+	text-transform: uppercase;
+	letter-spacing: -0.3px;
+	line-height: 1;
+	font-size: clamp(24px, 2.6vw, 34px);
 	color: var(--v2-ink);
 	margin: 0;
-	flex: 1 1 auto;
-	min-width: 0;
 }
 
-body.cat-directory-page .cat-card-count {
+body.cat-directory-page .catdir-section-count {
 	font-family: 'Outfit', Arial, sans-serif;
 	font-size: 12px;
 	font-weight: 600;
@@ -206,103 +256,142 @@ body.cat-directory-page .cat-card-count {
 	color: #fff;
 	background: var(--v2-ink);
 	border-radius: 999px;
-	padding: 5px 13px;
+	padding: 4px 12px;
 	white-space: nowrap;
-	flex: 0 0 auto;
 }
 
-/* The <li> nodes are the homepage's own, so the reset has to be explicit:
- * the legacy theme styles bare list items site-wide. */
-body.cat-directory-page .cat-card-list,
-body.cat-directory-page .cat-card-list li {
-	list-style: none !important;
-	list-style-type: none !important;
-	margin: 0;
-	padding: 0;
-}
-
-body.cat-directory-page .cat-card-list { padding-top: 4px; padding-bottom: 16px; }
-
-body.cat-directory-page .cat-card-list li + li { border-top: 1px solid rgba(20, 40, 36, .07); }
-
-body.cat-directory-page .cat-card-list li {
-	font-family: 'Outfit', 'Lato', Arial, sans-serif;
-	font-size: 15px;
-	line-height: 1.4;
-	color: var(--v2-body);
-	padding: 12px 0;
-}
-
-body.cat-directory-page .cat-card-list li strong,
-body.cat-directory-page .cat-card-list li b {
-	font-weight: 500;
-}
-
-body.cat-directory-page .cat-card-list a {
-	color: var(--v2-body);
-	text-decoration: none;
-	transition: color .15s ease;
-}
-
-/* The arrow is a marker on the row, not on the link text, so a row whose
- * label is split across the anchor and its wrapper still gets one. */
-body.cat-directory-page .cat-card-list li::after {
-	content: '\2192';
-	float: right;
-	margin-left: 12px;
-	color: var(--v2-teal);
-	opacity: 0;
-	transform: translateX(-6px);
-	transition: opacity .15s ease, transform .15s ease;
-}
-
-body.cat-directory-page .cat-card-list li:hover::after { opacity: 1; transform: none; }
-
-body.cat-directory-page .cat-card-list li:hover a,
-body.cat-directory-page .cat-card-list a:focus {
-	color: var(--v2-teal);
-	text-decoration: underline;
-}
-
-/* The section's own archive page - the target the icon strip on the
- * homepage already points each tile at. */
-body.cat-directory-page .cat-card-more {
-	display: inline-flex;
-	align-items: center;
-	align-self: flex-start;
-	gap: 8px;
+body.cat-directory-page .catdir-section-more {
+	margin-left: auto;
 	font-family: 'Outfit', Arial, sans-serif;
 	font-size: 13px;
 	font-weight: 600;
 	letter-spacing: .3px;
 	text-transform: uppercase;
-	color: var(--v2-ink);
-	background: #fff;
-	border-radius: 999px;
-	padding: 10px 18px;
-	margin-top: auto;
+	color: var(--v2-teal);
 	text-decoration: none;
-	transition: background .15s ease, color .15s ease;
+	white-space: nowrap;
 }
 
-body.cat-directory-page .cat-card:hover .cat-card-more { background: var(--v2-field); }
-
-body.cat-directory-page .cat-card-more::after {
+body.cat-directory-page .catdir-section-more::after {
 	content: '\2192';
-	font-size: 14px;
-	line-height: 1;
+	margin-left: 7px;
+	display: inline-block;
+	transition: transform .15s ease;
 }
 
-body.cat-directory-page .cat-card-more:hover,
-body.cat-directory-page .cat-card-more:focus {
-	background: var(--v2-ink);
-	color: #fff;
+body.cat-directory-page .catdir-section-more:hover { color: var(--v2-ink); }
+body.cat-directory-page .catdir-section-more:hover::after { transform: translateX(3px); }
+
+body.cat-directory-page .catdir-section[hidden] { display: none !important; }
+
+/* ---------------------------------------------------------------------
+ * Picture cards - the reference's grid tiles: artwork above, title under.
+ * ------------------------------------------------------------------ */
+body.cat-directory-page .catdir-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(196px, 1fr));
+	gap: 20px;
 }
 
-/* The category name is in the link for screen readers - eight links all
- * reading "View all" out of context would be useless - but the card's
- * heading is right above it, so it is not repeated visually. */
-body.cat-directory-page .cat-card-more-sr {
+body.cat-directory-page .catdir-card { min-width: 0; }
+body.cat-directory-page .catdir-card[hidden] { display: none !important; }
+
+body.cat-directory-page .catdir-card-link {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	text-decoration: none;
+	height: 100%;
+}
+
+/* The inset hairline keeps a tile with a white-background diagram in it
+ * from dissolving into the white panel behind the grid. */
+body.cat-directory-page .catdir-card-thumb {
+	display: block;
+	position: relative;
+	overflow: hidden;
+	border-radius: 18px;
+	background: var(--v2-field);
+	box-shadow: inset 0 0 0 1px rgba(20, 40, 36, .07);
+	aspect-ratio: 4 / 3;
+}
+
+/* Browsers without aspect-ratio keep a padding box of the same shape. */
+@supports not (aspect-ratio: 4 / 3) {
+	body.cat-directory-page .catdir-card-thumb { height: 0; padding-bottom: 75%; }
+}
+
+body.cat-directory-page .catdir-card-img {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+	transition: transform .35s ease;
+}
+
+/* No featured image: the category's icon on the flat field, so the tile
+ * still reads as artwork rather than as a broken image. */
+body.cat-directory-page .catdir-card-fallback {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background:
+		radial-gradient(120% 120% at 30% 12%, rgba(63, 139, 121, .16) 0%, rgba(63, 139, 121, 0) 62%),
+		var(--v2-field);
+}
+
+body.cat-directory-page .catdir-card-fallback-icon {
+	width: 46px;
+	height: 46px;
+	object-fit: contain;
+	opacity: .32;
+	transition: transform .35s ease;
+}
+
+body.cat-directory-page .catdir-card-title {
+	font-family: 'Outfit', Arial, sans-serif;
+	font-size: 15px;
+	font-weight: 500;
+	line-height: 1.4;
+	color: var(--v2-ink);
+	transition: color .15s ease;
+}
+
+body.cat-directory-page .catdir-card-link:hover .catdir-card-img,
+body.cat-directory-page .catdir-card-link:focus .catdir-card-img { transform: scale(1.05); }
+
+body.cat-directory-page .catdir-card-link:hover .catdir-card-fallback-icon,
+body.cat-directory-page .catdir-card-link:focus .catdir-card-fallback-icon { transform: scale(1.08); }
+
+body.cat-directory-page .catdir-card-link:hover .catdir-card-title,
+body.cat-directory-page .catdir-card-link:focus .catdir-card-title { color: var(--v2-teal); }
+
+body.cat-directory-page .catdir-card-link:focus-visible .catdir-card-thumb {
+	outline: 2px solid var(--v2-teal);
+	outline-offset: 3px;
+}
+
+/* ---------------------------------------------------------------------
+ * Filter result
+ * ------------------------------------------------------------------ */
+body.cat-directory-page .catdir-empty {
+	font-family: 'Outfit', Arial, sans-serif;
+	font-size: 16px;
+	color: var(--v2-body);
+	background: var(--v2-field);
+	border-radius: 24px;
+	padding: 48px 26px;
+	text-align: center;
+	margin: 0;
+}
+
+body.cat-directory-page .catdir-empty[hidden] { display: none !important; }
+
+body.cat-directory-page .catdir-sr {
 	position: absolute;
 	width: 1px;
 	height: 1px;
@@ -313,44 +402,42 @@ body.cat-directory-page .cat-card-more-sr {
 }
 
 /* ---------------------------------------------------------------------
- * Filter results
- * ------------------------------------------------------------------ */
-body.cat-directory-page .cat-page-empty {
-	font-family: 'Outfit', Arial, sans-serif;
-	font-size: 16px;
-	color: var(--v2-body);
-	background: var(--v2-field);
-	border-radius: 24px;
-	padding: 44px 26px;
-	text-align: center;
-	margin: 0;
-}
-
-body.cat-directory-page .cat-page-total {
-	font-family: 'Outfit', Arial, sans-serif;
-	font-size: 13px;
-	letter-spacing: .6px;
-	text-transform: uppercase;
-	color: var(--v2-grey);
-	text-align: center;
-	margin: 30px 0 6px;
-}
-
-body.cat-directory-page .cat-card[hidden],
-body.cat-directory-page .cat-page-empty[hidden] { display: none !important; }
-
-/* ---------------------------------------------------------------------
- * Responsive
+ * Responsive - the sidebar becomes a scrolling chip rail above the grid.
  * ------------------------------------------------------------------ */
 @media (max-width: 900px) {
 	body.cat-directory-page .page-hero-inner { padding: 52px 20px 84px; }
-	body.cat-directory-page .cat-page-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+
+	body.cat-directory-page .catdir-layout {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 20px;
+	}
+
+	body.cat-directory-page .catdir-sidebar-inner {
+		top: 0;
+		z-index: 20;
+		padding: 12px;
+		border-radius: 18px;
+	}
+
+	body.cat-directory-page .catdir-sidebar-title { display: none; }
+
+	body.cat-directory-page .catdir-sidebar-list {
+		display: flex;
+		gap: 6px;
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	body.cat-directory-page .catdir-sidebar-item { flex: 0 0 auto; }
+	body.cat-directory-page .catdir-sidebar-item a { white-space: nowrap; }
+	body.cat-directory-page .catdir-sidebar-label { overflow: visible; }
+	body.cat-directory-page .catdir-section { scroll-margin-top: 76px; }
 }
 
 @media (max-width: 640px) {
 	body.cat-directory-page .page-hero-inner { padding: 38px 20px 66px; }
 	body.cat-directory-page .page-hero-blurb { font-size: 15px; }
-	body.cat-directory-page .cat-page-grid { grid-template-columns: 1fr; }
-	body.cat-directory-page .cat-card { padding: 22px 20px 10px; }
-	body.cat-directory-page .cat-page-toolbar { gap: 10px; }
+	body.cat-directory-page .catdir-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; }
+	body.cat-directory-page .catdir-card-title { font-size: 14px; }
+	body.cat-directory-page .catdir-section-more { margin-left: 0; flex-basis: 100%; }
 }
