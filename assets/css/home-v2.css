@@ -1,7 +1,14 @@
 /*
  * Homepage visual language: heavy condensed display type, two-tone
- * headings, pill navigation, a teal hero, and rounded cards on a light
+ * headings, pill navigation, a charcoal hero, and rounded cards on a light
  * grey field.
+ *
+ * The palette is the site's own, as the live masterbadminton.com pages wear
+ * it: orange on charcoal over neutral greys. --v2-accent is the orange of
+ * the logo's arc, the active nav item and in-body links; --v2-shade-deep is
+ * the near-black of the navigation bar. Both match the --mb-* values in
+ * home-ui.css, which dress the legacy article pages, so the redesigned
+ * pages and the rest of the site read as one site.
  *
  * Scoped entirely under body.home-v2, which templates/header.php sets only
  * on the homepage, so the 1,600+ article pages keep the existing look. To
@@ -16,9 +23,12 @@
  */
 
 body.home-v2 {
-	--v2-teal-deep: #14413a;
-	--v2-teal: #2c6a5e;
-	--v2-teal-light: #3f8b79;
+	--v2-accent: #eb7d2e;
+	/* The same orange darkened until it clears 4.5:1 as text on the light
+	 * field, or behind white text. #eb7d2e itself only reaches 2.8:1 either
+	 * way, so it is kept for dark grounds, fills, rings and tints. */
+	--v2-accent-strong: #a8521f;
+	--v2-shade-deep: #141414;
 	--v2-ink: #0d0d0d;
 	--v2-grey: #b4b4b4;
 	--v2-body: #5f6360;
@@ -30,34 +40,35 @@ body.home-v2 {
 }
 
 /* ---------------------------------------------------------------------
- * Hero - teal field, pill nav floated on top, CTA as the focal element.
+ * Hero - charcoal field, pill nav floated on top, CTA as the focal element.
  *
  * The nav is taken out of flow so the hero starts at the top of the page
  * and the bar sits over it, as in the reference. The hero's own padding
  * reserves the space the bar occupies.
  * ------------------------------------------------------------------ */
 /* The hero band is a child of .site-header, so the header itself carries
- * the teal surface and the logo, nav and CTA simply sit on it in normal
+ * the dark surface and the logo, nav and CTA simply sit on it in normal
  * flow. Nothing needs taking out of flow, which keeps the mobile stack
  * and the sticky quick-nav below it behaving normally.
  *
  * The background is the hero photograph - a racket and shuttles on a
- * court-lined field - read through a teal scrim so the white logo, nav and
- * CTA keep their contrast over it. The three gradient layers are the scrim
- * and stack above the photo; the flat teal underneath covers the band while
- * the JPEG is still loading. This replaced an inline-SVG court-line motif
- * that stood in for photography before. */
+ * court-lined field - read through a charcoal scrim, warmed by an orange
+ * glow at the top right, so the white logo, nav and CTA keep their contrast
+ * over it. The three gradient layers are the scrim and stack above the
+ * photo; the flat near-black underneath covers the band while the JPEG is
+ * still loading. This replaced an inline-SVG court-line motif that stood in
+ * for photography before. */
 body.home-v2 .site-header {
 	position: relative;
 	isolation: isolate;
 	overflow: hidden;
 	box-shadow: none;
 	background:
-		radial-gradient(120% 90% at 78% 4%, rgba(94, 190, 165, .30) 0%, rgba(94, 190, 165, 0) 55%),
-		radial-gradient(90% 70% at 10% 98%, rgba(9, 46, 39, .72) 0%, rgba(9, 46, 39, 0) 62%),
-		linear-gradient(158deg, rgba(63, 139, 121, .70) 0%, rgba(30, 82, 72, .80) 48%, rgba(13, 46, 39, .90) 100%),
+		radial-gradient(90% 70% at 82% 2%, rgba(235, 125, 46, .30) 0%, rgba(235, 125, 46, 0) 48%),
+		radial-gradient(90% 70% at 10% 98%, rgba(10, 10, 10, .76) 0%, rgba(10, 10, 10, 0) 62%),
+		linear-gradient(158deg, rgba(46, 45, 44, .70) 0%, rgba(26, 25, 24, .86) 48%, rgba(12, 12, 12, .94) 100%),
 		url("/assets/images/hero-racket-shuttles.jpg") center / cover no-repeat,
-		var(--v2-teal-deep);
+		var(--v2-shade-deep);
 }
 
 body.home-v2 .header-middle {
@@ -95,7 +106,7 @@ body.home-v2 .main-nav {
 }
 
 body.home-v2 .main-nav .nav-groups {
-	background: rgba(10, 42, 36, .5);
+	background: rgba(18, 18, 18, .52);
 	border: 1px solid rgba(255, 255, 255, .16);
 	backdrop-filter: blur(14px);
 	-webkit-backdrop-filter: blur(14px);
@@ -118,11 +129,25 @@ body.home-v2 .main-nav .nav-item > .nav-parent {
 }
 
 body.home-v2 .main-nav .nav-item > a:hover,
-body.home-v2 .main-nav .nav-item:hover > .nav-parent,
-body.home-v2 .main-nav .nav-item.is-active > a {
+body.home-v2 .main-nav .nav-item:hover > .nav-parent {
 	background: rgba(255, 255, 255, .14);
 	border-bottom: 0;
 	color: #fff;
+}
+
+/* The page you are on is marked in the accent, the way the live site marks
+ * it: orange type on the dark bar rather than a filled pill, which also
+ * keeps it at 6.7:1 instead of white-on-orange's 2.8:1. */
+body.home-v2 .main-nav .nav-item.is-active > a {
+	background: transparent;
+	border-bottom: 0;
+	color: var(--v2-accent);
+	font-weight: 600;
+}
+
+body.home-v2 .main-nav .nav-item.is-active > a:hover {
+	background: rgba(255, 255, 255, .14);
+	color: var(--v2-accent);
 }
 
 body.home-v2 .nav-list-utility::before { background: rgba(255, 255, 255, .22); }
@@ -214,7 +239,7 @@ body.home-v2 #main.wrapper {
 	background: #fff;
 	border-radius: 34px;
 	padding: 18px 34px 40px;
-	box-shadow: 0 30px 80px rgba(20, 40, 36, .12);
+	box-shadow: 0 30px 80px rgba(24, 20, 16, .14);
 	box-sizing: border-box;
 }
 
@@ -262,7 +287,7 @@ body.home-v2 .home-intro-prose p {
 body.home-v2 .home-intro.wpb_text_column .home-intro-lead,
 body.home-v2 .home-intro-lead {
 	color: var(--v2-ink);
-	border-left-color: var(--v2-teal);
+	border-left-color: var(--v2-accent);
 	font-size: 18px;
 }
 
@@ -384,7 +409,7 @@ body.home-v2 .cat-directory .cat-expand-all {
 	padding: 16px 26px;
 }
 
-body.home-v2 .cat-directory .cat-expand-all:hover { background: var(--v2-teal); border-color: var(--v2-teal); }
+body.home-v2 .cat-directory .cat-expand-all:hover { background: var(--v2-accent-strong); border-color: var(--v2-accent-strong); }
 
 body.home-v2 .cat-directory .cat-accordion {
 	border: 0;
@@ -395,11 +420,11 @@ body.home-v2 .cat-directory .cat-accordion {
 body.home-v2 .cat-directory .cat-accordion:hover,
 body.home-v2 .cat-directory .cat-accordion[open] {
 	border: 0;
-	box-shadow: 0 10px 26px rgba(20, 40, 36, .09);
+	box-shadow: 0 10px 26px rgba(24, 20, 16, .10);
 }
 
 body.home-v2 .cat-directory .cat-accordion.is-targeted {
-	box-shadow: 0 0 0 2px var(--v2-teal);
+	box-shadow: 0 0 0 2px var(--v2-accent);
 }
 
 body.home-v2 .cat-accordion summary {
@@ -424,7 +449,7 @@ body.home-v2 .cat-accordion-body a {
 	font-weight: 500;
 }
 
-body.home-v2 .cat-accordion-body a:hover { color: var(--v2-teal); }
+body.home-v2 .cat-accordion-body a:hover { color: var(--v2-accent-strong); }
 
 /* ---------------------------------------------------------------------
  * Facebook module
@@ -510,7 +535,7 @@ body.home-v2 .lang-switch {
 	}
 
 	body.home-v2 .nav-toggle-checkbox:checked ~ .nav-groups {
-		background: rgba(10, 42, 36, .62);
+		background: rgba(18, 18, 18, .66);
 		border-color: rgba(255, 255, 255, .16);
 		backdrop-filter: blur(14px);
 		-webkit-backdrop-filter: blur(14px);
@@ -518,7 +543,7 @@ body.home-v2 .lang-switch {
 		padding: 8px;
 	}
 	body.home-v2 .header-middle-inner { padding: 18px 18px 0; }
-	/* The header stays teal at every width, so the logo keeps its white
+	/* The header stays dark at every width, so the logo keeps its white
 	 * silhouette and the search field its translucent treatment. */
 	body.home-v2 .nav-toggle-btn { padding: 12px 18px; }
 	body.home-v2 .hero-cta-inner { padding: 44px 20px 54px; }

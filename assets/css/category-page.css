@@ -12,7 +12,7 @@
  */
 
 /* ---------------------------------------------------------------------
- * Hero - same teal photographic header as the homepage, with the page
+ * Hero - same charcoal photographic header as the homepage, with the page
  * title where the homepage puts its call-to-action button.
  * ------------------------------------------------------------------ */
 body.cat-directory-page .page-hero {
@@ -150,7 +150,7 @@ body.cat-directory-page .catdir-sidebar-item a:focus {
 }
 
 body.cat-directory-page .catdir-sidebar-item.is-active a {
-	background: var(--v2-ink);
+	background: var(--v2-accent-strong);
 	color: #fff;
 }
 
@@ -205,8 +205,8 @@ body.cat-directory-page .catdir-search-input::placeholder { color: #9a9d9b; }
 
 body.cat-directory-page .catdir-search-input:focus {
 	background: #fff;
-	border-color: var(--v2-teal);
-	box-shadow: 0 0 0 4px rgba(44, 106, 94, .12);
+	border-color: var(--v2-accent);
+	box-shadow: 0 0 0 4px rgba(235, 125, 46, .16);
 }
 
 body.cat-directory-page .catdir-tally {
@@ -234,7 +234,7 @@ body.cat-directory-page .catdir-section-head {
 	flex-wrap: wrap;
 	padding-bottom: 14px;
 	margin-bottom: 20px;
-	border-bottom: 1px solid rgba(20, 40, 36, .10);
+	border-bottom: 1px solid rgba(24, 20, 16, .11);
 }
 
 body.cat-directory-page .catdir-section-title {
@@ -267,7 +267,7 @@ body.cat-directory-page .catdir-section-more {
 	font-weight: 600;
 	letter-spacing: .3px;
 	text-transform: uppercase;
-	color: var(--v2-teal);
+	color: var(--v2-accent-strong);
 	text-decoration: none;
 	white-space: nowrap;
 }
@@ -312,7 +312,7 @@ body.cat-directory-page .catdir-card-thumb {
 	overflow: hidden;
 	border-radius: 18px;
 	background: var(--v2-field);
-	box-shadow: inset 0 0 0 1px rgba(20, 40, 36, .07);
+	box-shadow: inset 0 0 0 1px rgba(24, 20, 16, .08);
 	aspect-ratio: 4 / 3;
 }
 
@@ -340,7 +340,7 @@ body.cat-directory-page .catdir-card-fallback {
 	align-items: center;
 	justify-content: center;
 	background:
-		radial-gradient(120% 120% at 30% 12%, rgba(63, 139, 121, .16) 0%, rgba(63, 139, 121, 0) 62%),
+		radial-gradient(120% 120% at 30% 12%, rgba(235, 125, 46, .14) 0%, rgba(235, 125, 46, 0) 62%),
 		var(--v2-field);
 }
 
@@ -368,10 +368,10 @@ body.cat-directory-page .catdir-card-link:hover .catdir-card-fallback-icon,
 body.cat-directory-page .catdir-card-link:focus .catdir-card-fallback-icon { transform: scale(1.08); }
 
 body.cat-directory-page .catdir-card-link:hover .catdir-card-title,
-body.cat-directory-page .catdir-card-link:focus .catdir-card-title { color: var(--v2-teal); }
+body.cat-directory-page .catdir-card-link:focus .catdir-card-title { color: var(--v2-accent-strong); }
 
 body.cat-directory-page .catdir-card-link:focus-visible .catdir-card-thumb {
-	outline: 2px solid var(--v2-teal);
+	outline: 2px solid var(--v2-accent);
 	outline-offset: 3px;
 }
 
