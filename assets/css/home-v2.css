@@ -97,8 +97,17 @@ body.home-v2 .site-search input[type="text"]::placeholder { color: rgba(255, 255
 body.home-v2 .site-search input[type="text"]:focus { background: rgba(255, 255, 255, .2); border-color: rgba(255, 255, 255, .5); }
 body.home-v2 .site-search button { color: rgba(255, 255, 255, .85); }
 
-/* The nav bar itself: a translucent pill floating on the hero. */
+/* The nav bar itself: a translucent pill floating on the hero.
+ *
+ * It is lifted above the hero band explicitly. The pill below carries a
+ * backdrop-filter, which makes it a stacking context, so the dropdown's
+ * own z-index only ranks it inside that pill - and .hero-cta / .page-hero
+ * are positioned siblings later in the header, so they painted over the
+ * open dropdown and swallowed its clicks. Ranking the whole bar above them
+ * is what puts the menu back on top. */
 body.home-v2 .main-nav {
+	position: relative;
+	z-index: 20;
 	background: transparent;
 	max-width: 1240px;
 	margin: 14px auto 0;
