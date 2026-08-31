@@ -186,6 +186,14 @@ if ($normalizedPath === '/zh' || str_starts_with($normalizedPath, '/zh/')) {
 		.has-children > .nav-parent::after{content:'▾';font-size:9px;opacity:.7;}
 
 		.nav-dropdown{display:none;position:absolute;top:100%;left:0;z-index:30;background:#fff;border-radius:10px;box-shadow:0 12px 28px rgba(0,0,0,.16);padding:8px;margin-top:4px !important;min-width:230px;}
+		/* The panel is offset 4px below its parent, and that gap used to be
+		   dead: moving the pointer down into the menu left the <li> for long
+		   enough that :hover went false and the panel closed before it could
+		   be clicked. This invisible strip bridges the gap. It is a child of
+		   the panel, so the pointer never leaves the <li> that :hover is
+		   tested on. It is a little taller than the gap so a fast pointer
+		   cannot skip past it between frames. */
+		.nav-dropdown::before{content:'';position:absolute;left:0;right:0;top:-8px;height:8px;}
 		.nav-item:hover > .nav-dropdown,
 		.nav-item:focus-within > .nav-dropdown{display:block;}
 		.nav-dropdown li a{display:block;padding:10px 14px;border-radius:6px;color:#3f3f3f;font-size:14px;font-family:'Lato',sans-serif;font-weight:400;}
@@ -202,6 +210,8 @@ if ($normalizedPath === '/zh' || str_starts_with($normalizedPath, '/zh/')) {
 			.nav-dropdown,
 			.nav-item:hover > .nav-dropdown,
 			.nav-item:focus-within > .nav-dropdown{display:block;position:static;background:#181818;box-shadow:none;border-radius:0;margin:0 !important;padding:0;}
+			/* No hover on the stacked mobile menu, so no gap to bridge. */
+			.nav-dropdown::before{display:none;}
 			.nav-dropdown li a{color:#ccc;padding:10px 20px 10px 34px;}
 			.nav-dropdown li a:hover{background:#2c2c2c;color:#eb7d2e;}
 		}
