@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 use App\Core\Locale;
 use App\Core\SiteLinks;
+use App\Core\SiteVisibility;
 
 // Every label carries its Chinese counterpart, so the mirror's chrome
 // speaks the mirror's language. A missing translation simply falls back to
@@ -210,7 +211,14 @@ $langLabel = $chrome['switch'];
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 	<link rel="shortcut icon" href="/wp-content/uploads/2016/09/favi.png" />
-	<meta name="robots" content="index, follow" />
+	<?php /*
+		SiteVisibility::indexable() is off by default, which is what keeps
+		this deployment out of search results until it is turned on
+		explicitly (normally: only on production, never here). robots.txt
+		carries the same on/off switch - see index.php - so the two never
+		disagree about whether a crawler is welcome.
+	*/ ?>
+	<meta name="robots" content="<?= SiteVisibility::indexable() ? 'index, follow' : 'noindex, nofollow' ?>" />
 
 	<title><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?></title>
 	<?php if ($description !== ''): ?>

@@ -13,12 +13,28 @@ use App\Core\PageContent;
 use App\Core\Request;
 use App\Core\Router;
 use App\Core\SiteLinks;
+use App\Core\SiteVisibility;
 use App\Layout\Layout;
 
 $request = new Request($_SERVER);
 $router = new Router(__DIR__);
 $siteLinks = new SiteLinks(__DIR__);
 $layout = new Layout(__DIR__ . '/templates/header.php', __DIR__ . '/templates/footer.php');
+
+// robots.txt carries the same on/off switch as the <meta name="robots">
+// tag every page sends (see templates/header.php): while this deployment
+// isn't meant to be found yet, it disallows everything and says nothing
+// about the sitemap, rather than pointing crawlers at 1,000+ URLs it is
+// simultaneously asking them not to index.
+if ($request->path() === '/robots.txt') {
+    $body = SiteVisibility::indexable()
+        ? "User-agent: *\nAllow: /\n\nSitemap: {$request->baseUrl()}/sitemap.xml\n"
+        : "User-agent: *\nDisallow: /\n";
+
+    header('Content-Type: text/plain; charset=UTF-8');
+    echo $body;
+    exit;
+}
 
 // /sitemap.xml is generated from the exported tree rather than kept as a
 // file, so it cannot drift out of step with the pages that actually exist.
