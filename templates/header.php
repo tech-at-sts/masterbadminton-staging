@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 use App\Core\Locale;
 use App\Core\SiteLinks;
+use App\Core\SiteVisibility;
 
 // Every label carries its Chinese counterpart, so the mirror's chrome
 // speaks the mirror's language. A missing translation simply falls back to
@@ -70,7 +71,7 @@ $navItems = [
 	],
 	['label' => 'Contact', 'label_zh' => '联系我们', 'href' => '/contact.html', 'group' => 'utility'],
 	['label' => 'Ask a Question', 'label_zh' => '提问', 'href' => 'https://masterbadminton.com/badminton-questions.html', 'group' => 'utility'],
-	['label' => 'Store', 'label_zh' => '商店', 'href' => 'https://masterbadmintonshop.com/', 'target' => '_blank', 'group' => 'utility', 'variant' => 'store'],
+	['label' => 'Store', 'label_zh' => '商店', 'href' => 'https://badmintonclick.com.au/', 'target' => '_blank', 'group' => 'utility', 'variant' => 'store'],
 ];
 
 // Same items, same order, same labels - only split into two visual groups
@@ -180,6 +181,14 @@ $hero = $isCategoryIndex
 
 $beginnerHref = $localize('/category/badminton-videos/badminton-basics.html');
 
+// The search control used to be the 🔍 emoji, which every platform paints
+// in its own colour and its own shape - a blue disc on some, a grey outline
+// on others - so it never matched the type around it. This is drawn in
+// currentColor instead, and so inherits whatever the header is wearing.
+$searchIcon = '<svg class="icon-search" viewBox="0 0 24 24" aria-hidden="true" focusable="false">'
+	. '<circle cx="11" cy="11" r="7" /><line x1="16.2" y1="16.2" x2="21" y2="21" />'
+	. '</svg>';
+
 $isLinkActive = static function (string $href) use ($normalizedPath): bool {
 	if ($href === '/' || $href === '/zh') {
 		return $normalizedPath === $href;
@@ -202,7 +211,14 @@ $langLabel = $chrome['switch'];
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 	<link rel="shortcut icon" href="/wp-content/uploads/2016/09/favi.png" />
-	<meta name="robots" content="index, follow" />
+	<?php /*
+		SiteVisibility::indexable() is off by default, which is what keeps
+		this deployment out of search results until it is turned on
+		explicitly (normally: only on production, never here). robots.txt
+		carries the same on/off switch - see index.php - so the two never
+		disagree about whether a crawler is welcome.
+	*/ ?>
+	<meta name="robots" content="<?= SiteVisibility::indexable() ? 'index, follow' : 'noindex, nofollow' ?>" />
 
 	<title><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?></title>
 	<?php if ($description !== ''): ?>
@@ -239,14 +255,28 @@ $langLabel = $chrome['switch'];
 		.header-middle{background:#fff;box-shadow:0 1px 0 rgba(0,0,0,.05);}
 		.header-middle-inner{max-width:1140px;margin:0 auto;padding:22px 20px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;}
 		.site-logo img{width:190px;display:block;}
+		.header-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
 		.site-search{position:relative;width:300px;max-width:100%;display:flex;}
 		.site-search input[type="text"]{background:#f4f4f5;border:1px solid transparent;border-radius:24px;padding:12px 44px 12px 18px;width:100%;font-size:14px;color:#444;font-family:'Lato',sans-serif;outline:none;}
 		.site-search input[type="text"]:focus{border-color:#eb7d2e;background:#fff;}
-		.site-search button{position:absolute;right:4px;top:4px;bottom:4px;width:38px;background:transparent;border:0;color:#b0b0b0;font-size:15px;cursor:pointer;}
+		.site-search button{position:absolute;right:4px;top:4px;bottom:4px;width:38px;display:flex;align-items:center;justify-content:center;background:transparent;border:0;color:#8f8f8f;cursor:pointer;padding:0;}
+		.site-search button:hover{color:#eb7d2e;}
+
+		/* One magnifier, drawn in currentColor, so the control matches the
+		   type beside it instead of whatever the platform paints an emoji. */
+		.icon-search{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;display:block;}
 
 		.main-nav{background:#1f1f1f;}
-		.nav-toggle-checkbox{display:none;}
-		.nav-toggle-btn{display:none;}
+		/* Kept in the layout but invisible, rather than display:none, so the
+		   toggles stay reachable from the keyboard. */
+		.nav-toggle-checkbox,
+		.search-toggle-checkbox{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);}
+		.icon-btn{display:none;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;cursor:pointer;flex:0 0 auto;color:#3a3a3a;}
+		.nav-toggle-btn{flex-direction:column;gap:4px;}
+		.nav-toggle-btn span{display:block;width:19px;height:2px;background:currentColor;border-radius:2px;}
+		.icon-btn:hover{background:rgba(0,0,0,.06);}
+		.search-toggle-checkbox:focus-visible ~ .header-middle .search-toggle-btn,
+		.nav-toggle-checkbox:focus-visible ~ .header-middle .nav-toggle-btn{outline:2px solid #eb7d2e;outline-offset:2px;}
 		.nav-list,
 		.nav-list .nav-item,
 		.nav-dropdown,
@@ -277,12 +307,22 @@ $langLabel = $chrome['switch'];
 		.nav-dropdown li a:hover{background:#fbeee2;color:#eb7d2e;}
 
 		@media (max-width: 767px){
-			.header-middle-inner{padding:14px 20px;}
-			.site-search{width:auto;flex:1;}
+			.header-middle-inner{padding:14px 20px;gap:12px;flex-wrap:nowrap;}
+			/* The bar is one row: logo, then the two icon buttons. The search
+			   field is not in that row at all until it is asked for, and then
+			   it opens as a row of its own underneath. */
+			.header-actions{flex:0 0 auto;gap:4px;}
+			.site-search{display:none;}
+			.icon-btn{display:flex;}
+			/* An explicit ground, not inherit: the row is positioned outside
+			   the flow, so it would otherwise be transparent over whatever
+			   sits beneath the bar. */
+			.search-toggle-checkbox:checked ~ .header-middle .site-search{display:flex;position:absolute;left:0;right:0;top:100%;width:auto;padding:0 20px 14px;background:#fff;box-shadow:0 10px 20px rgba(0,0,0,.08);z-index:30;}
+			.search-toggle-checkbox:checked ~ .header-middle .site-search input[type="text"]{width:100%;}
+			.search-toggle-checkbox:checked ~ .header-middle .site-search button{right:24px;}
+			.header-middle{position:relative;}
 			.nav-list{flex-direction:column;align-items:stretch;padding:0;max-height:0;overflow:hidden;transition:max-height .2s ease;}
-			.nav-toggle-checkbox:checked ~ .nav-list{max-height:2000px;}
-			.nav-toggle-btn{display:flex;flex-direction:column;justify-content:center;gap:4px;max-width:1140px;margin:0 auto;padding:14px 20px;cursor:pointer;}
-			.nav-toggle-btn span{display:block;width:22px;height:2px;background:#fff;}
+			.nav-toggle-checkbox:checked ~ .main-nav .nav-list{max-height:2000px;}
 			.nav-item > a,.nav-item > .nav-parent{padding:12px 20px;border-bottom:1px solid #2c2c2c;}
 			.nav-dropdown,
 			.nav-item:hover > .nav-dropdown,
@@ -349,6 +389,16 @@ $langLabel = $chrome['switch'];
 <div id="page" class="hfeed site">
 
 	<header class="site-header">
+		<?php /*
+			Both toggles are checkboxes at the top of the header rather than
+			next to the controls they open: everything they show - the nav
+			panel inside .main-nav, the search field inside .header-middle -
+			is a following sibling from here, which is what lets a label
+			placed anywhere in the bar drive them without script.
+		*/ ?>
+		<input type="checkbox" id="nav-toggle" class="nav-toggle-checkbox" />
+		<input type="checkbox" id="search-toggle" class="search-toggle-checkbox" />
+
 		<?php if (!$usesHomeVisual): ?>
 		<div class="topbar">
 			<div class="topbar-inner">
@@ -363,16 +413,24 @@ $langLabel = $chrome['switch'];
 				<a class="site-logo" href="<?= htmlspecialchars($localize('/'), ENT_QUOTES, 'UTF-8') ?>">
 					<img src="https://masterbadminto.wpenginepowered.com/wp-content/uploads/2016/05/masw.png" alt="<?= htmlspecialchars($chrome['logo'], ENT_QUOTES, 'UTF-8') ?>" title="<?= htmlspecialchars($chrome['logo'], ENT_QUOTES, 'UTF-8') ?>" />
 				</a>
-				<form class="site-search" method="get" action="<?= htmlspecialchars($localize('/'), ENT_QUOTES, 'UTF-8') ?>">
-					<input type="text" value="" name="s" placeholder="<?= htmlspecialchars($chrome['search'], ENT_QUOTES, 'UTF-8') ?>" autocomplete="off" />
-					<button type="submit" aria-label="<?= htmlspecialchars($chrome['search'], ENT_QUOTES, 'UTF-8') ?>">&#128269;</button>
-				</form>
+				<div class="header-actions">
+					<form class="site-search" method="get" action="<?= htmlspecialchars($localize('/'), ENT_QUOTES, 'UTF-8') ?>">
+						<input type="text" value="" name="s" placeholder="<?= htmlspecialchars($chrome['search'], ENT_QUOTES, 'UTF-8') ?>" autocomplete="off" />
+						<button type="submit" aria-label="<?= htmlspecialchars($chrome['search'], ENT_QUOTES, 'UTF-8') ?>"><?= $searchIcon ?></button>
+					</form>
+					<?php /*
+						Phone only: the field collapses to this button so the
+						bar stays one row, and opens as a row of its own
+						underneath. Both labels sit here, side by side, so the
+						hamburger no longer takes a second row to itself.
+					*/ ?>
+					<label for="search-toggle" class="icon-btn search-toggle-btn" aria-label="<?= htmlspecialchars($chrome['search'], ENT_QUOTES, 'UTF-8') ?>"><?= $searchIcon ?></label>
+					<label for="nav-toggle" class="icon-btn nav-toggle-btn" aria-label="<?= htmlspecialchars($chrome['menu'], ENT_QUOTES, 'UTF-8') ?>"><span></span><span></span><span></span></label>
+				</div>
 			</div>
 		</div>
 
 		<nav class="main-nav">
-			<input type="checkbox" id="nav-toggle" class="nav-toggle-checkbox" />
-			<label for="nav-toggle" class="nav-toggle-btn" aria-label="<?= htmlspecialchars($chrome['menu'], ENT_QUOTES, 'UTF-8') ?>"><span></span><span></span><span></span></label>
 			<div class="nav-groups">
 			<?php foreach ($navGroups as $groupName => $groupItems): ?>
 				<?php if ($groupItems === []) { continue; } ?>
