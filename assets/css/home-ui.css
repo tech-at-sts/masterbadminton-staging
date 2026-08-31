@@ -535,7 +535,9 @@
 		transition: max-height .2s ease;
 	}
 
-	.nav-toggle-checkbox:checked ~ .nav-groups { max-height: 2000px; }
+	/* The toggle now lives at the top of the header, so the panel it opens
+	   is reached through .main-nav rather than as its direct sibling. */
+	.nav-toggle-checkbox:checked ~ .main-nav .nav-groups { max-height: 2000px; }
 
 	.nav-groups .nav-list { max-height: none; overflow: visible; }
 

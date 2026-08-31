@@ -5,6 +5,7 @@ declare(strict_types=1);
 require __DIR__ . '/app/bootstrap.php';
 
 use App\Content\CategoryDirectory;
+use App\Content\Sitemap;
 use App\Core\ContentCache;
 use App\Core\ContentExtractor;
 use App\Core\LinkRewriter;
@@ -18,6 +19,35 @@ $request = new Request($_SERVER);
 $router = new Router(__DIR__);
 $siteLinks = new SiteLinks(__DIR__);
 $layout = new Layout(__DIR__ . '/templates/header.php', __DIR__ . '/templates/footer.php');
+
+// /sitemap.xml is generated from the exported tree rather than kept as a
+// file, so it cannot drift out of step with the pages that actually exist.
+// Answered before anything else because it is not a page and takes none of
+// the page pipeline.
+if ($request->path() === '/sitemap.xml') {
+    $baseUrl = $request->baseUrl();
+
+    // Keyed on the host, not just on the path: <loc> values are absolute,
+    // so a copy built for the staging hostname must never be handed to a
+    // request that arrived on the production one.
+    $cacheFile = __DIR__ . '/storage/cache/sitemap-' . substr(sha1($baseUrl), 0, 12) . '.xml';
+    $maxAge = 3600;
+
+    if (is_file($cacheFile) && time() - (int) filemtime($cacheFile) < $maxAge) {
+        $xml = (string) file_get_contents($cacheFile);
+    } else {
+        $xml = (new Sitemap(__DIR__, $siteLinks))->build($baseUrl);
+
+        if (is_dir(dirname($cacheFile)) && is_writable(dirname($cacheFile))) {
+            @file_put_contents($cacheFile, $xml, LOCK_EX);
+        }
+    }
+
+    header('Content-Type: application/xml; charset=UTF-8');
+    header('Cache-Control: public, max-age=3600');
+    echo $xml;
+    exit;
+}
 
 // The category directory has no exported file of its own: it is built
 // from the homepage's own category grid, so it is answered before the

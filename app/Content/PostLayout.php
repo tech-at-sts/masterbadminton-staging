@@ -85,6 +85,17 @@ final class PostLayout
             return null;
         }
 
+        // The homepage is a WordPress page too, and it has its own layout
+        // in HomepageLayout - the hero band, the quick-nav strip and the
+        // category directory. Left unguarded, the "type-page" branch below
+        // claimed it and dressed it as an article, which is how both
+        // homepages ended up wearing an article hero built from their
+        // English <title>. The icon strip is the same marker HomepageLayout
+        // keys off.
+        if ($xpath->query('.//ul[@id="thct"]', $root)->length > 0) {
+            return null;
+        }
+
         $copy = self::COPY[$locale] ?? self::COPY[Locale::ENGLISH];
 
         $article = $this->firstByClass($xpath, 'single-post', $root);
