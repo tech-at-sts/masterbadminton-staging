@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Core;
 
 use App\Content\HomepageLayout;
+use App\Content\PostLayout;
 
 /**
  * Pulls the page <title>, meta description, and main content region out of
@@ -65,7 +66,14 @@ final class ContentExtractor
      */
     public static function fingerprint(): string
     {
-        $sources = [__FILE__, dirname(__DIR__) . '/Content/HomepageLayout.php'];
+        $sources = [
+            __FILE__,
+            __DIR__ . '/LinkRewriter.php',
+            __DIR__ . '/Locale.php',
+            __DIR__ . '/SiteLinks.php',
+            dirname(__DIR__) . '/Content/HomepageLayout.php',
+            dirname(__DIR__) . '/Content/PostLayout.php',
+        ];
         $parts = [];
 
         foreach ($sources as $source) {
@@ -73,6 +81,22 @@ final class ContentExtractor
         }
 
         return substr(sha1(implode('|', $parts)), 0, 12);
+    }
+
+    /**
+     * @param string $baseDir the document root the exported tree sits in;
+     *        the source file's position under it is what says which
+     *        language the page is written in
+     * @param LinkRewriter|null $links repoints in-content links at this
+     *        site and at the language of the page being extracted. Optional
+     *        so the extractor stays usable on its own, but index.php always
+     *        supplies one - without it a reader on the Chinese mirror falls
+     *        back into the English tree on the first link they follow.
+     */
+    public function __construct(
+        private readonly string $baseDir,
+        private readonly ?LinkRewriter $links = null,
+    ) {
     }
 
     public function extract(string $filePath): PageContent
@@ -102,19 +126,62 @@ final class ContentExtractor
             ?? $xpath->query('//div[@id="primary"]')->item(0);
 
         $this->stripSidebar($xpath);
+        $this->stripLegacyFooter($xpath, $main);
         $this->stripLegacyLanguageSwitcher($xpath);
         $this->stripHomeCategoryColumn($dom, $xpath);
         $hasCategorySections = $this->convertCategoryGridToAccordion($dom, $xpath);
+
+        // Before any layout surgery: the transforms below move anchors
+        // around, and the rewriter needs to see them where the export put
+        // them to know what they were written relative to.
+        $this->links?->rewrite($xpath, $filePath);
+
         (new HomepageLayout())->apply($dom, $xpath);
+        $shape = (new PostLayout())->apply($dom, $xpath, $main, Locale::of($this->publicPathOf($filePath)));
+
         $pageStyle = $this->extractPageStyle($xpath);
 
         $content = $main instanceof \DOMNode ? $this->innerHtml($dom, $main) : '';
+
+        // A few listing pages carry no heading of their own in the body -
+        // the theme only ever named them in <title>. Rather than leave the
+        // hero blank, or invent a name for the page, it borrows the one the
+        // page already has, minus the site suffix every title repeats.
+        if ($shape !== null && ($shape['hero']['title'] ?? '') === '') {
+            $shape['hero']['title'] = $this->headline($title ?? '');
+        }
 
         return new PageContent(
             $title !== null && $title !== '' ? $title : self::DEFAULT_TITLE,
             $description ?? '',
             $pageStyle . $content . ($hasCategorySections ? self::CATEGORY_SECTION_SCRIPT : ''),
+            $shape['layout'] ?? '',
+            $shape['hero'] ?? null,
         );
+    }
+
+    /** The page's own <title>, without the " - Master Badminton" every one of them ends in. */
+    private function headline(string $title): string
+    {
+        return trim((string) preg_replace('/\s*[-–|]\s*' . preg_quote(self::DEFAULT_TITLE, '/') . '\s*$/u', '', $title));
+    }
+
+    /**
+     * Where in the exported tree the source file sits, as a site path. The
+     * layout of the tree is what marks a page's language - the mirror is
+     * everything under zh/ - so this is all the extractor needs to know to
+     * hand the right language to the layout transforms.
+     */
+    private function publicPathOf(string $filePath): string
+    {
+        $base = realpath($this->baseDir);
+        $file = realpath($filePath);
+
+        if ($base === false || $file === false || !str_starts_with($file, $base . DIRECTORY_SEPARATOR)) {
+            return '/';
+        }
+
+        return '/' . str_replace(DIRECTORY_SEPARATOR, '/', substr($file, strlen($base) + 1));
     }
 
     private function firstText(\DOMXPath $xpath, string $query): ?string
@@ -158,6 +225,34 @@ final class ContentExtractor
         $sidebar = $xpath->query('//aside[@id="left-sidebar"]')->item(0);
 
         $sidebar?->parentNode?->removeChild($sidebar);
+    }
+
+    /**
+     * Drop the exported page's own footer and back-to-top button when they
+     * end up inside the extracted region.
+     *
+     * They normally sit outside #main and are simply not extracted. On the
+     * listing pages they are pulled in: WordPress cut some post excerpts in
+     * the middle of their markup, leaving <div>s unclosed, and the parser
+     * then nests everything that follows - the remaining posts, the pager,
+     * and the page's footer - inside the broken excerpt. templates/footer.php
+     * renders the site's one footer, so the smuggled copy is removed here.
+     */
+    private function stripLegacyFooter(\DOMXPath $xpath, ?\DOMNode $main): void
+    {
+        if (!$main instanceof \DOMElement) {
+            return;
+        }
+
+        // #fb-root is deliberately not in this list: the exported pages
+        // carry the Facebook SDK loader inside the content region, and it
+        // is the only copy on the page, so removing it would leave the
+        // like button and comment embeds dead.
+        $query = './/footer[@id="colophon"] | .//div[@id="to-top"]';
+
+        foreach (iterator_to_array($xpath->query($query, $main)) as $node) {
+            $node->parentNode?->removeChild($node);
+        }
     }
 
     /**

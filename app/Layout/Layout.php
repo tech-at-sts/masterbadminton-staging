@@ -25,10 +25,15 @@ final class Layout
     {
         http_response_code($statusCode);
 
-        // Exposed to the header/footer templates via include() scope.
+        // Exposed to the header/footer templates via include() scope. The
+        // two templates are included from this one method, so anything the
+        // header defines is still in scope for the footer - which is how
+        // the footer reaches the header's language helpers.
         $title = $page->title;
         $description = $page->description;
         $currentPath = $requestPath;
+        $pageLayout = $page->layout;
+        $pageHero = $page->hero;
 
         include $this->headerTemplate;
         echo $page->html;

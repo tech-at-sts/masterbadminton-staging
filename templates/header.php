@@ -3,15 +3,23 @@
  * Single shared header for every page on the site.
  *
  * Rendered by App\Layout\Layout::render(). Variables in scope:
- * $title, $description, $currentPath (all set by Layout before this file
- * is included).
+ * $title, $description, $currentPath, $pageLayout, $pageHero (all set by
+ * Layout before this file is included). Anything defined here is still in
+ * scope for templates/footer.php, which Layout includes from the same
+ * method - the footer uses that to reach $localize and $lang below.
  */
 
 declare(strict_types=1);
 
+use App\Core\Locale;
+use App\Core\SiteLinks;
+
+// Every label carries its Chinese counterpart, so the mirror's chrome
+// speaks the mirror's language. A missing translation simply falls back to
+// the English label rather than blanking the item.
 $navItems = [
-	['label' => 'Home', 'href' => '/'],
-	['label' => 'Blog', 'href' => '/how-to-play-badminton-blog.html'],
+	['label' => 'Home', 'label_zh' => '首页', 'href' => '/'],
+	['label' => 'Blog', 'label_zh' => '博客', 'href' => '/how-to-play-badminton-blog.html'],
 	// The category directory, built by App\Content\CategoryDirectory from the
 	// homepage's own "All Categories" grid. Top level rather than inside
 	// "Playing the Game", so the full topic index is one click from every
@@ -19,46 +27,50 @@ $navItems = [
 	// URL still resolves through the Router alias, it just no longer takes a
 	// top-level nav slot - Techniques is one of the eight cards here, and
 	// "Techniques and Shots" remains under Playing the Game.)
-	['label' => 'Category', 'href' => '/categories'],
+	['label' => 'Category', 'label_zh' => '分类', 'href' => '/categories'],
 	[
 		'label' => 'Playing the Game',
+		'label_zh' => '打球技巧',
 		'children' => [
-			['label' => 'Rules', 'href' => '/badminton-rules.html'],
-			['label' => 'Badminton Basics', 'href' => '/category/badminton-videos/badminton-basics.html'],
-			['label' => 'Badminton Strokes', 'href' => '/badminton-strokes.html'],
-			['label' => 'Techniques and Shots', 'href' => '/badminton-techniques.html'],
-			['label' => 'Net Play', 'href' => '/badminton-net-play.html'],
-			['label' => 'Smashing', 'href' => '/badminton-smash-technique.html'],
-			['label' => 'Advanced Skills', 'href' => '/advanced-badminton-techniques.html'],
+			['label' => 'Rules', 'label_zh' => '比赛规则', 'href' => '/badminton-rules.html'],
+			['label' => 'Badminton Basics', 'label_zh' => '羽毛球基础', 'href' => '/category/badminton-videos/badminton-basics.html'],
+			['label' => 'Badminton Strokes', 'label_zh' => '击球动作', 'href' => '/badminton-strokes.html'],
+			['label' => 'Techniques and Shots', 'label_zh' => '技术与球路', 'href' => '/badminton-techniques.html'],
+			['label' => 'Net Play', 'label_zh' => '网前球', 'href' => '/badminton-net-play.html'],
+			['label' => 'Smashing', 'label_zh' => '扣杀', 'href' => '/badminton-smash-technique.html'],
+			['label' => 'Advanced Skills', 'label_zh' => '进阶技巧', 'href' => '/advanced-badminton-techniques.html'],
 		],
 	],
 	[
 		'label' => 'Equipment',
+		'label_zh' => '装备',
 		'children' => [
-			['label' => 'Rackets', 'href' => '/badminton-racket.html'],
-			['label' => 'Equipments', 'href' => '/badminton-equipment.html'],
+			['label' => 'Rackets', 'label_zh' => '球拍', 'href' => '/badminton-racket.html'],
+			['label' => 'Equipments', 'label_zh' => '器材', 'href' => '/badminton-equipment.html'],
 		],
 	],
 	[
 		'label' => 'Resources',
+		'label_zh' => '资源',
 		'children' => [
-			['label' => 'Badminton Articles', 'href' => '/badminton-articles.html'],
-			['label' => 'Badminton Tips', 'href' => '/badminton-tips.html'],
-			['label' => 'Professional Players', 'href' => '/professional-badminton-interview.html'],
-			['label' => 'Places to Play in UK', 'href' => '/uk-badminton-places-to-play.html'],
+			['label' => 'Badminton Articles', 'label_zh' => '羽毛球文章', 'href' => '/badminton-articles.html'],
+			['label' => 'Badminton Tips', 'label_zh' => '羽毛球窍门', 'href' => '/badminton-tips.html'],
+			['label' => 'Professional Players', 'label_zh' => '职业球员访谈', 'href' => '/professional-badminton-interview.html'],
+			['label' => 'Places to Play in UK', 'label_zh' => '英国球场', 'href' => '/uk-badminton-places-to-play.html'],
 		],
 	],
 	[
 		'label' => 'Just for Fun',
+		'label_zh' => '趣味专区',
 		'children' => [
-			['label' => 'Top Players', 'href' => '/badminton-players.html'],
-			['label' => 'Videos', 'href' => '/badminton-videos.html'],
-			['label' => 'News', 'href' => '/badminton-news.html'],
+			['label' => 'Top Players', 'label_zh' => '顶尖球员', 'href' => '/badminton-players.html'],
+			['label' => 'Videos', 'label_zh' => '视频', 'href' => '/badminton-videos.html'],
+			['label' => 'News', 'label_zh' => '新闻', 'href' => '/badminton-news.html'],
 		],
 	],
-	['label' => 'Contact', 'href' => '/contact.html', 'group' => 'utility'],
-	['label' => 'Ask a Question', 'href' => 'https://masterbadminton.com/badminton-questions.html', 'group' => 'utility'],
-	['label' => 'Store', 'href' => 'https://masterbadmintonshop.com/', 'target' => '_blank', 'group' => 'utility', 'variant' => 'store'],
+	['label' => 'Contact', 'label_zh' => '联系我们', 'href' => '/contact.html', 'group' => 'utility'],
+	['label' => 'Ask a Question', 'label_zh' => '提问', 'href' => 'https://masterbadminton.com/badminton-questions.html', 'group' => 'utility'],
+	['label' => 'Store', 'label_zh' => '商店', 'href' => 'https://masterbadmintonshop.com/', 'target' => '_blank', 'group' => 'utility', 'variant' => 'store'],
 ];
 
 // Same items, same order, same labels - only split into two visual groups
@@ -69,6 +81,75 @@ $navGroups = [
 ];
 
 $normalizedPath = '/' . trim((string) parse_url($currentPath, PHP_URL_PATH), '/');
+
+// Which of the two page-for-page trees this page belongs to - English at
+// the root, the Chinese mirror under /zh/.
+$lang = Locale::of($normalizedPath);
+$isChinese = $lang === Locale::CHINESE;
+
+// Whether a URL is actually served, and what it is called in a given
+// language, are both asked of SiteLinks rather than re-implemented here.
+// This file used to carry its own copy of the candidate lookup, and the two
+// drifted: the Router also resolves aliases for live URLs with no exported
+// file of their own (/techniques), which the private copy could not see, so
+// the switcher fell back to the language's homepage for exactly those
+// pages. The Router is also the side that handles a document root reached
+// through a symlink, by realpath()ing the root as well as each candidate.
+$siteLinks = new SiteLinks(realpath(dirname(__DIR__)) ?: dirname(__DIR__));
+
+/**
+ * Every internal link in the site chrome goes through here.
+ *
+ * Navigation used to be a list of literal English paths, so a reader who
+ * switched to 中文 was thrown straight back into the English tree by the
+ * next thing they clicked - and had to switch language again on every page.
+ * Now each target is asked for in the language of the page it is being
+ * rendered on, and only falls back to English when the mirror genuinely has
+ * no counterpart for it.
+ */
+$localize = static function (string $href) use ($siteLinks, $lang, $isChinese): string {
+	if (!str_starts_with($href, '/')) {
+		return $href;
+	}
+
+	// A few pages sit at a different slug in the mirror than in the English
+	// tree, so prefixing "/zh" cannot find them. Those are named rather than
+	// guessed; everything else follows the page-for-page rule.
+	$aliases = [
+		'/category/badminton-videos/badminton-basics.html' => '/zh/badminton-basics.html',
+	];
+
+	if ($isChinese && isset($aliases[$href]) && $siteLinks->exists($aliases[$href])) {
+		return $aliases[$href];
+	}
+
+	return $siteLinks->localized($href, $lang);
+};
+
+/** The label to show for a nav entry, in this page's language. */
+$navLabel = static function (array $item) use ($isChinese): string {
+	return $isChinese && ($item['label_zh'] ?? '') !== '' ? $item['label_zh'] : $item['label'];
+};
+
+// Chrome copy that is not a nav label. Same rule: the mirror gets Chinese,
+// everything else gets English.
+$chrome = $isChinese
+	? [
+		'beginner' => '新手入门？点这里',
+		'search' => '搜索',
+		'menu' => '打开导航菜单',
+		'logo' => 'Master Badminton',
+		'top' => '回到顶部',
+		'switch' => 'English',
+	]
+	: [
+		'beginner' => 'Are you a beginner? Click Here',
+		'search' => 'Search',
+		'menu' => 'Toggle navigation menu',
+		'logo' => 'Master Badminton',
+		'top' => 'Back to Top',
+		'switch' => '中文',
+	];
 
 // The homepage - English or the Chinese mirror - gets the prominent
 // beginner call-to-action band; every page that keeps the plain white
@@ -81,46 +162,42 @@ $isHome = in_array($normalizedPath, ['/', '/zh'], true);
 // same body class and stylesheet, with its own hero band in place of the
 // beginner call-to-action.
 $isCategoryIndex = \App\Content\CategoryDirectory::handles($normalizedPath);
-$categoryHero = $isCategoryIndex ? \App\Content\CategoryDirectory::hero($normalizedPath) : null;
-$usesHomeVisual = $isHome || $isCategoryIndex;
+
+// Article pages and post listings, recognised by App\Content\PostLayout
+// from the markup rather than from the URL, wear the same visual language
+// with a stylesheet of their own on top.
+$pageLayout = $pageLayout ?? '';
+$isPost = $pageLayout === 'post';
+$isArchive = $pageLayout === 'archive';
+
+$usesHomeVisual = $isHome || $isCategoryIndex || $isPost || $isArchive;
+
+// One hero band serves all of them: the category directory authors its own
+// copy, article and listing pages hand theirs up from the extractor.
+$hero = $isCategoryIndex
+	? \App\Content\CategoryDirectory::hero($normalizedPath)
+	: ($pageHero ?? null);
+
+$beginnerHref = $localize('/category/badminton-videos/badminton-basics.html');
 
 $isLinkActive = static function (string $href) use ($normalizedPath): bool {
-	if ($href === '/') {
-		return $normalizedPath === '/';
+	if ($href === '/' || $href === '/zh') {
+		return $normalizedPath === $href;
 	}
 
 	return str_starts_with($href, '/') && rtrim($href, '/') === rtrim($normalizedPath, '/');
 };
 
-// The legacy tree keeps a full Chinese mirror under /zh/, page-for-page
-// with the English tree. Point the language switcher at the mirror of the
-// page actually being viewed when it exists, falling back to that
-// language's homepage otherwise, rather than always sending readers to /.
-//
-// "Exists" is asked of the Router rather than re-implemented here. This
-// file used to carry its own copy of the candidate lookup, and the two
-// drifted: the Router also resolves aliases for live URLs with no exported
-// file of their own (/techniques), which the private copy could not see, so
-// the switcher fell back to the language's homepage for exactly those
-// pages. The Router is also the side that handles a document root reached
-// through a symlink, by realpath()ing the root as well as each candidate.
-$siteRoot = realpath(dirname(__DIR__)) ?: dirname(__DIR__);
-$linkRouter = new \App\Core\Router($siteRoot);
-$pathResolves = static fn (string $path): bool => $linkRouter->resolve($path) !== null
-	|| \App\Content\CategoryDirectory::handles($path);
-
-if ($normalizedPath === '/zh' || str_starts_with($normalizedPath, '/zh/')) {
-	$counterpart = $normalizedPath === '/zh' ? '/' : substr($normalizedPath, 3);
-	$langHref = $pathResolves($counterpart) ? $counterpart : '/';
-	$langLabel = 'English';
-} else {
-	$counterpart = $normalizedPath === '/' ? '/zh' : '/zh' . $normalizedPath;
-	$langHref = $pathResolves($counterpart) ? $counterpart : '/zh';
-	$langLabel = '中文';
-}
+// The language switcher points at the mirror of the page actually being
+// viewed when it exists, falling back to that language's homepage
+// otherwise, rather than always sending readers to /.
+$otherLang = Locale::other($lang);
+$counterpart = Locale::to($normalizedPath, $otherLang);
+$langHref = $siteLinks->exists($counterpart) ? $counterpart : Locale::to('/', $otherLang);
+$langLabel = $chrome['switch'];
 ?>
 <!DOCTYPE html>
-<html lang="en-US">
+<html lang="<?= htmlspecialchars(Locale::htmlLang($lang), ENT_QUOTES, 'UTF-8') ?>">
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
@@ -261,10 +338,14 @@ if ($normalizedPath === '/zh' || str_starts_with($normalizedPath, '/zh/')) {
 	<!-- Category directory layer. Scoped to body.cat-directory-page; builds on home-v2. -->
 	<link rel="stylesheet" href="/assets/css/category-page.css" media="all" />
 	<?php endif; ?>
+	<?php if ($isPost || $isArchive): ?>
+	<!-- Article and listing layer. Scoped to body.post-v2 / body.archive-v2; builds on home-v2. -->
+	<link rel="stylesheet" href="/assets/css/post-page.css" media="all" />
+	<?php endif; ?>
 
 	<script src="https://masterbadminto.wpenginepowered.com/wp-includes/js/jquery/jquery.min.js"></script>
 </head>
-<body class="wp-theme-gon wp-child-theme-gon-child header-v2 wide layout-fullwidth ts_desktop<?= $usesHomeVisual ? ' home-v2' : '' ?><?= $isCategoryIndex ? ' cat-directory-page' : '' ?>">
+<body class="wp-theme-gon wp-child-theme-gon-child header-v2 wide layout-fullwidth ts_desktop<?= $usesHomeVisual ? ' home-v2' : '' ?><?= $isCategoryIndex ? ' cat-directory-page' : '' ?><?= $isPost ? ' post-v2' : '' ?><?= $isArchive ? ' archive-v2' : '' ?>">
 <div id="page" class="hfeed site">
 
 	<header class="site-header">
@@ -272,26 +353,26 @@ if ($normalizedPath === '/zh' || str_starts_with($normalizedPath, '/zh/')) {
 		<div class="topbar">
 			<div class="topbar-inner">
 				<img src="/wp-content/uploads/2016/09/icon-badminton-1.png" alt="" />
-				<a class="beginner-link" href="/category/badminton-videos/badminton-basics.html">Are you a beginner? Click Here</a>
+				<a class="beginner-link" href="<?= htmlspecialchars($beginnerHref, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($chrome['beginner'], ENT_QUOTES, 'UTF-8') ?></a>
 			</div>
 		</div>
 		<?php endif; ?>
 
 		<div class="header-middle">
 			<div class="header-middle-inner">
-				<a class="site-logo" href="/">
-					<img src="https://masterbadminto.wpenginepowered.com/wp-content/uploads/2016/05/masw.png" alt="Master Badminton" title="Master Badminton" />
+				<a class="site-logo" href="<?= htmlspecialchars($localize('/'), ENT_QUOTES, 'UTF-8') ?>">
+					<img src="https://masterbadminto.wpenginepowered.com/wp-content/uploads/2016/05/masw.png" alt="<?= htmlspecialchars($chrome['logo'], ENT_QUOTES, 'UTF-8') ?>" title="<?= htmlspecialchars($chrome['logo'], ENT_QUOTES, 'UTF-8') ?>" />
 				</a>
-				<form class="site-search" method="get" action="/">
-					<input type="text" value="" name="s" placeholder="Search" autocomplete="off" />
-					<button type="submit" aria-label="Search">&#128269;</button>
+				<form class="site-search" method="get" action="<?= htmlspecialchars($localize('/'), ENT_QUOTES, 'UTF-8') ?>">
+					<input type="text" value="" name="s" placeholder="<?= htmlspecialchars($chrome['search'], ENT_QUOTES, 'UTF-8') ?>" autocomplete="off" />
+					<button type="submit" aria-label="<?= htmlspecialchars($chrome['search'], ENT_QUOTES, 'UTF-8') ?>">&#128269;</button>
 				</form>
 			</div>
 		</div>
 
 		<nav class="main-nav">
 			<input type="checkbox" id="nav-toggle" class="nav-toggle-checkbox" />
-			<label for="nav-toggle" class="nav-toggle-btn" aria-label="Toggle navigation menu"><span></span><span></span><span></span></label>
+			<label for="nav-toggle" class="nav-toggle-btn" aria-label="<?= htmlspecialchars($chrome['menu'], ENT_QUOTES, 'UTF-8') ?>"><span></span><span></span><span></span></label>
 			<div class="nav-groups">
 			<?php foreach ($navGroups as $groupName => $groupItems): ?>
 				<?php if ($groupItems === []) { continue; } ?>
@@ -299,25 +380,29 @@ if ($normalizedPath === '/zh' || str_starts_with($normalizedPath, '/zh/')) {
 				<?php foreach ($groupItems as $item): ?>
 					<?php $hasChildren = !empty($item['children']); ?>
 					<?php
+						// Both the active test and the rendered href use the
+						// localized target, so "you are here" still lights up
+						// on the Chinese mirror.
+						$itemHref = $hasChildren ? null : $localize($item['href']);
 						$active = $hasChildren
 							? array_reduce(
 								$item['children'],
-								static fn (bool $carry, array $child): bool => $carry || $isLinkActive($child['href']),
+								fn (bool $carry, array $child): bool => $carry || $isLinkActive($localize($child['href'])),
 								false,
 							)
-							: $isLinkActive($item['href']);
+							: $isLinkActive($itemHref);
 					?>
 					<?php $isMega = $hasChildren && count($item['children']) > 4; ?>
 					<li class="nav-item<?= $active ? ' is-active' : '' ?><?= $hasChildren ? ' has-children' : '' ?><?= isset($item['variant']) ? ' nav-item-' . htmlspecialchars($item['variant'], ENT_QUOTES, 'UTF-8') : '' ?>">
 						<?php if ($hasChildren): ?>
-							<a href="#" class="nav-parent" aria-haspopup="true"><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></a>
+							<a href="#" class="nav-parent" aria-haspopup="true"><?= htmlspecialchars($navLabel($item), ENT_QUOTES, 'UTF-8') ?></a>
 							<ul class="nav-dropdown<?= $isMega ? ' nav-dropdown-mega' : '' ?>">
 								<?php foreach ($item['children'] as $child): ?>
-									<li><a href="<?= htmlspecialchars($child['href'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($child['label'], ENT_QUOTES, 'UTF-8') ?></a></li>
+									<li><a href="<?= htmlspecialchars($localize($child['href']), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($navLabel($child), ENT_QUOTES, 'UTF-8') ?></a></li>
 								<?php endforeach; ?>
 							</ul>
 						<?php else: ?>
-							<a href="<?= htmlspecialchars($item['href'], ENT_QUOTES, 'UTF-8') ?>"<?= isset($item['target']) ? ' target="' . htmlspecialchars($item['target'], ENT_QUOTES, 'UTF-8') . '"' : '' ?>><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></a>
+							<a href="<?= htmlspecialchars($itemHref, ENT_QUOTES, 'UTF-8') ?>"<?= isset($item['target']) ? ' target="' . htmlspecialchars($item['target'], ENT_QUOTES, 'UTF-8') . '"' : '' ?>><?= htmlspecialchars($navLabel($item), ENT_QUOTES, 'UTF-8') ?></a>
 						<?php endif; ?>
 					</li>
 				<?php endforeach; ?>
@@ -326,12 +411,29 @@ if ($normalizedPath === '/zh' || str_starts_with($normalizedPath, '/zh/')) {
 			</div>
 		</nav>
 
-		<?php if ($categoryHero !== null): ?>
-		<section class="page-hero">
+		<?php if ($hero !== null): ?>
+		<?php
+			// Two shapes of title: the directory pages set lead/key for the
+			// two-tone display treatment, article and listing pages hand up
+			// their own heading as one string.
+			$heroTwoTone = isset($hero['lead'], $hero['key']);
+		?>
+		<section class="page-hero<?= isset($hero['variant']) ? ' page-hero-' . htmlspecialchars($hero['variant'], ENT_QUOTES, 'UTF-8') : '' ?>">
 			<div class="page-hero-inner">
-				<p class="page-hero-eyebrow"><?= htmlspecialchars($categoryHero['eyebrow'], ENT_QUOTES, 'UTF-8') ?></p>
-				<h1 class="page-hero-title"><span class="v2-head-lead"><?= htmlspecialchars($categoryHero['lead'], ENT_QUOTES, 'UTF-8') ?></span> <span class="v2-head-key"><?= htmlspecialchars($categoryHero['key'], ENT_QUOTES, 'UTF-8') ?></span></h1>
-				<p class="page-hero-blurb"><?= htmlspecialchars($categoryHero['blurb'], ENT_QUOTES, 'UTF-8') ?></p>
+				<?php if (($hero['eyebrow'] ?? '') !== ''): ?>
+				<p class="page-hero-eyebrow"><?= htmlspecialchars($hero['eyebrow'], ENT_QUOTES, 'UTF-8') ?></p>
+				<?php endif; ?>
+				<?php if ($heroTwoTone): ?>
+				<h1 class="page-hero-title"><span class="v2-head-lead"><?= htmlspecialchars($hero['lead'], ENT_QUOTES, 'UTF-8') ?></span> <span class="v2-head-key"><?= htmlspecialchars($hero['key'], ENT_QUOTES, 'UTF-8') ?></span></h1>
+				<?php elseif (($hero['title'] ?? '') !== ''): ?>
+				<h1 class="page-hero-title"><?= htmlspecialchars($hero['title'], ENT_QUOTES, 'UTF-8') ?></h1>
+				<?php endif; ?>
+				<?php if (($hero['blurb'] ?? '') !== ''): ?>
+				<p class="page-hero-blurb"><?= htmlspecialchars($hero['blurb'], ENT_QUOTES, 'UTF-8') ?></p>
+				<?php endif; ?>
+				<?php if (($hero['meta'] ?? '') !== ''): ?>
+				<p class="page-hero-meta"><?= htmlspecialchars($hero['meta'], ENT_QUOTES, 'UTF-8') ?></p>
+				<?php endif; ?>
 			</div>
 		</section>
 		<?php endif; ?>
@@ -340,7 +442,7 @@ if ($normalizedPath === '/zh' || str_starts_with($normalizedPath, '/zh/')) {
 		<section class="hero-cta">
 			<div class="hero-cta-inner">
 				<img class="hero-cta-icon" src="/wp-content/uploads/2016/09/icon-badminton-1.png" alt="" />
-				<a class="hero-cta-btn" href="/category/badminton-videos/badminton-basics.html">Are you a beginner? Click Here</a>
+				<a class="hero-cta-btn" href="<?= htmlspecialchars($beginnerHref, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($chrome['beginner'], ENT_QUOTES, 'UTF-8') ?></a>
 			</div>
 		</section>
 		<?php endif; ?>

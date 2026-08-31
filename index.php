@@ -7,13 +7,16 @@ require __DIR__ . '/app/bootstrap.php';
 use App\Content\CategoryDirectory;
 use App\Core\ContentCache;
 use App\Core\ContentExtractor;
+use App\Core\LinkRewriter;
 use App\Core\PageContent;
 use App\Core\Request;
 use App\Core\Router;
+use App\Core\SiteLinks;
 use App\Layout\Layout;
 
 $request = new Request($_SERVER);
 $router = new Router(__DIR__);
+$siteLinks = new SiteLinks(__DIR__);
 $layout = new Layout(__DIR__ . '/templates/header.php', __DIR__ . '/templates/footer.php');
 
 // The category directory has no exported file of its own: it is built
@@ -58,7 +61,7 @@ if ($sourceFile === null) {
 }
 
 $cache = new ContentCache(__DIR__ . '/storage/cache', ContentExtractor::fingerprint());
-$extractor = new ContentExtractor();
+$extractor = new ContentExtractor(__DIR__, new LinkRewriter(__DIR__, $siteLinks));
 
 $page = $cache->remember($sourceFile, static fn (): PageContent => $extractor->extract($sourceFile));
 
