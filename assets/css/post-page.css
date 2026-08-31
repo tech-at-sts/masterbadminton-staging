@@ -1,0 +1,694 @@
+/*
+ * Article pages and post listings.
+ *
+ * The visual language is the homepage's, so home-v2.css loads first
+ * (templates/header.php gives these pages the same body.home-v2 class,
+ * which is what supplies the charcoal photographic header, the pill nav,
+ * the white rounded content panel and the black closing band) and this file
+ * adds only what an article needs on top: the hero that carries the post
+ * title, a contents rail beside the prose, and a type scale for a thousand
+ * pages of legacy WordPress body copy.
+ *
+ * Everything is scoped under body.post-v2 (single articles) or
+ * body.archive-v2 (the Blog page and the category archives), so no other
+ * page can pick these rules up. Tokens (--v2-*) come from home-v2.css.
+ *
+ * A note on the legacy markup this has to dress: the exported body copy
+ * carries inline colours, inline widths and a per-page <style> block that
+ * ContentExtractor re-emits inside <body> - later in document order than
+ * this file, and sometimes carrying !important. Rules that have to beat
+ * that carry an extra class of specificity, and the prose colour is
+ * deliberately picked to sit next to the inline #333 rather than to fight
+ * it, so paragraphs that keep their own colour still look like the rest.
+ */
+
+/* ---------------------------------------------------------------------
+ * Hero - the charcoal band the page title sits in, shared with the
+ * category directory's own hero.
+ * ------------------------------------------------------------------ */
+body.post-v2 .page-hero,
+body.archive-v2 .page-hero {
+	position: relative;
+	background: transparent;
+}
+
+body.post-v2 .page-hero-inner,
+body.archive-v2 .page-hero-inner {
+	max-width: 1240px;
+	margin: 0 auto;
+	padding: 58px 34px 92px;
+}
+
+body.post-v2 .page-hero-eyebrow,
+body.archive-v2 .page-hero-eyebrow {
+	font-family: 'Outfit', Arial, sans-serif;
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 2.4px;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, .66);
+	margin: 0 0 14px;
+}
+
+/* An article title is a sentence, not a two-word display line, so it takes
+ * a smaller step of the same Anton scale the directory hero uses - and a
+ * measure, so a long headline breaks into two or three readable lines
+ * instead of running the full width of the band. */
+body.post-v2 .page-hero-title,
+body.archive-v2 .page-hero-title {
+	font-family: 'Anton', 'Raleway', Impact, sans-serif;
+	font-weight: 400;
+	text-transform: uppercase;
+	letter-spacing: -0.3px;
+	line-height: 1.04;
+	font-size: clamp(30px, 4.2vw, 56px);
+	color: #fff;
+	margin: 0;
+	max-width: 17ch;
+}
+
+body.archive-v2 .page-hero-title { max-width: 20ch; }
+
+body.post-v2 .page-hero-meta,
+body.archive-v2 .page-hero-meta {
+	font-family: 'Outfit', Arial, sans-serif;
+	font-size: 14px;
+	font-weight: 500;
+	letter-spacing: .4px;
+	color: rgba(255, 255, 255, .72);
+	margin: 20px 0 0;
+	display: inline-flex;
+	align-items: center;
+	gap: 9px;
+	background: rgba(255, 255, 255, .10);
+	border: 1px solid rgba(255, 255, 255, .18);
+	border-radius: 999px;
+	padding: 7px 16px;
+}
+
+body.post-v2 .page-hero-meta::before,
+body.archive-v2 .page-hero-meta::before {
+	content: '';
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--v2-accent);
+}
+
+/* CJK has no lowercase to uppercase and no word spacing to tighten, so the
+ * mirror's headings drop both and gain a touch of line height. */
+body.post-v2:lang(zh) .page-hero-title,
+body.archive-v2:lang(zh) .page-hero-title,
+html[lang^="zh"] body.post-v2 .page-hero-title,
+html[lang^="zh"] body.archive-v2 .page-hero-title {
+	text-transform: none;
+	letter-spacing: 0;
+	line-height: 1.24;
+	max-width: 22ch;
+}
+
+/* ---------------------------------------------------------------------
+ * Breadcrumb rail, at the top of the white panel.
+ * ------------------------------------------------------------------ */
+body.post-v2 .post-breadcrumb,
+body.archive-v2 .post-breadcrumb {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0 8px;
+	padding: 18px 0 14px;
+	margin: 0 0 6px;
+	border-bottom: 1px solid rgba(24, 20, 16, .09);
+}
+
+body.post-v2 .post-breadcrumb-link,
+body.archive-v2 .post-breadcrumb-link {
+	font-family: 'Outfit', Arial, sans-serif;
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--v2-body);
+	text-decoration: none;
+	max-width: 34ch;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+body.post-v2 .post-breadcrumb-link:hover,
+body.archive-v2 .post-breadcrumb-link:hover { color: var(--v2-accent-strong); }
+
+body.post-v2 .post-breadcrumb-link + .post-breadcrumb-link::before,
+body.archive-v2 .post-breadcrumb-link + .post-breadcrumb-link::before {
+	content: '/';
+	margin-right: 8px;
+	color: var(--v2-grey);
+	font-weight: 400;
+}
+
+/* The trail's own last step repeats the title already in the hero, so it is
+ * shown only as far as it is useful for going back up. */
+body.post-v2 .post-breadcrumb-link:last-child,
+body.archive-v2 .post-breadcrumb-link:last-child {
+	color: var(--v2-ink);
+	font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------
+ * Two-column shell: contents rail beside the prose.
+ * ------------------------------------------------------------------ */
+body.post-v2 .post-layout {
+	display: grid;
+	grid-template-columns: 262px minmax(0, 1fr);
+	gap: 40px;
+	padding: 20px 0 8px;
+	align-items: start;
+}
+
+body.post-v2 .post-layout-single { grid-template-columns: minmax(0, 1fr); }
+body.post-v2 .post-main { min-width: 0; }
+
+body.post-v2 .post-rail-inner {
+	position: -webkit-sticky;
+	position: sticky;
+	top: 16px;
+	background: var(--v2-field);
+	border-radius: 24px;
+	padding: 22px 18px;
+}
+
+body.post-v2 .post-rail-title {
+	font-family: 'Outfit', Arial, sans-serif;
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 1.8px;
+	text-transform: uppercase;
+	color: var(--v2-body);
+	margin: 0 0 12px;
+	padding: 0 8px;
+}
+
+body.post-v2 .post-toc,
+body.post-v2 .post-toc-item {
+	list-style: none !important;
+	list-style-type: none !important;
+	margin: 0;
+	padding: 0;
+}
+
+body.post-v2 .post-toc { max-height: 58vh; overflow-y: auto; }
+
+body.post-v2 .post-toc-item a {
+	display: block;
+	padding: 8px 10px;
+	border-radius: 11px;
+	font-family: 'Outfit', Arial, sans-serif;
+	font-size: 13.5px;
+	font-weight: 500;
+	line-height: 1.4;
+	color: var(--v2-body);
+	text-decoration: none;
+	transition: background .15s ease, color .15s ease;
+}
+
+body.post-v2 .post-toc-level-3 a { padding-left: 22px; font-size: 13px; }
+
+body.post-v2 .post-toc-item a:hover,
+body.post-v2 .post-toc-item a:focus { background: #fff; color: var(--v2-ink); }
+
+body.post-v2 .post-toc-item.is-current a {
+	background: var(--v2-accent-strong);
+	color: #fff;
+}
+
+/* Share widgets, moved out of the headline area where the theme floated
+ * them against the title. The Facebook like button is a 450px iframe the
+ * export clipped with an inline style; the clip lives here now. */
+body.post-v2 .post-share {
+	margin-top: 22px;
+	padding-top: 18px;
+	border-top: 1px solid rgba(24, 20, 16, .09);
+}
+
+body.post-v2 .post-share .post-rail-title { margin-bottom: 10px; }
+
+body.post-v2 .post-share-widget {
+	display: block;
+	max-width: 100%;
+	overflow: hidden;
+}
+
+body.post-v2 .post-share .fb-pg-lk {
+	max-width: 52px;
+	max-height: 65px;
+}
+
+body.post-v2 .post-share iframe { border: 0; max-width: 100%; }
+
+/* ---------------------------------------------------------------------
+ * Body copy
+ * ------------------------------------------------------------------ */
+body.post-v2 .post-body {
+	font-family: 'Outfit', 'Lato', Arial, sans-serif;
+	font-size: 17px;
+	line-height: 1.78;
+	/* Deliberately close to the #333 the exported pages set inline, so
+	 * paragraphs that keep their own colour still match their neighbours. */
+	color: #33383a;
+	max-width: 74ch;
+}
+
+body.post-v2 .post-body p,
+body.post-v2 .post-body li {
+	font-family: 'Outfit', 'Lato', Arial, sans-serif;
+	font-size: 17px;
+	line-height: 1.78;
+}
+
+body.post-v2 .post-body p { margin: 0 0 20px; }
+
+body.post-v2 .post-body a {
+	color: var(--v2-accent-strong);
+	text-decoration: none;
+	box-shadow: inset 0 -1px 0 rgba(168, 82, 31, .35);
+}
+
+body.post-v2 .post-body a:hover {
+	color: var(--v2-ink);
+	box-shadow: inset 0 -1px 0 var(--v2-ink);
+}
+
+/* Section headings - the real <h2>/<h3> of the page plus the paragraphs
+ * PostLayout re-tagged as headings. Same Anton step the category page uses
+ * for its section titles, so an article reads as part of the same site. */
+body.post-v2 .post-body .post-heading,
+body.post-v2 .post-body h2,
+body.post-v2 .post-body h3,
+body.post-v2 .post-body h4 {
+	font-family: 'Anton', 'Raleway', Impact, sans-serif;
+	font-weight: 400;
+	text-transform: uppercase;
+	letter-spacing: -0.2px;
+	line-height: 1.12;
+	color: var(--v2-ink);
+	scroll-margin-top: 20px;
+}
+
+body.post-v2 .post-body .post-heading,
+body.post-v2 .post-body h2 {
+	font-size: clamp(23px, 2.5vw, 31px);
+	margin: 44px 0 16px;
+	padding-top: 26px;
+	border-top: 1px solid rgba(24, 20, 16, .10);
+}
+
+body.post-v2 .post-body h3 { font-size: 21px; margin: 32px 0 12px; }
+body.post-v2 .post-body h4 { font-size: 18px; margin: 26px 0 10px; }
+
+/* The heading text is the export's own, inline colours and all; the display
+ * treatment only works if the ink comes from here. */
+body.post-v2 .post-body .post-heading span,
+body.post-v2 .post-body .post-heading b,
+body.post-v2 .post-body .post-heading strong,
+body.post-v2 .post-body h2 span,
+body.post-v2 .post-body h3 span {
+	color: inherit !important;
+	font-size: inherit !important;
+	font-weight: inherit !important;
+}
+
+body.post-v2 .post-body .post-heading br { display: none; }
+
+/* The first section heading opens the article, so it needs no rule above it. */
+body.post-v2 .post-body .Liner > .post-heading:first-child,
+body.post-v2 .post-body > .post-heading:first-child {
+	border-top: 0;
+	padding-top: 0;
+	margin-top: 8px;
+}
+
+body.post-v2 .post-body ul,
+body.post-v2 .post-body ol {
+	margin: 0 0 22px;
+	padding-left: 22px;
+}
+
+body.post-v2 .post-body li {
+	margin: 0 0 9px;
+	color: #33383a;
+	list-style-position: outside;
+}
+
+body.post-v2 .post-body ul > li { list-style-type: disc; }
+body.post-v2 .post-body ol > li { list-style-type: decimal; }
+
+body.post-v2 .post-body img {
+	max-width: 100%;
+	height: auto;
+	border-radius: 14px;
+}
+
+body.post-v2 .post-body .ImageBlock { margin: 0 0 14px; }
+body.post-v2 .post-body .ImageBlockCenter { text-align: center; }
+
+body.post-v2 .post-body iframe,
+body.post-v2 .post-body embed,
+body.post-v2 .post-body object { max-width: 100%; }
+
+body.post-v2 .post-body blockquote {
+	margin: 26px 0;
+	padding: 4px 0 4px 22px;
+	border-left: 3px solid var(--v2-accent);
+	color: var(--v2-ink);
+	font-size: 18px;
+}
+
+body.post-v2 .post-body hr {
+	border: 0;
+	border-top: 1px solid rgba(24, 20, 16, .12);
+	margin: 32px 0;
+}
+
+/* Legacy layout tables (picture beside a paragraph). They carry inline
+ * percentage widths, so they are given a field to sit on rather than being
+ * re-gridded - and they stack below the phone breakpoint. */
+body.post-v2 .post-body table {
+	width: 100% !important;
+	max-width: 100%;
+	border-collapse: collapse;
+	margin: 0 0 26px;
+}
+
+/* The exported cells carry inline percentage widths sized for a 1140px
+ * theme column; letting the browser size them to their contents instead
+ * keeps the picture cell to the picture and gives the paragraph the rest. */
+body.post-v2 .post-body table td {
+	width: auto !important;
+	padding: 14px 16px;
+	vertical-align: top;
+	border-bottom: 1px solid rgba(24, 20, 16, .08);
+}
+
+body.post-v2 .post-body table td p:last-child { margin-bottom: 0; }
+
+/* Forms carried by the standalone pages (the contact form), dressed to
+ * match the search field and buttons the rest of the site uses. */
+body.post-v2 .post-body input[type="text"],
+body.post-v2 .post-body input[type="email"],
+body.post-v2 .post-body input[type="tel"],
+body.post-v2 .post-body textarea {
+	width: 100%;
+	max-width: 520px;
+	box-sizing: border-box;
+	background: var(--v2-field);
+	border: 1px solid transparent;
+	border-radius: 14px;
+	padding: 14px 18px;
+	font-family: 'Outfit', Arial, sans-serif;
+	font-size: 15px;
+	color: var(--v2-ink);
+	outline: none;
+	margin: 0 0 14px;
+}
+
+body.post-v2 .post-body textarea { min-height: 170px; border-radius: 18px; resize: vertical; }
+
+body.post-v2 .post-body input[type="text"]:focus,
+body.post-v2 .post-body input[type="email"]:focus,
+body.post-v2 .post-body input[type="tel"]:focus,
+body.post-v2 .post-body textarea:focus {
+	background: #fff;
+	border-color: var(--v2-accent);
+	box-shadow: 0 0 0 4px rgba(235, 125, 46, .16);
+}
+
+body.post-v2 .post-body input[type="submit"],
+body.post-v2 .post-body button[type="submit"] {
+	background: var(--v2-ink);
+	color: #fff;
+	border: 0;
+	border-radius: 999px;
+	padding: 14px 30px;
+	font-family: 'Outfit', Arial, sans-serif;
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background .15s ease;
+}
+
+body.post-v2 .post-body input[type="submit"]:hover,
+body.post-v2 .post-body button[type="submit"]:hover { background: var(--v2-accent-strong); }
+
+/* ---------------------------------------------------------------------
+ * The theme's leftovers: ad slots, the comment block, prev/next.
+ * ------------------------------------------------------------------ */
+body.post-v2 .post-slot-ad {
+	margin: 26px auto !important;
+	max-width: 100% !important;
+	text-align: center;
+}
+
+body.post-v2 .post-comments {
+	background: var(--v2-field);
+	border-radius: 24px;
+	padding: 26px 26px 28px;
+	margin: 40px 0 0;
+}
+
+body.post-v2 .post-comments h3 {
+	font-family: 'Outfit', Arial, sans-serif;
+	font-weight: 600;
+	font-size: 19px;
+	color: var(--v2-ink);
+	margin: 0 0 8px;
+	text-transform: none;
+	letter-spacing: 0;
+	border: 0;
+	padding: 0;
+}
+
+body.post-v2 .post-comments p {
+	font-size: 15px;
+	color: var(--v2-body);
+	margin: 0 0 16px;
+}
+
+body.post-v2 .post-pager {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 14px;
+	margin: 40px 0 8px;
+}
+
+body.post-v2 .post-pager-link {
+	flex: 1 1 220px;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	background: var(--v2-field);
+	border-radius: 18px;
+	padding: 18px 22px;
+	font-family: 'Outfit', Arial, sans-serif;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--v2-ink);
+	text-decoration: none;
+	box-shadow: none;
+	transition: background .15s ease, transform .15s ease;
+}
+
+body.post-v2 .post-pager-link:hover {
+	background: #e5e5e2;
+	color: var(--v2-ink);
+	transform: translateY(-1px);
+	box-shadow: none;
+}
+
+body.post-v2 .post-pager-prev::before { content: '\2190'; color: var(--v2-accent-strong); font-size: 17px; }
+body.post-v2 .post-pager-next { justify-content: flex-end; }
+body.post-v2 .post-pager-next::after { content: '\2192'; color: var(--v2-accent-strong); font-size: 17px; }
+
+/* Empty theme wrappers that would otherwise leave gaps in the new flow. */
+body.post-v2 .entry-format:empty,
+body.post-v2 .meta-bottom-wrapper:empty { display: none; }
+
+/* ---------------------------------------------------------------------
+ * Listings - the Blog page and the category archives, as a card grid.
+ * ------------------------------------------------------------------ */
+body.archive-v2 .post-cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+	gap: 20px;
+	padding: 22px 0 8px;
+}
+
+body.archive-v2 .post-card {
+	display: flex;
+	flex-direction: column;
+	background: var(--v2-field);
+	border-radius: 24px;
+	padding: 26px 26px 24px;
+	margin: 0;
+	border: 0;
+	min-width: 0;
+	transition: box-shadow .15s ease, transform .15s ease;
+}
+
+body.archive-v2 .post-card:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 14px 32px rgba(24, 20, 16, .12);
+}
+
+body.archive-v2 .post-card .entry-format,
+body.archive-v2 .post-card .entry-info,
+body.archive-v2 .post-card .entry-content,
+body.archive-v2 .post-card .entry-summary { padding: 0; margin: 0; border: 0; background: none; }
+
+body.archive-v2 .post-card .entry-title {
+	font-family: 'Outfit', Arial, sans-serif;
+	font-size: 19px;
+	font-weight: 600;
+	line-height: 1.3;
+	margin: 0 0 12px;
+	text-transform: none;
+	letter-spacing: 0;
+}
+
+body.archive-v2 .post-card .entry-title a {
+	color: var(--v2-ink);
+	text-decoration: none;
+}
+
+body.archive-v2 .post-card .entry-title a:hover { color: var(--v2-accent-strong); }
+
+body.archive-v2 .post-card .short-content {
+	position: relative;
+	font-family: 'Outfit', 'Lato', Arial, sans-serif;
+	font-size: 14.5px;
+	line-height: 1.7;
+	color: var(--v2-body);
+	/* The excerpt is the export's own, cut where the export cut it; this
+	 * only caps how much of it the card shows, and fades the last line so
+	 * the cut reads as deliberate rather than as a rendering fault. */
+	max-height: 8.5em;
+	overflow: hidden;
+	margin: 0 0 18px;
+}
+
+body.archive-v2 .post-card .short-content::after {
+	content: '';
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 2.4em;
+	background: linear-gradient(to bottom, rgba(238, 238, 236, 0), var(--v2-field));
+	pointer-events: none;
+}
+
+body.archive-v2 .post-card .short-content h2,
+body.archive-v2 .post-card .short-content h3 {
+	font-family: 'Outfit', Arial, sans-serif;
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--v2-ink);
+	margin: 0 0 6px;
+	text-transform: none;
+	letter-spacing: 0;
+}
+
+body.archive-v2 .post-card .short-content img { display: none; }
+
+body.archive-v2 .post-card-more {
+	align-self: flex-start;
+	margin-top: auto;
+	background: var(--v2-ink);
+	color: #fff;
+	font-family: 'Outfit', Arial, sans-serif;
+	font-size: 13px;
+	font-weight: 600;
+	letter-spacing: .3px;
+	border-radius: 999px;
+	padding: 11px 22px;
+	text-decoration: none;
+	border: 0;
+	transition: background .15s ease;
+}
+
+body.archive-v2 .post-card-more:hover { background: var(--v2-accent-strong); color: #fff; }
+
+body.archive-v2 .post-archive-pager {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	justify-content: center;
+	margin: 30px 0 10px;
+}
+
+body.archive-v2 .post-archive-pager a,
+body.archive-v2 .post-archive-pager span {
+	font-family: 'Outfit', Arial, sans-serif;
+	font-size: 14px;
+	font-weight: 600;
+	border-radius: 12px;
+	padding: 10px 15px;
+	background: var(--v2-field);
+	color: var(--v2-ink);
+	text-decoration: none;
+}
+
+body.archive-v2 .post-archive-pager .current,
+body.archive-v2 .post-archive-pager a:hover { background: var(--v2-ink); color: #fff; }
+
+/* ---------------------------------------------------------------------
+ * Responsive - the rail moves above the prose and stops following.
+ * ------------------------------------------------------------------ */
+@media (max-width: 1000px) {
+	body.post-v2 .post-layout {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 22px;
+	}
+
+	body.post-v2 .post-rail-inner {
+		position: static;
+		padding: 16px 16px 14px;
+		border-radius: 18px;
+	}
+
+	body.post-v2 .post-toc { max-height: none; }
+	body.post-v2 .post-body { max-width: none; }
+}
+
+@media (max-width: 900px) {
+	body.post-v2 .page-hero-inner,
+	body.archive-v2 .page-hero-inner { padding: 44px 20px 78px; }
+}
+
+@media (max-width: 640px) {
+	body.post-v2 .page-hero-inner,
+	body.archive-v2 .page-hero-inner { padding: 34px 20px 62px; }
+	body.post-v2 .page-hero-title,
+	body.archive-v2 .page-hero-title { max-width: none; }
+
+	body.post-v2 .post-body,
+	body.post-v2 .post-body p,
+	body.post-v2 .post-body li { font-size: 16px; }
+
+	body.post-v2 .post-breadcrumb-link,
+	body.archive-v2 .post-breadcrumb-link { max-width: 18ch; }
+
+	/* Layout tables stop being layout: each cell becomes its own block, so
+	 * the picture sits above the paragraph it belongs to. */
+	body.post-v2 .post-body table,
+	body.post-v2 .post-body tbody,
+	body.post-v2 .post-body tr,
+	body.post-v2 .post-body td {
+		display: block;
+		width: 100% !important;
+	}
+
+	body.post-v2 .post-body table td { padding: 10px 0; border-bottom: 0; }
+	body.post-v2 .post-body table tr { border-bottom: 1px solid rgba(24, 20, 16, .08); padding-bottom: 10px; margin-bottom: 14px; }
+
+	body.archive-v2 .post-cards { grid-template-columns: minmax(0, 1fr); }
+	body.archive-v2 .post-card { padding: 22px 20px; }
+}
