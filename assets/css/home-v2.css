@@ -458,6 +458,15 @@ body.home-v2 .cat-accordion-body a {
 	font-weight: 500;
 }
 
+/* Legacy content wraps some links in <strong>/<b> and not others; force a
+   consistent weight regardless of that markup. */
+body.home-v2 .cat-accordion-body a strong,
+body.home-v2 .cat-accordion-body a b,
+body.home-v2 .cat-accordion-body strong,
+body.home-v2 .cat-accordion-body b {
+	font-weight: 500;
+}
+
 body.home-v2 .cat-accordion-body a:hover { color: var(--v2-accent-strong); }
 
 /* ---------------------------------------------------------------------
