@@ -44,7 +44,6 @@ final class HomepageLayout
 
         $this->buildQuickNav($dom, $xpath, $sections);
         $this->reflowIntro($dom, $xpath);
-        $this->relocateSocialModule($dom, $xpath);
         $this->splitDisplayHeadings($xpath);
     }
 
@@ -103,9 +102,9 @@ final class HomepageLayout
     /**
      * The eight-icon strip (ul#thct) only exists on pages built from the
      * homepage layout, which makes it a reliable marker for the rest of the
-     * transforms. It matters: the Facebook block and the WPBakery text
-     * column that the reflow targets also appear on well over a thousand
-     * article pages, and those pages are out of scope here.
+     * transforms. It matters: the WPBakery text column that the reflow
+     * targets also appears on well over a thousand article pages, and those
+     * pages are out of scope here.
      */
     private function isHomepageLayout(\DOMXPath $xpath): bool
     {
@@ -330,36 +329,6 @@ final class HomepageLayout
         }
 
         $list->setAttribute('class', trim($list->getAttribute('class') . ' home-intro-list'));
-    }
-
-    /**
-     * Demote the Facebook band. The whole WPBakery row - "Like Us on
-     * Facebook", the like iframe, "Facebook Comments", the comments embed
-     * and the trailing widgets - is moved into a compact <aside> as a single
-     * unit, so nothing inside it is edited or reordered.
-     */
-    private function relocateSocialModule(\DOMDocument $dom, \DOMXPath $xpath): void
-    {
-        $comments = $this->firstByClass($xpath, 'fb-comments');
-
-        if ($comments === null) {
-            return;
-        }
-
-        $row = $xpath->query(
-            'ancestor::div[contains(concat(" ", normalize-space(@class), " "), " vc_row ")][1]',
-            $comments,
-        )->item(0);
-
-        if (!$row instanceof \DOMElement || $row->parentNode === null) {
-            return;
-        }
-
-        $aside = $dom->createElement('aside');
-        $aside->setAttribute('class', 'home-social');
-
-        $row->parentNode->replaceChild($aside, $row);
-        $aside->appendChild($row);
     }
 
     private function firstByClass(\DOMXPath $xpath, string $class, ?\DOMElement $context = null): ?\DOMElement

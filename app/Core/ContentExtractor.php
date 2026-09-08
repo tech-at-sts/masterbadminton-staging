@@ -128,6 +128,7 @@ final class ContentExtractor
         $this->stripSidebar($xpath);
         $this->stripLegacyFooter($xpath, $main);
         $this->stripLegacyLanguageSwitcher($xpath);
+        $this->stripFacebookWidgets($xpath);
         $this->stripHomeCategoryColumn($dom, $xpath);
         $hasCategorySections = $this->convertCategoryGridToAccordion($dom, $xpath);
 
@@ -244,10 +245,6 @@ final class ContentExtractor
             return;
         }
 
-        // #fb-root is deliberately not in this list: the exported pages
-        // carry the Facebook SDK loader inside the content region, and it
-        // is the only copy on the page, so removing it would leave the
-        // like button and comment embeds dead.
         $query = './/footer[@id="colophon"] | .//div[@id="to-top"]';
 
         foreach (iterator_to_array($xpath->query($query, $main)) as $node) {
@@ -271,6 +268,98 @@ final class ContentExtractor
 
         foreach (iterator_to_array($xpath->query($query)) as $node) {
             $node->parentNode?->removeChild($node);
+        }
+    }
+
+    /**
+     * Every exported article carries some combination of a Facebook Like
+     * button, the Facebook Comments plugin, a "Like Masterbadminton.com?"
+     * prompt built from the deprecated <like>/<like-box> XFBML tags, a
+     * Facebook page-plugin iframe, and the Facebook SDK loader (#fb-root
+     * plus the connect.facebook.net script) - all marked with a "fb-"
+     * prefixed class or one of a handful of fixed ids across the exported
+     * tree. The site drops all Facebook integration, so every one of these
+     * is stripped here - the one place all legacy content passes through -
+     * rather than editing the thousand-plus exported files.
+     */
+    private function stripFacebookWidgets(\DOMXPath $xpath): void
+    {
+        // The homepage's "Like Us on Facebook" / "Facebook Comments" band is
+        // one WPBakery row: two headings plus the like button and comments
+        // widgets, built as a single unit. The headings carry no "fb-"
+        // class of their own, so if the widgets inside were stripped node
+        // by node the headings would survive as orphaned text - the whole
+        // row is dropped first instead, while the widget markup that
+        // identifies it is still there to find it by.
+        $rowQuery = '//*[contains(concat(" ", normalize-space(@class), " "), " fb-comments ")'
+            . ' or contains(concat(" ", normalize-space(@class), " "), " fb-like ")]'
+            . '/ancestor::div[contains(concat(" ", normalize-space(@class), " "), " vc_row ")][1]';
+
+        foreach (iterator_to_array($xpath->query($rowQuery)) as $row) {
+            $row->parentNode?->removeChild($row);
+        }
+
+        // <fb:comments-count> - a Facebook comment-count XFBML tag, parsed
+        // by the HTML parser as a plain <comments-count> element with its
+        // namespace prefix dropped - sits in a "Comments" heading plus a
+        // "N comments" line built solely to hold it. With the tag gone the
+        // count is just blank, so the heading and the sentence are dropped
+        // as a unit rather than left behind reading "Comments" / " comments".
+        foreach (iterator_to_array($xpath->query('//comments-count')) as $tag) {
+            $paragraph = $tag->parentNode;
+
+            if (!$paragraph instanceof \DOMElement || strtolower($paragraph->nodeName) !== 'p') {
+                $tag->parentNode?->removeChild($tag);
+                continue;
+            }
+
+            $heading = $xpath->query('preceding-sibling::*[1][self::h3]', $paragraph)->item(0);
+
+            if ($heading instanceof \DOMElement && trim($heading->textContent) === 'Comments') {
+                $heading->parentNode?->removeChild($heading);
+            }
+
+            $paragraph->parentNode?->removeChild($paragraph);
+        }
+
+        // "Please Like me on Facebook. Thanks!" (and its Chinese counterpart
+        // on the mirror) - a prompt hidden with an inline display:none that
+        // is always the sole content of its own paragraph, so the whole
+        // paragraph goes rather than leaving it empty behind.
+        $hiddenFacebookPrompt = '//b[contains(translate(@style, " ", ""), "display:none")'
+            . ' and contains(., "Facebook")]';
+
+        foreach (iterator_to_array($xpath->query($hiddenFacebookPrompt)) as $prompt) {
+            $paragraph = $xpath->query('ancestor::p[1]', $prompt)->item(0);
+            $target = $paragraph instanceof \DOMElement ? $paragraph : $prompt;
+            $target->parentNode?->removeChild($target);
+        }
+
+        $query = '//*[contains(concat(" ", normalize-space(@class), " "), " fb-")]'
+            . ' | //*[contains(concat(" ", normalize-space(@class), " "), " fblikeste ")]'
+            . ' | //*[contains(concat(" ", normalize-space(@class), " "), " redtagtitlelfb ")]'
+            . ' | //*[@id="fb-root" or @id="frmfb" or @id="COMMENTING"]'
+            . ' | //like | //like-box'
+            . ' | //iframe[contains(@src, "facebook.com")]';
+
+        foreach (iterator_to_array($xpath->query($query)) as $node) {
+            $parent = $node->parentNode;
+            $node->parentNode?->removeChild($node);
+
+            // The iframe's own wrapper carries no id/class of its own and is
+            // left as a visually empty block once the iframe inside it is
+            // gone - drop it too when nothing else is left in it.
+            if ($parent instanceof \DOMElement && $parent->childNodes->length === 0 && trim($parent->textContent ?? '') === '') {
+                $parent->parentNode?->removeChild($parent);
+            }
+        }
+
+        foreach (iterator_to_array($xpath->query('//script[contains(., "connect.facebook.net")]')) as $script) {
+            $script->parentNode?->removeChild($script);
+        }
+
+        foreach (iterator_to_array($xpath->query('//comment()[contains(., "Facebook")]')) as $comment) {
+            $comment->parentNode?->removeChild($comment);
         }
     }
 

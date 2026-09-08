@@ -29,6 +29,7 @@ $navItems = [
 	// top-level nav slot - Techniques is one of the eight cards here, and
 	// "Techniques and Shots" remains under Playing the Game.)
 	['label' => 'Category', 'label_zh' => '分类', 'href' => '/categories'],
+	['label' => 'Where to Play', 'label_zh' => '哪里可以打球', 'href' => '/where-to-play-in-australia.html'],
 	[
 		'label' => 'Playing the Game',
 		'label_zh' => '打球技巧',
@@ -209,7 +210,7 @@ $langLabel = $chrome['switch'];
 <html lang="<?= htmlspecialchars(Locale::htmlLang($lang), ENT_QUOTES, 'UTF-8') ?>">
 <head>
 	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<link rel="shortcut icon" href="/wp-content/uploads/2016/09/favi.png" />
 	<?php /*
 		SiteVisibility::indexable() is off by default, which is what keeps
