@@ -470,59 +470,20 @@ body.home-v2 .cat-accordion-body b {
 body.home-v2 .cat-accordion-body a:hover { color: var(--v2-accent-strong); }
 
 /* ---------------------------------------------------------------------
- * Facebook module
+ * Footer - the black closing band from the reference. .site-footer's own
+ * rules (assets/css/home-ui.css) already give every page the dark
+ * multi-column layout; this only adds the rounded top edge and the
+ * heavier type this layout wears everywhere else.
  * ------------------------------------------------------------------ */
-body.home-v2 .home-social {
-	background: var(--v2-field);
-	border: 0;
-	border-radius: 24px;
-	padding: 26px 26px 28px;
-}
-
-body.home-v2 .home-social h2 {
-	font-family: 'Outfit', Arial, sans-serif;
-	font-weight: 600;
-	color: var(--v2-ink) !important;
-	letter-spacing: .6px;
-}
-
-/* ---------------------------------------------------------------------
- * Footer - the black closing band from the reference.
- * ------------------------------------------------------------------ */
-body.home-v2 #colophon {
-	background: var(--v2-ink);
+body.home-v2 .site-footer {
 	border-radius: 34px 34px 0 0;
 	margin-top: 54px;
-	padding: 20px 0 8px;
 }
 
-body.home-v2 #colophon .menu {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: center;
-	gap: 6px 28px;
-}
-
-body.home-v2 #colophon .menu li { list-style: none; margin: 0; }
-
-body.home-v2 #colophon .menu li a {
-	font-size: 14px;
-	opacity: .85;
-	text-decoration: none;
-}
-
-body.home-v2 #colophon .menu li a:hover { opacity: 1; }
-
-body.home-v2 #colophon .textwidget { text-align: center; margin-top: 14px; }
-
-body.home-v2 #colophon .menu li a,
-body.home-v2 #colophon .textwidget,
-body.home-v2 #colophon .textwidget a {
+body.home-v2 .site-footer-col-title,
+body.home-v2 .site-footer-col a,
+body.home-v2 .site-footer-bottom {
 	font-family: 'Outfit', Arial, sans-serif;
-	color: #fff;
 }
 
 body.home-v2 .lang-switch {
