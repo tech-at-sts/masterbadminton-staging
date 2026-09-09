@@ -29,7 +29,14 @@ $navItems = [
 	// top-level nav slot - Techniques is one of the eight cards here, and
 	// "Techniques and Shots" remains under Playing the Game.)
 	['label' => 'Category', 'label_zh' => '分类', 'href' => '/categories'],
-	['label' => 'Where to Play', 'label_zh' => '哪里可以打球', 'href' => '/where-to-play-in-australia.html'],
+	[
+		'label' => 'Where to Play',
+		'label_zh' => '哪里可以打球',
+		'children' => [
+			['label' => 'Australia', 'label_zh' => '澳大利亚', 'href' => '/where-to-play-in-australia.html'],
+			['label' => 'New York', 'label_zh' => '纽约', 'href' => '/directory'],
+		],
+	],
 	[
 		'label' => 'Playing the Game',
 		'label_zh' => '打球技巧',
