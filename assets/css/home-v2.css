@@ -1,74 +1,128 @@
 /*
- * Homepage visual language: heavy condensed display type, two-tone
- * headings, pill navigation, a charcoal hero, and rounded cards on a light
- * grey field.
+ * The BadmintonClick visual language, applied to the site chrome and to the
+ * homepage's own sections: a warm near-black hero band carrying the
+ * headline, the two calls to action and the eight-category strip, then
+ * white rounded panels lifted onto a light neutral field, set in condensed
+ * italic display type with shuttle-yellow accents.
  *
- * The palette is the site's own, as the live masterbadminton.com pages wear
- * it: orange on charcoal over neutral greys. --v2-accent is the orange of
- * the logo's arc, the active nav item and in-body links; --v2-shade-deep is
- * the near-black of the navigation bar. Both match the --mb-* values in
- * home-ui.css, which dress the legacy article pages, so the redesigned
- * pages and the rest of the site read as one site.
+ * Tokens come from design-tokens.css (--bc-*, --yellow-*, --red-*,
+ * --neutral-*, --font-*, --radius-*, --shadow-*), loaded before this file.
+ * The --v2-* custom properties below are this layer's own short aliases
+ * onto those tokens, kept so category-page.css and post-page.css - which
+ * build on this file - keep reading the same way.
  *
- * Scoped entirely under body.home-v2, which templates/header.php sets only
- * on the homepage, so the 1,600+ article pages keep the existing look. To
- * roll this out sitewide, drop the $isHome condition on the body class.
+ * Scoped under body.home-v2, which templates/header.php sets on every page
+ * built from the homepage, category-directory, article or listing layouts -
+ * i.e. effectively the whole site. The homepage's own sections carry the
+ * extra body.home-page scope.
  *
  * Loaded after home-ui.css, so it wins ties against it. Rules that also
  * have to beat the per-page WPBakery CSS (re-emitted inside <body>, i.e.
  * later in document order) carry an extra class of specificity.
  *
- * This layer changes no copy. Two-tone headings are produced by wrapping
- * the existing words in spans, never by editing them.
+ * This layer changes no copy.
  */
 
-body.home-v2 {
-	--v2-accent: #eb7d2e;
-	/* The same orange darkened until it clears 4.5:1 as text on the light
-	 * field, or behind white text. #eb7d2e itself only reaches 2.8:1 either
-	 * way, so it is kept for dark grounds, fills, rings and tints. */
-	--v2-accent-strong: #a8521f;
-	--v2-shade-deep: #141414;
-	--v2-ink: #0d0d0d;
-	--v2-grey: #b4b4b4;
-	--v2-body: #5f6360;
-	--v2-field: #eeeeec;
-	--v2-line: #e2e2df;
+/* Two-digit section numbers (01, 02 …) for the counters below. */
+@counter-style bc-2digit {
+	system: numeric;
+	symbols: "0" "1" "2" "3" "4" "5" "6" "7" "8" "9";
+	pad: 2 "0";
+}
 
-	background: var(--v2-field);
-	font-family: 'Outfit', 'Lato', Arial, sans-serif;
+body.home-v2 {
+	--v2-accent: var(--accent-sale);       /* sale red - link/active accent on light grounds */
+	--v2-accent-strong: var(--red-600);    /* darker red for hover states */
+	--v2-energy: var(--accent-energy);     /* shuttle yellow - fills, badges, CTA */
+	--v2-shade-deep: var(--hero-2);
+	--v2-ink: var(--bc-black);
+	--v2-grey: var(--neutral-400);
+	--v2-body: var(--text-secondary);
+	--v2-field: var(--surface-sunken);
+	--v2-line: #EDEBE7;
+	--v2-hairline: #F4F2EF;
+
+	background: #E8E6E2;
+	font-family: var(--font-sans);
+	color: var(--text-primary);
 }
 
 /* ---------------------------------------------------------------------
- * Hero - charcoal field, pill nav floated on top, CTA as the focal element.
- *
- * The nav is taken out of flow so the hero starts at the top of the page
- * and the bar sits over it, as in the reference. The hero's own padding
- * reserves the space the bar occupies.
+ * Hero - warm near-black field with a diagonal court-line texture and a
+ * soft radial glow (no photography), the nav sitting straight on it.
  * ------------------------------------------------------------------ */
-/* The hero band is a child of .site-header, so the header itself carries
- * the dark surface and the logo, nav and CTA simply sit on it in normal
- * flow. Nothing needs taking out of flow, which keeps the mobile stack
- * and the sticky quick-nav below it behaving normally.
- *
- * The background is the hero photograph - a racket and shuttles on a
- * court-lined field - read through a charcoal scrim, warmed by an orange
- * glow at the top right, so the white logo, nav and CTA keep their contrast
- * over it. The three gradient layers are the scrim and stack above the
- * photo; the flat near-black underneath covers the band while the JPEG is
- * still loading. This replaced an inline-SVG court-line motif that stood in
- * for photography before. */
+/* Deliberately no isolation and no z-index of its own: the content panel
+ * below rides up over the foot of this band (z-index:5 against the hero's
+ * 2), while the nav dropdowns (30) and the full-screen mobile nav panel
+ * (150) still have to paint over that panel. Giving the header a stacking
+ * context of its own flattens all three into one layer and the panel wins,
+ * which hid both the open menu and the top of the panel's own content. */
+/* overflow stays visible: the band used to clip itself to keep the two
+ * decorative rings inside it, which also cut the bottom off any nav
+ * dropdown taller than the band - every article page, where the hero is
+ * one line of title. The rings are clipped by the hero band below instead,
+ * and #page (overflow:hidden, from the legacy theme) still catches any
+ * horizontal spill. */
 body.home-v2 .site-header {
 	position: relative;
-	isolation: isolate;
-	overflow: hidden;
+	overflow: visible;
 	box-shadow: none;
 	background:
-		radial-gradient(90% 70% at 82% 2%, rgba(235, 125, 46, .30) 0%, rgba(235, 125, 46, 0) 48%),
-		radial-gradient(90% 70% at 10% 98%, rgba(10, 10, 10, .76) 0%, rgba(10, 10, 10, 0) 62%),
-		linear-gradient(158deg, rgba(46, 45, 44, .70) 0%, rgba(26, 25, 24, .86) 48%, rgba(12, 12, 12, .94) 100%),
-		url("/assets/images/hero-racket-shuttles.jpg") center / cover no-repeat,
-		var(--v2-shade-deep);
+		repeating-linear-gradient(115deg, rgba(255, 212, 0, .075) 0 1px, transparent 1px 34px),
+		radial-gradient(46% 40% at 22% 40%, rgba(255, 212, 0, .09) 0%, rgba(255, 212, 0, 0) 100%),
+		radial-gradient(120% 90% at 14% 34%, #2A1E14 0%, var(--hero-2) 52%, var(--hero-3) 100%);
+}
+
+/* Two rings, echoing the reference's decorative circles at the top right.
+ * They hang off the hero band, which clips them, so the header itself does
+ * not have to. */
+body.home-v2 .page-hero::before,
+body.home-v2 .page-hero::after {
+	content: '';
+	position: absolute;
+	border-radius: 50%;
+	pointer-events: none;
+	z-index: 0;
+}
+
+body.home-v2 .page-hero::before {
+	right: -180px;
+	top: -220px;
+	width: 620px;
+	height: 620px;
+	border: 1px solid rgba(255, 255, 255, .07);
+}
+
+body.home-v2 .page-hero::after {
+	right: -60px;
+	top: -40px;
+	width: 380px;
+	height: 380px;
+	border: 1px solid rgba(255, 212, 0, .09);
+}
+
+/* One layer order for the whole band, all of it in the root stacking
+ * context (see .site-header above):
+ *
+ *   0   the decorative rings
+ *   1   the hero copy, which the content panel below rides up over
+ *   5   #main.wrapper, the content panel
+ *   40  the two bars - so the nav dropdowns (30) and the full-screen
+ *       mobile nav panel (150) inside them still open over that panel
+ *
+ * The bars need the number rather than z-index:auto: a positioned element
+ * with a numeric z-index becomes a stacking context, and its descendants
+ * are then ranked inside it - which is exactly why 2 was not enough. */
+body.home-v2 .header-middle,
+body.home-v2 .main-nav {
+	position: relative;
+	z-index: 40;
+}
+
+body.home-v2 .page-hero {
+	position: relative;
+	z-index: 1;
+	overflow: hidden;
 }
 
 body.home-v2 .header-middle {
@@ -77,385 +131,933 @@ body.home-v2 .header-middle {
 }
 
 body.home-v2 .header-middle-inner {
-	max-width: 1240px;
-	padding: 26px 34px 0;
+	max-width: 1200px;
+	padding: 30px 32px 22px;
+	border-bottom: 1px solid rgba(255, 255, 255, .14);
+	align-items: center;
 }
 
-body.home-v2 .site-logo img {
-	width: 168px;
-	filter: brightness(0) invert(1);
-}
+body.home-v2 .site-search input[type="text"] { color: #fff; }
+body.home-v2 .site-search input[type="text"]::placeholder { color: rgba(255, 255, 255, .68); }
+body.home-v2 .site-search button { color: rgba(255, 255, 255, .82); }
+body.home-v2 .site-search button:hover { color: var(--v2-energy); }
 
-body.home-v2 .site-search input[type="text"] {
-	background: rgba(255, 255, 255, .14);
-	border: 1px solid rgba(255, 255, 255, .22);
-	color: #fff;
-	backdrop-filter: blur(6px);
-}
-
-body.home-v2 .site-search input[type="text"]::placeholder { color: rgba(255, 255, 255, .7); }
-body.home-v2 .site-search input[type="text"]:focus { background: rgba(255, 255, 255, .2); border-color: rgba(255, 255, 255, .5); }
-body.home-v2 .site-search button { color: rgba(255, 255, 255, .85); }
-
-/* The nav bar itself: a translucent pill floating on the hero.
- *
- * It is lifted above the hero band explicitly. The pill below carries a
- * backdrop-filter, which makes it a stacking context, so the dropdown's
- * own z-index only ranks it inside that pill - and .hero-cta / .page-hero
- * are positioned siblings later in the header, so they painted over the
- * open dropdown and swallowed its clicks. Ranking the whole bar above them
- * is what puts the menu back on top. */
 body.home-v2 .main-nav {
-	position: relative;
-	z-index: 20;
 	background: transparent;
-	max-width: 1240px;
-	margin: 14px auto 0;
-	padding: 0 34px;
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 0;
 }
 
-body.home-v2 .main-nav .nav-groups {
-	background: rgba(18, 18, 18, .52);
-	border: 1px solid rgba(255, 255, 255, .16);
-	backdrop-filter: blur(14px);
-	-webkit-backdrop-filter: blur(14px);
-	border-radius: 999px;
-	padding: 6px 14px;
-	max-width: none;
+body.home-v2 .nav-list-utility::before { background: rgba(255, 255, 255, .2); }
+body.home-v2 .nav-dropdown { box-shadow: 0 22px 48px rgba(0, 0, 0, .3); }
+
+/* ---------------------------------------------------------------------
+ * Hero copy - the headline, the blurb and the two calls to action.
+ * ------------------------------------------------------------------ */
+body.home-v2 .page-hero { background: transparent; }
+
+body.home-v2 .page-hero-inner {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 26px 32px 92px;
 }
 
-body.home-v2 .main-nav .nav-item > a,
-body.home-v2 .main-nav .nav-item > .nav-parent {
-	font-family: 'Outfit', Arial, sans-serif;
-	font-size: 14px;
-	font-weight: 400;
-	text-transform: none;
-	letter-spacing: 0;
-	color: rgba(255, 255, 255, .88);
-	padding: 12px 14px;
-	border-bottom: 0;
-	border-radius: 999px;
+body.home-v2 .page-hero-eyebrow {
+	font-family: var(--font-mono);
+	font-size: 10.5px;
+	font-weight: 700;
+	letter-spacing: .2em;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, .6);
+	margin: 0 0 14px;
 }
 
-body.home-v2 .main-nav .nav-item > a:hover,
-body.home-v2 .main-nav .nav-item:hover > .nav-parent {
-	background: rgba(255, 255, 255, .14);
-	border-bottom: 0;
-	color: #fff;
+body.home-v2 .page-hero-title {
+	font-family: var(--font-display);
+	font-weight: var(--fw-black);
+	font-style: italic;
+	text-transform: uppercase;
+	letter-spacing: -.012em;
+	line-height: .88;
+	color: rgba(255, 255, 255, .52);
+	text-shadow: 0 2px 30px rgba(0, 0, 0, .35);
+	margin: 0 0 24px;
 }
 
-/* The page you are on is marked in the accent, the way the live site marks
- * it: orange type on the dark bar rather than a filled pill, which also
- * keeps it at 6.7:1 instead of white-on-orange's 2.8:1. */
-body.home-v2 .main-nav .nav-item.is-active > a {
-	background: transparent;
-	border-bottom: 0;
-	color: var(--v2-accent);
-	font-weight: 600;
+body.home-v2 .page-hero-title .v2-head-lead { color: rgba(255, 255, 255, .52); }
+body.home-v2 .page-hero-title .v2-head-key { color: #fff; }
+
+body.home-v2 .page-hero-blurb {
+	font-family: var(--font-sans);
+	font-size: 19px;
+	line-height: 1.6;
+	color: rgba(255, 255, 255, .9);
+	max-width: 54ch;
+	margin: 0;
 }
 
-body.home-v2 .main-nav .nav-item.is-active > a:hover {
-	background: rgba(255, 255, 255, .14);
-	color: var(--v2-accent);
-}
-
-body.home-v2 .nav-list-utility::before { background: rgba(255, 255, 255, .22); }
-
-body.home-v2 .nav-item-store > a {
-	background: #fff;
-	color: var(--v2-ink) !important;
-	border-color: #fff;
-	font-weight: 600;
-}
-
-body.home-v2 .nav-item-store > a:hover { background: #fff; color: var(--v2-ink) !important; }
-
-body.home-v2 .nav-dropdown {
-	border-radius: 18px;
-	padding: 10px;
-	box-shadow: 0 24px 48px rgba(0, 0, 0, .28);
-}
-
-body.home-v2 .nav-dropdown li a {
-	font-family: 'Outfit', Arial, sans-serif;
-	border-radius: 10px;
-}
-
-body.home-v2 .hero-cta {
-	position: relative;
-	background: transparent;
-	border-bottom: 0;
-}
-
-body.home-v2 .hero-cta-inner {
-	max-width: 1240px;
-	padding: 84px 34px 104px;
+/* The homepage's band: a big two-line headline, the opening paragraph, the
+ * buttons, then the strip pinned along the bottom. */
+body.home-v2 .page-hero-home .page-hero-inner {
+	padding: 14px 32px 0;
+	display: flex;
 	flex-direction: column;
-	align-items: flex-start;
-	gap: 26px;
-	text-align: left;
+	min-height: min(520px, 62vh);
 }
 
-body.home-v2 .hero-cta-icon {
-	width: 60px;
-	height: 60px;
-	filter: brightness(0) invert(1);
-	opacity: .9;
+body.home-v2 .page-hero-home .page-hero-title {
+	font-size: clamp(44px, 7.6vw, 100px);
+	max-width: 760px;
+	text-wrap: balance;
+	margin: 14px 0 24px;
 }
 
-body.home-v2 .hero-cta-btn {
-	background: #fff;
-	color: var(--v2-ink);
-	font-family: 'Outfit', Arial, sans-serif;
-	font-size: 17px;
-	font-weight: 600;
-	letter-spacing: 0;
-	padding: 18px 20px 18px 34px;
-	gap: 16px;
-	box-shadow: 0 18px 40px rgba(0, 0, 0, .22);
+body.home-v2 .page-hero-home .page-hero-blurb { margin: 0 0 34px; }
+
+body.home-v2 .hero-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 14px;
+	margin: 0 0 40px;
 }
 
-/* The arrow becomes a filled disc, as in the reference. */
-body.home-v2 .hero-cta-btn::after {
-	content: '\2197';
+body.home-v2 .hero-btn {
 	display: inline-flex;
 	align-items: center;
-	justify-content: center;
+	text-decoration: none;
+	border-radius: var(--radius-pill);
+	white-space: nowrap;
+}
+
+body.home-v2 .hero-btn-primary {
+	gap: 16px;
+	background: var(--v2-energy);
+	padding: 11px 11px 11px 32px;
+	box-shadow: 0 20px 46px rgba(0, 0, 0, .42);
+	transition: transform var(--dur-base) var(--ease-out), filter var(--dur-base) var(--ease-out);
+}
+
+body.home-v2 .hero-btn-primary .hero-btn-label {
+	font-size: 16px;
+	font-weight: 700;
+	letter-spacing: .02em;
+	color: var(--v2-ink);
+}
+
+body.home-v2 .hero-btn-primary .hero-btn-icon {
 	width: 38px;
 	height: 38px;
 	border-radius: 50%;
 	background: var(--v2-ink);
 	color: #fff;
-	font-size: 17px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-family: var(--font-mono);
+	font-size: 14px;
 }
 
-body.home-v2 .hero-cta-btn:hover,
-body.home-v2 .hero-cta-btn:focus {
-	background: #fff;
-	color: var(--v2-ink);
+body.home-v2 .hero-btn-primary:hover,
+body.home-v2 .hero-btn-primary:focus {
+	filter: brightness(1.08);
 	transform: translateY(-2px);
-	box-shadow: 0 24px 50px rgba(0, 0, 0, .3);
+}
+
+body.home-v2 .hero-btn-ghost {
+	gap: 10px;
+	padding: 15px 26px;
+	border: 1.5px solid rgba(255, 255, 255, .34);
+	color: #fff;
+	font-size: 14px;
+	font-weight: 700;
+	letter-spacing: .02em;
+	transition: background var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
+}
+
+body.home-v2 .hero-btn-ghost:hover,
+body.home-v2 .hero-btn-ghost:focus {
+	background: rgba(255, 255, 255, .12);
+	border-color: #fff;
+	color: #fff;
 }
 
 /* ---------------------------------------------------------------------
- * Content shell - one rounded white panel lifted onto the grey field.
+ * Hero strip - the eight categories in columns along the foot of the band.
+ *
+ * The markup keeps the legacy .quick-nav / #thct contract (see
+ * templates/header.php), and the page-level WPBakery CSS still styles
+ * "ul#thct li" as a floated, bordered 130px box - so every rule here
+ * carries .hero-strip as well, which outranks it.
+ * ------------------------------------------------------------------ */
+body.home-v2 .quick-nav.hero-strip {
+	/* relative, so the two arrows can sit against its edges */
+	position: relative;
+	margin: auto 0 0;
+	/* The space the white panel below rides up into. It sits on the strip
+	 * rather than on the row inside it, so the row's box is exactly the
+	 * columns - which is what the arrows centre themselves on. */
+	padding: 0 0 88px;
+	background: transparent;
+	border: 0;
+	border-top: 1px solid rgba(255, 255, 255, .16);
+	box-shadow: none;
+	z-index: auto;
+}
+
+body.home-v2 .hero-strip .quick-nav-inner {
+	position: relative;
+	max-width: none;
+	margin: 0;
+	padding: 0;
+	background: transparent;
+	border-radius: 0;
+	overflow: visible;
+}
+
+/* ---------------------------------------------------------------------
+ * Strip arrows - shown only once the row actually scrolls, which
+ * assets/js/home-ui.js decides by measuring it.
+ * ------------------------------------------------------------------ */
+body.home-v2 .hero-strip-arrow {
+	display: none;
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	z-index: 3;
+	width: 34px;
+	height: 34px;
+	padding: 0;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	background: rgba(20, 13, 8, .72);
+	border: 1px solid rgba(255, 255, 255, .3);
+	color: #fff;
+	font-family: var(--font-mono);
+	font-size: 15px;
+	line-height: 1;
+	cursor: pointer;
+	-webkit-backdrop-filter: blur(6px);
+	backdrop-filter: blur(6px);
+	transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out);
+}
+
+body.home-v2 .hero-strip.is-scrollable .hero-strip-arrow { display: flex; }
+
+body.home-v2 .hero-strip-prev { left: -4px; }
+body.home-v2 .hero-strip-next { right: -4px; }
+
+body.home-v2 .hero-strip-arrow:hover,
+body.home-v2 .hero-strip-arrow:focus-visible {
+	background: var(--v2-energy);
+	border-color: var(--v2-energy);
+	color: var(--v2-ink);
+}
+
+/* At either end there is nothing further that way. The button is disabled
+ * rather than given pointer-events:none, which would pass the tap straight
+ * through to the category link underneath it. */
+body.home-v2 .hero-strip-arrow:disabled {
+	opacity: .25;
+	cursor: default;
+}
+
+body.home-v2 .hero-strip-arrow:disabled:hover {
+	background: rgba(20, 13, 8, .72);
+	border-color: rgba(255, 255, 255, .3);
+	color: #fff;
+}
+
+/* A fade over the cut-off column, so the row reads as continuing. */
+body.home-v2 .hero-strip.is-scrollable .quick-nav-inner::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	right: 0;
+	width: 64px;
+	background: linear-gradient(to right, rgba(23, 16, 10, 0), rgba(23, 16, 10, .9));
+	pointer-events: none;
+	z-index: 2;
+	transition: opacity var(--dur-base) var(--ease-out);
+}
+
+body.home-v2 .hero-strip.at-end .quick-nav-inner::after { opacity: 0; }
+
+body.home-v2 .hero-strip #thct {
+	display: grid;
+	grid-template-columns: repeat(8, minmax(0, 1fr));
+	gap: 0;
+	width: 100%;
+	max-width: none;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	justify-content: stretch;
+}
+
+body.home-v2 .hero-strip #thct li {
+	float: none;
+	display: block;
+	list-style-type: none;
+	width: auto;
+	max-width: none;
+	min-width: 0;
+	flex: none;
+	padding: 0;
+	text-align: left;
+	background: transparent;
+	/* li#rle7 sets border-right with !important in the legacy page CSS. */
+	border: 0 !important;
+	border-right: 1px solid rgba(255, 255, 255, .1) !important;
+}
+
+body.home-v2 .hero-strip #thct li:last-child { border-right: 0 !important; }
+body.home-v2 .hero-strip #thct li:hover { background: transparent; }
+
+body.home-v2 .hero-strip #thct li .quick-nav-link {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
+	width: 100%;
+	height: auto;
+	padding: 20px 16px;
+	border: 0;
+	border-radius: 0;
+	color: rgba(255, 255, 255, .82);
+	text-decoration: none;
+	transition: color .18s var(--ease-out), padding-left .18s var(--ease-out);
+}
+
+body.home-v2 .hero-strip #thct li:first-child .quick-nav-link { padding-left: 0; }
+
+body.home-v2 .hero-strip #thct li .quick-nav-label {
+	font-family: var(--font-display);
+	font-weight: var(--fw-black);
+	font-style: italic;
+	text-transform: uppercase;
+	font-size: 17px;
+	line-height: 1;
+	letter-spacing: 0;
+	color: inherit;
+}
+
+body.home-v2 .hero-strip #thct li .quick-nav-count {
+	font-family: var(--font-mono);
+	font-size: 9.5px;
+	letter-spacing: .06em;
+	color: rgba(255, 255, 255, .5);
+}
+
+body.home-v2 .hero-strip #thct li .quick-nav-link:hover,
+body.home-v2 .hero-strip #thct li .quick-nav-link:focus {
+	background: transparent;
+	color: #fff;
+	padding-left: 24px;
+}
+
+body.home-v2 .hero-strip #thct li:first-child .quick-nav-link:hover,
+body.home-v2 .hero-strip #thct li:first-child .quick-nav-link:focus { padding-left: 8px; }
+
+body.home-v2 .hero-strip #thct li.is-active .quick-nav-link { color: #fff; }
+body.home-v2 .hero-strip #thct li.is-active .quick-nav-count { color: var(--v2-energy); }
+
+/* ---------------------------------------------------------------------
+ * Content shell - the panels ride up over the foot of the hero. On the
+ * homepage each section is its own card, so the wrapper itself is bare.
  * ------------------------------------------------------------------ */
 body.home-v2 #main.wrapper {
-	max-width: 1240px;
-	margin: -56px auto 0;
+	max-width: 1200px;
+	margin: -64px auto 0;
 	position: relative;
 	z-index: 5;
 	background: #fff;
-	border-radius: 34px;
+	/* The same corner the homepage and directory panels take, so every
+	 * white surface on the site is cut to one shape. */
+	border-radius: 20px;
 	padding: 18px 34px 40px;
-	box-shadow: 0 30px 80px rgba(24, 20, 16, .14);
+	box-shadow: 0 30px 70px rgba(22, 17, 12, .11);
 	box-sizing: border-box;
+}
+
+body.home-page #main.wrapper {
+	background: transparent;
+	border-radius: 0;
+	box-shadow: none;
+	padding: 0 32px 56px;
 }
 
 body.home-v2 .page-container { padding-top: 0 !important; }
 
-/* ---------------------------------------------------------------------
- * Display headings. .v2-head-lead is every word but the last (grey),
- * .v2-head-key is the last word (ink) - the two-tone treatment.
- * ------------------------------------------------------------------ */
-body.home-v2 .home-intro h2,
-body.home-v2 .cat-directory .cat-section-title {
-	font-family: 'Anton', 'Raleway', Impact, sans-serif;
-	font-weight: 400;
-	text-transform: uppercase;
-	letter-spacing: -0.5px;
-	line-height: .96;
-	color: var(--v2-ink);
+/* The legacy theme paints .page-container solid white, as one tall square
+ * block wrapping the whole page. Left alone it sits behind every panel
+ * here and fills in their rounded corners, so the cards read as one square
+ * slab - on the homepage and the category directory, where the panels are
+ * the white surface, and on article pages, where its corners poke out past
+ * #main.wrapper's. The white comes from the panels themselves instead.
+ *
+ * Carries #main so it outranks the theme's own selector for this element,
+ * which is more specific than a two-class rule. */
+body.home-v2 #main .page-container,
+body.home-v2 #main .content-front { background: transparent; }
+
+/* The card panels themselves. */
+body.home-page .home-intro,
+body.home-page .cat-section.cat-directory {
+	background: #fff;
+	border: 0;
+	border-radius: 20px;
+	box-shadow: 0 30px 70px rgba(22, 17, 12, .11);
+	padding: clamp(24px, 3.4vw, 48px);
+	margin: 0 0 20px;
+	box-sizing: border-box;
 }
 
-body.home-v2 .home-intro h2 {
-	font-size: clamp(38px, 6vw, 86px);
-	/* the source heading carries an inline text-align that only !important beats */
-	text-align: left !important;
-	margin: 34px 0 30px;
+/* WPBakery's own spacers and rules between the two panels: the design has
+ * the cards themselves do the separating. */
+body.home-page .vc_separator,
+body.home-page .vc_empty_space { display: none !important; }
+
+/* …and its 15px column gutter, which would otherwise inset the panels
+ * from the hero text above them instead of lining up with it. */
+body.home-page .vc_row,
+body.home-page .vc_row-fluid { margin-left: 0; margin-right: 0; }
+
+body.home-page .wpb_column,
+body.home-page .vc_column_container,
+body.home-page .vc_column_container > .vc_column-inner {
+	padding-left: 0;
+	padding-right: 0;
+}
+
+/* ---------------------------------------------------------------------
+ * Display headings
+ * ------------------------------------------------------------------ */
+body.home-v2 .home-secret-title,
+body.home-v2 .home-inside-title,
+body.home-v2 .cat-directory .cat-section-title {
+	font-family: var(--font-display);
+	font-weight: var(--fw-black);
+	font-style: italic;
+	text-transform: uppercase;
+	letter-spacing: -.006em;
+	line-height: .98;
+	color: var(--v2-ink);
+	margin: 0;
+	/* The legacy theme centres every h2 inside a text column; these are
+	 * section headings in a left-aligned column. */
+	text-align: left;
+}
+
+/* The small mono label above a section heading. */
+body.home-v2 .home-eyebrow {
+	font-family: var(--font-mono);
+	font-size: 10.5px;
+	font-weight: 700;
+	letter-spacing: .2em;
+	text-transform: uppercase;
+	color: var(--v2-ink);
+	margin: 0 0 12px;
 }
 
 body.home-v2 .v2-head-lead { color: var(--v2-grey); }
 body.home-v2 .v2-head-key { color: var(--v2-ink); }
 
+/* The mirror. The display face carries no CJK, so a Chinese heading in it
+ * is synthesised - slanted, tracked and uppercased for an alphabet that
+ * has none of those - which reads as a rendering fault rather than as
+ * display type. The mirror keeps the weight and drops the rest. */
+html[lang^="zh"] body.home-v2 .page-hero-title,
+html[lang^="zh"] body.home-v2 .home-answer-lead,
+html[lang^="zh"] body.home-v2 .home-secret-title,
+html[lang^="zh"] body.home-v2 .home-inside-title,
+html[lang^="zh"] body.home-v2 .cat-section-title,
+html[lang^="zh"] body.home-v2 .cat-accordion-title,
+html[lang^="zh"] body.home-v2 .cat-accordion summary,
+html[lang^="zh"] body.home-v2 .hero-strip #thct li .quick-nav-label {
+	font-family: var(--font-sans);
+	font-style: normal;
+	font-weight: var(--fw-extra);
+	text-transform: none;
+	letter-spacing: 0;
+	line-height: 1.16;
+}
+
 /* ---------------------------------------------------------------------
- * Intro prose and feature cards
+ * "If YES is your answer" - the opening callout, a rule down its left.
  * ------------------------------------------------------------------ */
-body.home-v2 .home-intro-prose p,
-body.home-v2 .home-intro-lead,
-body.home-v2 .home-intro-list li {
-	font-family: 'Outfit', 'Lato', Arial, sans-serif;
+body.home-v2 .home-answer {
+	display: flex;
+	gap: clamp(18px, 3vw, 34px);
+	align-items: flex-start;
+	margin: 0 0 30px;
+}
+
+body.home-v2 .home-answer-rule {
+	flex-shrink: 0;
+	width: 3px;
+	align-self: stretch;
+	background: var(--v2-energy);
+	border-radius: 2px;
+}
+
+body.home-v2 .home-answer-copy {
+	margin: 0;
+	max-width: 54ch;
+}
+
+body.home-v2 .home-answer-lead {
+	display: block;
+	font-family: var(--font-display);
+	font-weight: var(--fw-black);
+	font-style: italic;
+	text-transform: uppercase;
+	font-size: clamp(22px, 2.4vw, 30px);
+	line-height: 1.04;
+	letter-spacing: -.006em;
+	color: var(--v2-ink);
+	margin-bottom: 10px;
+}
+
+body.home-v2 .home-answer-body {
+	display: block;
+	font-size: 16px;
+	line-height: 1.68;
+	color: var(--v2-body);
+}
+
+/* ---------------------------------------------------------------------
+ * Two-column prose
+ * ------------------------------------------------------------------ */
+body.home-v2 .home-intro-prose {
+	columns: 2 292px;
+	column-gap: 44px;
+	margin: 0;
+	padding-bottom: 32px;
+	border-bottom: 1px solid var(--v2-line);
 }
 
 body.home-v2 .home-intro-prose p {
+	break-inside: avoid;
+	-webkit-column-break-inside: avoid;
+	page-break-inside: avoid;
 	color: var(--v2-body);
-	font-size: 16px;
-	line-height: 1.8;
+	font-size: 15px;
+	line-height: 1.78;
+	margin: 0 0 16px;
 }
 
-body.home-v2 .home-intro.wpb_text_column .home-intro-lead,
-body.home-v2 .home-intro-lead {
-	color: var(--v2-ink);
-	border-left-color: var(--v2-accent);
-	font-size: 18px;
+body.home-v2 .home-intro-prose p:last-child { margin-bottom: 0; }
+
+/* ---------------------------------------------------------------------
+ * "What's the secret?" - a panel in the artwork column beside the copy.
+ * The panel is drawn rather than photographed: there is no image for it in
+ * this tree yet, so it carries the hero's own court-line texture.
+ * ------------------------------------------------------------------ */
+body.home-v2 .home-secret {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+	gap: 28px 44px;
+	align-items: center;
+	padding: 32px 0;
+	border-bottom: 1px solid var(--v2-line);
+}
+
+body.home-v2 .home-secret-media {
+	position: relative;
+	min-width: 0;
+	height: clamp(240px, 26vw, 360px);
+	border-radius: 14px;
+	overflow: hidden;
+	/* The tint stays underneath as the colour the panel wears while the
+	 * photograph loads, and if it ever fails to. */
+	background: #ECE7E0 url('/assets/images/home-basics.webp') center / cover no-repeat;
+}
+
+body.home-v2 .home-secret-media-label {
+	position: absolute;
+	left: 16px;
+	bottom: 16px;
+	background: rgba(14, 14, 14, .82);
+	color: #fff;
+	font-family: var(--font-mono);
+	font-size: 9.5px;
+	font-weight: 700;
+	letter-spacing: .16em;
+	text-transform: uppercase;
+	padding: 7px 12px;
+	border-radius: var(--radius-pill);
+}
+
+body.home-v2 .home-secret-copy {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+body.home-v2 .home-secret-copy .home-eyebrow { margin: 0; }
+
+body.home-v2 .home-secret-title { font-size: clamp(30px, 3.8vw, 46px); line-height: .96; }
+
+body.home-v2 .home-secret-copy p {
+	margin: 0;
+	font-size: 15px;
+	line-height: 1.78;
+	color: var(--v2-body);
+}
+
+body.home-v2 .home-secret-copy p strong,
+body.home-v2 .home-secret-copy p b { color: var(--v2-ink); font-weight: 700; }
+
+/* ---------------------------------------------------------------------
+ * "What's inside" - the six numbered cards in a hairline grid.
+ * ------------------------------------------------------------------ */
+body.home-v2 .home-inside { padding-top: 32px; }
+
+body.home-v2 .home-inside .home-eyebrow { margin-bottom: 14px; }
+
+body.home-v2 .home-inside-title {
+	font-size: clamp(30px, 3.8vw, 46px);
+	max-width: 34ch;
+	text-wrap: balance;
+}
+
+body.home-v2 .home-inside-sub {
+	margin: 14px 0 24px;
+	font-size: 23px;
+	font-weight: 600;
+	line-height: 1.4;
+	letter-spacing: -.006em;
+	color: var(--v2-body);
+}
+
+body.home-v2 .home-intro-list {
+	list-style: none !important;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(266px, 1fr));
+	gap: 1px;
+	background: var(--v2-line);
+	border: 1px solid var(--v2-line);
+	border-radius: 14px;
+	overflow: hidden;
+	counter-reset: bc-inside;
 }
 
 body.home-v2 .home-intro-list li {
-	background: var(--v2-field);
+	list-style: none;
+	counter-increment: bc-inside;
+	background: #fff;
 	border: 0;
-	border-radius: 20px;
-	padding: 24px 26px;
+	border-radius: 0;
+	padding: 20px 20px 22px;
+	min-width: 0;
+	font-size: 13.5px;
+	line-height: 1.58;
 	color: var(--v2-body);
+	transition: background var(--dur-base) var(--ease-out);
+}
+
+body.home-v2 .home-intro-list li:hover { background: #FAF9F7; }
+
+body.home-v2 .home-intro-list li::before {
+	content: counter(bc-inside, bc-2digit);
+	display: block;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: .1em;
+	color: var(--v2-grey);
+	margin-bottom: 7px;
 }
 
 body.home-v2 .home-intro-list li strong {
-	font-family: 'Outfit', Arial, sans-serif;
-	font-weight: 600;
+	display: block;
+	font-family: var(--font-sans);
+	font-size: 14px;
+	font-weight: 700;
+	line-height: 1.36;
+	letter-spacing: -.004em;
 	color: var(--v2-ink);
-	margin-bottom: 6px;
+	margin: 0 0 7px;
 }
 
 /* ---------------------------------------------------------------------
- * Quick-nav - the sticky tab bar, restyled as a pill rail.
- * Extra specificity so it beats both home-ui.css and the legacy
- * "ul#thct li a" rule in the page-level WPBakery CSS.
- * ------------------------------------------------------------------ */
-body.home-v2 .quick-nav {
-	background: #fff;
-	border: 0;
-	box-shadow: none;
-	margin: 8px 0 0;
-	padding: 10px 0;
-}
-
-body.home-v2 .quick-nav-inner {
-	background: var(--v2-field);
-	border-radius: 999px;
-	padding: 8px;
-	max-width: 100%;
-}
-
-body.home-v2 .quick-nav #thct { gap: 2px; }
-
-body.home-v2 .quick-nav #thct li .quick-nav-link {
-	border-radius: 999px;
-	border-bottom: 0;
-	padding: 12px 6px 11px;
-	gap: 7px;
-}
-
-body.home-v2 .quick-nav #thct li .quick-nav-icon {
-	width: 38px;
-	height: 38px;
-	background: #fff;
-}
-
-body.home-v2 .quick-nav #thct li .quick-nav-label {
-	font-family: 'Outfit', Arial, sans-serif;
-	font-size: 11px;
-	font-weight: 500;
-	letter-spacing: .2px;
-	text-transform: uppercase;
-	color: var(--v2-body);
-}
-
-body.home-v2 .quick-nav #thct li .quick-nav-link:hover,
-body.home-v2 .quick-nav #thct li .quick-nav-link:focus {
-	background: #e2e2df;
-	border-bottom: 0;
-}
-
-body.home-v2 .quick-nav #thct li .quick-nav-link:hover .quick-nav-icon,
-body.home-v2 .quick-nav #thct li .quick-nav-link:focus .quick-nav-icon { background: #fff; transform: none; }
-
-body.home-v2 .quick-nav #thct li .quick-nav-link:hover .quick-nav-label { color: var(--v2-ink); }
-
-body.home-v2 .quick-nav #thct li.is-active .quick-nav-link {
-	background: var(--v2-ink);
-	border-bottom: 0;
-}
-
-body.home-v2 .quick-nav #thct li.is-active .quick-nav-icon { background: #fff; }
-body.home-v2 .quick-nav #thct li.is-active .quick-nav-label { color: #fff; }
-
-/* ---------------------------------------------------------------------
- * All Categories directory
+ * All Categories - the picture-card grid, one card per category.
  * ------------------------------------------------------------------ */
 body.home-v2 .cat-section.cat-directory {
-	background: var(--v2-field);
+	background: #fff;
 	border: 0;
-	border-radius: 30px;
 	box-shadow: none;
-	margin: 40px 0;
+	overflow: visible;
 }
 
 body.home-v2 .cat-directory-head {
 	background: transparent;
-	border-bottom: 0;
-	padding: 40px 40px 24px;
+	border-bottom: 1px solid var(--v2-line);
+	padding: 0 0 20px;
+	margin-bottom: 24px;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 18px;
 }
 
-body.home-v2 .cat-directory .cat-section-title { font-size: clamp(30px, 4.4vw, 58px); margin-bottom: 8px; }
+body.home-v2 .cat-directory .cat-section-title {
+	text-align: left;
+	font-size: clamp(30px, 4.2vw, 50px);
+	line-height: .96;
+	letter-spacing: -.008em;
+	margin: 0 0 8px;
+	flex: 1 1 100%;
+	order: 1;
+}
+
+body.home-v2 .cat-directory .cat-section-title .v2-head-lead { color: var(--text-muted); }
 
 body.home-v2 .cat-directory .cat-section-subtitle {
-	font-family: 'Outfit', Arial, sans-serif;
-	color: var(--v2-body);
-	margin-bottom: 24px;
+	text-align: left;
+	font-family: var(--font-sans);
+	font-size: 13px;
+	letter-spacing: 0;
+	text-transform: none;
+	color: var(--text-muted);
+	margin: 0;
+	flex: 1 1 auto;
+	order: 2;
 }
+
+body.home-v2 .cat-directory .cat-section-controls {
+	margin: 0;
+	order: 3;
+	flex: 0 1 auto;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+}
+
+body.home-v2 .cat-directory .cat-search-wrap { flex: 1 1 200px; min-width: 180px; }
 
 body.home-v2 .cat-directory .cat-search-input {
 	background: #fff;
-	border: 0;
-	font-family: 'Outfit', Arial, sans-serif;
-	padding: 16px 18px 16px 44px;
+	border: 1px solid #E4E1DC;
+	border-radius: var(--radius-pill);
+	padding: 11px 18px 11px 40px;
+	font-size: 13px;
+	color: var(--text-primary);
 }
+
+body.home-v2 .cat-directory .cat-search-icon { left: 16px; font-size: 12px; }
+body.home-v2 .cat-directory .cat-search-input:focus { border-color: var(--v2-ink); }
 
 body.home-v2 .cat-directory .cat-expand-all {
 	background: var(--v2-ink);
 	border-color: var(--v2-ink);
-	font-family: 'Outfit', Arial, sans-serif;
-	font-weight: 600;
-	padding: 16px 26px;
+	border-radius: var(--radius-pill);
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: .14em;
+	text-transform: uppercase;
+	padding: 13px 24px;
+	transition: filter var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
 
-body.home-v2 .cat-directory .cat-expand-all:hover { background: var(--v2-accent-strong); border-color: var(--v2-accent-strong); }
+body.home-v2 .cat-directory .cat-expand-all:hover { filter: brightness(1.4); }
+body.home-v2 .cat-directory .cat-expand-all:active { transform: scale(.97); }
 
+body.home-v2 .cat-directory .cat-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
+	gap: 20px;
+	padding: 0;
+	align-items: start;
+	counter-reset: bc-card;
+}
+
+/* Each card: a tile you click to open, its guide count under it, and the
+ * guide list below that when open. */
 body.home-v2 .cat-directory .cat-accordion {
+	counter-increment: bc-card;
+	background: transparent;
 	border: 0;
-	border-radius: 20px;
+	border-radius: 0;
 	box-shadow: none;
+	overflow: visible;
+	align-self: start;
+	scroll-margin-top: 24px;
 }
 
 body.home-v2 .cat-directory .cat-accordion:hover,
 body.home-v2 .cat-directory .cat-accordion[open] {
 	border: 0;
-	box-shadow: 0 10px 26px rgba(24, 20, 16, .10);
-}
-
-body.home-v2 .cat-directory .cat-accordion.is-targeted {
-	box-shadow: 0 0 0 2px var(--v2-accent);
+	box-shadow: none;
 }
 
 body.home-v2 .cat-accordion summary {
-	font-family: 'Outfit', Arial, sans-serif;
-	font-weight: 600;
-	font-size: 17px;
-	color: var(--v2-ink);
-	padding: 22px 26px;
+	display: block;
+	list-style: none;
+	cursor: pointer;
+	height: auto;
+	padding: 0;
+	border-radius: 0;
+	overflow: visible;
+	background: transparent;
 }
 
-body.home-v2 .cat-accordion-count {
-	background: var(--v2-ink);
+body.home-v2 .cat-accordion summary::-webkit-details-marker { display: none; }
+
+body.home-v2 .cat-accordion-tile {
+	position: relative;
+	display: block;
+	height: 168px;
+	border-radius: 14px;
+	overflow: hidden;
+	transition: transform var(--dur-base) var(--ease-out);
+}
+
+body.home-v2 .cat-accordion summary:hover .cat-accordion-tile { transform: translateY(-3px); }
+
+/* The artwork, darkened at the foot so the label reads over it. */
+body.home-v2 .cat-accordion-tile::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(180deg, rgba(20, 13, 8, 0) 46%, rgba(20, 13, 8, .82) 100%);
+	z-index: 1;
+	pointer-events: none;
+}
+
+/* One photograph per category, in the order the homepage lists them -
+ * Rules, Basics, Strokes, Techniques, Net Play, Smashing, Advanced,
+ * Equipments. Each keeps its tint underneath as the colour the tile wears
+ * while the photograph loads. */
+body.home-v2 .cat-directory .cat-accordion:nth-of-type(8n+1) .cat-accordion-tile { background: #EEE2DF url('/assets/images/category-rules.webp') center / cover no-repeat; }
+body.home-v2 .cat-directory .cat-accordion:nth-of-type(8n+2) .cat-accordion-tile { background: #E4EBE2 url('/assets/images/category-basics.webp') center / cover no-repeat; }
+body.home-v2 .cat-directory .cat-accordion:nth-of-type(8n+3) .cat-accordion-tile { background: #E6E7ED url('/assets/images/category-strokes.webp') center / cover no-repeat; }
+body.home-v2 .cat-directory .cat-accordion:nth-of-type(8n+4) .cat-accordion-tile { background: #F0E9DC url('/assets/images/category-techniques.webp') center / cover no-repeat; }
+body.home-v2 .cat-directory .cat-accordion:nth-of-type(8n+5) .cat-accordion-tile { background: #E1E9ED url('/assets/images/category-net-play.webp') center / cover no-repeat; }
+body.home-v2 .cat-directory .cat-accordion:nth-of-type(8n+6) .cat-accordion-tile { background: #ECE3D9 url('/assets/images/category-smashing.webp') center / cover no-repeat; }
+body.home-v2 .cat-directory .cat-accordion:nth-of-type(8n+7) .cat-accordion-tile { background: #E3E7DF url('/assets/images/category-advanced.webp') center / cover no-repeat; }
+body.home-v2 .cat-directory .cat-accordion:nth-of-type(8n+8) .cat-accordion-tile { background: #EAE4DF url('/assets/images/category-equipments.webp') center / cover no-repeat; }
+
+/* The card number, top left. */
+body.home-v2 .cat-directory .cat-accordion-tile::after {
+	content: counter(bc-card, bc-2digit);
+	position: absolute;
+	left: 16px;
+	top: 14px;
+	z-index: 2;
+	font-family: var(--font-mono);
+	font-size: 9.5px;
+	font-weight: 700;
+	letter-spacing: .14em;
 	color: #fff;
-	font-family: 'Outfit', Arial, sans-serif;
+	background: rgba(20, 13, 8, .6);
+	padding: 4px 9px;
+	border-radius: var(--radius-pill);
 }
 
-body.home-v2 .cat-accordion-body { border-top-color: #ececea; padding: 14px 26px 22px; }
+body.home-v2 .cat-accordion-title {
+	position: absolute;
+	left: 16px;
+	right: 52px;
+	bottom: 14px;
+	z-index: 2;
+	font-family: var(--font-display);
+	font-weight: var(--fw-black);
+	font-style: italic;
+	text-transform: uppercase;
+	font-size: 19px;
+	line-height: 1.02;
+	color: #fff;
+}
+
+/* The open/closed marker: a white disc at the foot of the tile. The tile's
+ * own ::before and ::after are already spoken for (the gradient and the
+ * card number), so the marker hangs off the label instead. */
+body.home-v2 .cat-accordion .cat-accordion-title::after {
+	content: '+';
+	position: absolute;
+	right: -38px;
+	bottom: 0;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, .94);
+	color: var(--v2-ink);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-family: var(--font-mono);
+	font-size: 13px;
+	font-weight: 700;
+	font-style: normal;
+}
+
+body.home-v2 .cat-accordion[open] .cat-accordion-title::after { content: '\2013'; }
+
+/* The guide count, under the tile. */
+body.home-v2 .cat-directory .cat-accordion-count {
+	display: block;
+	background: transparent;
+	color: var(--text-muted);
+	font-family: var(--font-mono);
+	font-size: 10.5px;
+	font-weight: 400;
+	letter-spacing: .06em;
+	padding: 0;
+	margin: 12px 0 0;
+	border-radius: 0;
+}
+
+body.home-v2 .cat-directory .cat-accordion-body {
+	border-top: 0;
+	padding: 12px 0 4px;
+}
+
+body.home-v2 .cat-accordion-body ul { gap: 0; }
+
+/* The legacy page CSS styles "li" directly, which beats the list-style
+ * inherited from the <ul> - so the marker is turned off on the rows
+ * themselves, or every guide gets a bullet on a line of its own above it. */
+body.home-v2 .cat-accordion-body li {
+	padding: 0;
+	list-style: none !important;
+	list-style-type: none !important;
+}
 
 body.home-v2 .cat-accordion-body a {
-	font-family: 'Outfit', Arial, sans-serif;
+	display: flex;
+	align-items: center;
+	gap: 11px;
+	padding: 9px 2px;
+	border-bottom: 1px solid var(--v2-hairline);
+	font-family: var(--font-sans);
+	font-size: 13px;
+	font-weight: 600;
 	color: var(--v2-body);
-	font-weight: 500;
+	transition: padding-left .18s var(--ease-out), color .18s var(--ease-out);
+}
+
+body.home-v2 .cat-accordion-body a::before {
+	content: '';
+	flex-shrink: 0;
+	width: 12px;
+	height: 1px;
+	background: var(--amber-500);
+}
+
+body.home-v2 .cat-accordion-body a:hover {
+	padding-left: 6px;
+	color: var(--v2-ink);
+	text-decoration: none;
 }
 
 /* Legacy content wraps some links in <strong>/<b> and not others; force a
@@ -463,20 +1065,45 @@ body.home-v2 .cat-accordion-body a {
 body.home-v2 .cat-accordion-body a strong,
 body.home-v2 .cat-accordion-body a b,
 body.home-v2 .cat-accordion-body strong,
-body.home-v2 .cat-accordion-body b {
-	font-weight: 500;
+body.home-v2 .cat-accordion-body b { font-weight: 600; }
+
+/* Brief highlight when a hero strip column jumps to this card. */
+body.home-v2 .cat-directory .cat-accordion.is-targeted .cat-accordion-tile {
+	box-shadow: 0 0 0 3px var(--v2-energy);
 }
 
-body.home-v2 .cat-accordion-body a:hover { color: var(--v2-accent-strong); }
-
 /* ---------------------------------------------------------------------
- * Footer - the black closing band from the reference.
+ * Footer - the black closing band.
+ *
+ * The homepage sets it out as the reference does, logo against links and
+ * copyright against the back-to-top button; every other page centres the
+ * same parts, matching the directory reference.
  * ------------------------------------------------------------------ */
 body.home-v2 #colophon {
 	background: var(--v2-ink);
-	border-radius: 34px 34px 0 0;
-	margin-top: 54px;
-	padding: 20px 0 8px;
+	border-radius: 0;
+	margin-top: 0;
+	padding: 0;
+}
+
+body.home-v2 .site-footer-inner {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 56px 32px 44px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 26px;
+	text-align: center;
+}
+
+/* Centred stack by default: wordmark, then the links under it. */
+body.home-v2 .site-footer-top-row {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 26px;
 }
 
 body.home-v2 #colophon .menu {
@@ -486,80 +1113,162 @@ body.home-v2 #colophon .menu {
 	display: flex;
 	flex-wrap: wrap;
 	justify-content: center;
-	gap: 6px 28px;
+	gap: 10px 28px;
 }
 
 body.home-v2 #colophon .menu li { list-style: none; margin: 0; }
 
 body.home-v2 #colophon .menu li a {
-	font-size: 14px;
-	opacity: .85;
+	font-family: var(--font-sans);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: .04em;
+	color: rgba(255, 255, 255, .8);
 	text-decoration: none;
 }
 
-body.home-v2 #colophon .menu li a:hover { opacity: 1; }
+body.home-v2 #colophon .menu li a:hover { color: var(--v2-energy); }
 
-body.home-v2 #colophon .textwidget { text-align: center; margin-top: 14px; }
+body.home-v2 .site-footer-divider {
+	width: 100%;
+	max-width: 760px;
+	height: 1px;
+	background: rgba(255, 255, 255, .12);
+}
 
-body.home-v2 #colophon .menu li a,
+body.home-v2 .site-footer-meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 16px 26px;
+}
+
 body.home-v2 #colophon .textwidget,
 body.home-v2 #colophon .textwidget a {
-	font-family: 'Outfit', Arial, sans-serif;
-	color: #fff;
+	font-family: var(--font-mono);
+	font-size: 10.5px;
+	letter-spacing: .08em;
+	color: rgba(255, 255, 255, .62);
 }
 
-body.home-v2 .lang-switch {
-	font-family: 'Outfit', Arial, sans-serif;
-	background: var(--v2-ink);
-	border-radius: 999px;
+body.home-v2 #colophon .textwidget strong { color: rgba(255, 255, 255, .88); font-weight: 700; }
+
+body.home-v2 .site-footer-top {
+	flex-shrink: 0;
+	background: transparent;
+	border: 1px solid rgba(255, 255, 255, .2);
+	border-radius: var(--radius-pill);
+	color: rgba(255, 255, 255, .8);
+	font-family: var(--font-mono);
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: .16em;
+	text-transform: uppercase;
+	padding: 9px 18px;
+	cursor: pointer;
+	text-decoration: none;
+	display: inline-block;
+	transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
+
+body.home-v2 .site-footer-top:hover { background: rgba(255, 255, 255, .1); color: #fff; }
+
+/* The homepage's split rows. */
+body.home-page .site-footer-inner {
+	display: block;
+	padding: 48px 32px 36px;
+	text-align: left;
+}
+
+body.home-page .site-footer-wordmark { align-items: flex-start; }
+
+body.home-page .site-footer-top-row,
+body.home-page .site-footer-meta {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 24px 32px;
+}
+
+body.home-page .site-footer-top-row {
+	padding-bottom: 26px;
+	border-bottom: 1px solid rgba(255, 255, 255, .12);
+}
+
+body.home-page #colophon .menu { justify-content: flex-end; gap: 10px 26px; }
+body.home-page .site-footer-divider { display: none; }
+body.home-page .site-footer-meta { padding-top: 22px; }
+
+body.home-v2 .lang-switch { background: var(--v2-ink); }
 
 /* ---------------------------------------------------------------------
  * Responsive
  * ------------------------------------------------------------------ */
+@media (max-width: 1100px) {
+	body.home-v2 .hero-strip #thct { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+	body.home-v2 .hero-strip #thct li:nth-child(4) { border-right: 0 !important; }
+	body.home-v2 .hero-strip #thct li:nth-child(5) .quick-nav-link { padding-left: 0; }
+}
+
 @media (max-width: 900px) {
-	body.home-v2 #main.wrapper { border-radius: 24px; padding: 14px 18px 30px; margin-top: -40px; }
-	body.home-v2 .hero-cta-inner { padding: 60px 20px 78px; }
-	body.home-v2 .cat-directory-head { padding: 28px 22px 18px; }
+	body.home-v2 #main.wrapper { border-radius: 16px; padding: 14px 18px 30px; margin-top: -44px; }
+	body.home-page #main.wrapper { padding: 0 20px 44px; }
+	body.home-v2 .page-hero-home .page-hero-inner { min-height: 0; }
+	body.home-v2 .home-secret { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+}
+
+/* The nav's collapse breakpoint, matching templates/header.php. */
+@media (max-width: 1100px) {
+	body.home-v2 .header-middle-inner { padding: 18px 20px 18px; }
+	/* The header stays dark at every width, so the wordmark keeps its white
+	 * silhouette and the two icon buttons are white like it. */
+	body.home-v2 .icon-btn { color: #fff; }
+	body.home-v2 .icon-btn:hover { background: rgba(255, 255, 255, .18); }
 }
 
 @media (max-width: 767px) {
-	body.home-v2 .main-nav { padding: 0 18px; margin-top: 8px; }
-	/* Collapsed, the pill would still paint its background and padding as a
-	 * thin bar under the toggle; it only becomes a panel once opened. */
-	body.home-v2 .main-nav .nav-groups {
-		background: transparent;
-		border-color: transparent;
-		backdrop-filter: none;
-		-webkit-backdrop-filter: none;
-		padding: 0;
+	body.home-v2 .page-hero-inner { padding: 18px 20px 62px; }
+	body.home-v2 .page-hero-home .page-hero-inner { padding: 12px 18px 0; }
+	body.home-v2 .page-hero-blurb { font-size: 16px; }
+	body.home-v2 .page-hero-home .page-hero-blurb { margin-bottom: 26px; }
+	body.home-v2 .hero-actions { margin-bottom: 28px; }
+	body.home-v2 .hero-btn-primary { padding: 10px 10px 10px 24px; }
+	body.home-v2 .hero-btn-primary .hero-btn-label { font-size: 15px; }
+	body.home-v2 .hero-btn-primary .hero-btn-icon { width: 32px; height: 32px; }
+	body.home-v2 .hero-btn-ghost { padding: 13px 22px; font-size: 13px; }
+	body.home-v2 .home-inside-sub { font-size: 19px; }
+	body.home-page #main.wrapper { padding: 0 14px 44px; margin-top: -52px; }
+	body.home-page .home-intro,
+	body.home-page .cat-section.cat-directory { border-radius: 16px; margin-bottom: 16px; }
+	body.home-page .site-footer-inner { padding: 38px 20px 30px; }
+}
+
+@media (max-width: 620px) {
+	body.home-v2 .quick-nav.hero-strip { padding-bottom: 56px; }
+
+	/* The strip becomes one scrolling row, as in the reference. */
+	body.home-v2 .hero-strip #thct {
+		display: flex;
+		flex-wrap: nowrap;
+		overflow-x: auto;
+		scrollbar-width: none;
+		padding-bottom: 0;
+		scroll-behavior: smooth;
 	}
 
-	body.home-v2 .nav-toggle-checkbox:checked ~ .main-nav .nav-groups {
-		background: rgba(18, 18, 18, .66);
-		border-color: rgba(255, 255, 255, .16);
-		backdrop-filter: blur(14px);
-		-webkit-backdrop-filter: blur(14px);
-		border-radius: 22px;
-		padding: 8px;
+	body.home-v2 .hero-strip #thct::-webkit-scrollbar { display: none; }
+
+	body.home-v2 .hero-strip #thct li {
+		flex: 0 0 auto;
+		border-right: 1px solid rgba(255, 255, 255, .1) !important;
 	}
-	body.home-v2 .header-middle-inner { padding: 18px 18px 0; }
-	/* The header stays dark at every width, so the logo keeps its white
-	 * silhouette and the search field its translucent treatment. */
-	/* On the dark header the two icon buttons are white, like the logo. */
-	body.home-v2 .icon-btn { color: #fff; }
-	body.home-v2 .icon-btn:hover { background: rgba(255, 255, 255, .16); }
-	/* The v2 header is a dark photograph, so the opened row rides on it
-	   rather than on the white ground the plain header uses. */
-	body.home-v2 .search-toggle-checkbox:checked ~ .header-middle .site-search {
-		background: rgba(18, 18, 18, .82);
-		backdrop-filter: blur(14px);
-		-webkit-backdrop-filter: blur(14px);
-		border-radius: 0 0 18px 18px;
-		box-shadow: none;
-		padding-top: 10px;
-	}
-	body.home-v2 .hero-cta-inner { padding: 44px 20px 54px; }
-	body.home-v2 .hero-cta-btn { font-size: 15px; padding: 12px 12px 12px 24px; }
-	body.home-v2 .hero-cta-btn::after { width: 32px; height: 32px; }
+
+	body.home-v2 .hero-strip #thct li .quick-nav-link { padding: 16px 22px 16px 0; }
+	body.home-v2 .hero-strip #thct li:last-child .quick-nav-link { padding-right: 0; }
+	body.home-v2 .page-hero-home .page-hero-title { font-size: clamp(40px, 12vw, 56px); }
+	body.home-v2 .cat-directory .cat-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+	body.home-v2 .home-intro-list li { padding: 18px; }
 }

@@ -1,101 +1,175 @@
 /*
  * Category directory (/categories, /zh/categories).
  *
- * Structure follows the live /techniques listing - a sidebar of sections
- * beside a grid of picture cards - and the visual language is the
- * homepage's, so home-v2.css loads first (templates/header.php gives the
- * page the same body.home-v2 class) and this file adds only what the
- * directory itself needs.
+ * One white panel on the light field: a label/search/tally row, a rail of
+ * section chips that follows you down the page, then a section per
+ * category - its first guide as a picture card beside the rest of them as
+ * a numbered list.
+ *
+ * The visual language is the homepage's, so home-v2.css loads first
+ * (templates/header.php gives the page the same body.home-v2 class) and
+ * this file adds only what the directory itself needs.
  *
  * Everything is scoped under body.cat-directory-page so no other page can
- * pick these rules up. Tokens (--v2-*) come from home-v2.css.
+ * pick these rules up. Tokens (--v2-*) come from home-v2.css; --bc-*,
+ * --font-*, --radius-* etc. come from design-tokens.css.
  */
 
 /* ---------------------------------------------------------------------
- * Hero - same charcoal photographic header as the homepage, with the page
- * title where the homepage puts its call-to-action button.
+ * Hero - the same warm near-black textured band as the homepage, shorter,
+ * with the page title where the homepage puts its buttons.
  * ------------------------------------------------------------------ */
-body.cat-directory-page .page-hero {
-	position: relative;
-	background: transparent;
-}
-
 body.cat-directory-page .page-hero-inner {
-	max-width: 1240px;
+	max-width: 1200px;
 	margin: 0 auto;
-	padding: 70px 34px 96px;
-}
-
-body.cat-directory-page .page-hero-eyebrow {
-	font-family: 'Outfit', Arial, sans-serif;
-	font-size: 12px;
-	font-weight: 600;
-	letter-spacing: 2.4px;
-	text-transform: uppercase;
-	color: rgba(255, 255, 255, .66);
-	margin: 0 0 14px;
+	padding: 34px 32px 132px;
 }
 
 body.cat-directory-page .page-hero-title {
-	font-family: 'Anton', 'Raleway', Impact, sans-serif;
-	font-weight: 400;
-	text-transform: uppercase;
-	letter-spacing: -0.5px;
-	line-height: .94;
-	font-size: clamp(44px, 7.4vw, 104px);
+	font-size: clamp(42px, 6.4vw, 78px);
+	line-height: .9;
+	letter-spacing: -.008em;
 	margin: 0 0 22px;
-	color: #fff;
 }
 
-body.cat-directory-page .page-hero-title .v2-head-lead { color: rgba(255, 255, 255, .45); }
+body.cat-directory-page .page-hero-title .v2-head-lead { color: rgba(255, 255, 255, .48); }
 body.cat-directory-page .page-hero-title .v2-head-key { color: #fff; }
 
 body.cat-directory-page .page-hero-blurb {
-	font-family: 'Outfit', 'Lato', Arial, sans-serif;
-	font-size: 17px;
-	line-height: 1.65;
-	color: rgba(255, 255, 255, .82);
-	max-width: 560px;
+	font-size: 16px;
+	line-height: 1.62;
+	color: rgba(255, 255, 255, .8);
+	max-width: 52ch;
+}
+
+/* ---------------------------------------------------------------------
+ * The panel
+ * ------------------------------------------------------------------ */
+body.cat-directory-page #main.wrapper {
+	background: transparent;
+	border-radius: 0;
+	box-shadow: none;
+	padding: 0 32px 72px;
+	margin: -104px auto 0;
+}
+
+/* The legacy theme makes .page-container a flex container, which turned
+ * the panel below into a flex item with min-width:auto - so it sized itself
+ * to its widest content (the chip rail, which is deliberately wider than
+ * the screen and scrolls) and the whole page rendered at desktop width on
+ * a phone. The directory lays itself out, so the container goes back to
+ * being a block. */
+body.cat-directory-page .catdir-page { display: block; }
+
+body.cat-directory-page .catdir-shell {
+	background: #fff;
+	border-radius: 20px;
+	box-shadow: 0 30px 70px rgba(22, 17, 12, .11);
+	padding: clamp(26px, 3.6vw, 48px);
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	box-sizing: border-box;
+	/* Belt and braces: never let the panel outgrow its column, whatever
+	 * the wrapper above it turns out to be. */
+	width: 100%;
+	min-width: 0;
+	max-width: 100%;
+}
+
+/* ---------------------------------------------------------------------
+ * Head row - label, filter field, live tally.
+ * ------------------------------------------------------------------ */
+body.cat-directory-page .catdir-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px 20px;
+	padding: 0 2px 16px;
+	border-bottom: 1px solid var(--v2-line);
+}
+
+body.cat-directory-page .catdir-head-label {
+	font-family: var(--font-mono);
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: .2em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+}
+
+body.cat-directory-page .catdir-head-tools {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	flex: 1 1 300px;
+	justify-content: flex-end;
+}
+
+body.cat-directory-page .catdir-search {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	border: 1px solid #E4E1DC;
+	border-radius: var(--radius-pill);
+	padding: 10px 16px;
+	color: var(--text-muted);
+	flex: 1 1 220px;
+	max-width: 340px;
+	transition: border-color var(--dur-fast) var(--ease-out);
+}
+
+body.cat-directory-page .catdir-search:focus-within { border-color: var(--v2-ink); }
+
+body.cat-directory-page .catdir-search-icon {
+	position: static;
+	transform: none;
+	font-size: 12px;
+	line-height: 1;
+	opacity: .7;
+	pointer-events: none;
+}
+
+body.cat-directory-page .catdir-search-input {
+	width: 100%;
+	box-sizing: border-box;
+	background: transparent;
+	border: 0;
+	border-radius: 0;
+	padding: 0;
+	font-family: var(--font-sans);
+	font-size: 13px;
+	color: var(--text-primary);
+	outline: none;
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+body.cat-directory-page .catdir-search-input::placeholder { color: var(--text-muted); }
+
+body.cat-directory-page .catdir-tally {
+	flex-shrink: 0;
+	font-family: var(--font-mono);
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: .12em;
+	color: var(--v2-ink);
 	margin: 0;
 }
 
 /* ---------------------------------------------------------------------
- * Two-column shell: sidebar of sections, grid beside it.
+ * Rail - the section chips, sticky at the top of the panel.
  * ------------------------------------------------------------------ */
-/* The aside is left to stretch over the full grid row on purpose: a
- * start-aligned column would be only as tall as the menu itself, and
- * position:sticky inside it would have nothing to travel through. */
-body.cat-directory-page .catdir-layout {
-	display: grid;
-	grid-template-columns: 244px minmax(0, 1fr);
-	gap: 34px;
-	padding: 12px 0 10px;
-}
-
-body.cat-directory-page .catdir-main { min-width: 0; }
-
-/* ---------------------------------------------------------------------
- * Sidebar - the reference's boxed section menu, as one rounded card that
- * follows you down the page.
- * ------------------------------------------------------------------ */
-body.cat-directory-page .catdir-sidebar-inner {
+body.cat-directory-page .catdir-rail {
 	position: -webkit-sticky;
 	position: sticky;
-	top: 16px;
-	background: var(--v2-field);
-	border-radius: 24px;
-	padding: 22px 16px;
-}
-
-body.cat-directory-page .catdir-sidebar-title {
-	font-family: 'Outfit', Arial, sans-serif;
-	font-size: 12px;
-	font-weight: 600;
-	letter-spacing: 1.8px;
-	text-transform: uppercase;
-	color: var(--v2-body);
-	margin: 0 0 14px;
-	padding: 0 10px;
+	top: 0;
+	z-index: 6;
+	background: #fff;
+	padding: 6px 0 10px;
+	margin: 0 0 10px;
 }
 
 body.cat-directory-page .catdir-sidebar-list,
@@ -106,191 +180,142 @@ body.cat-directory-page .catdir-sidebar-item {
 	padding: 0;
 }
 
-body.cat-directory-page .catdir-sidebar-item a {
+body.cat-directory-page .catdir-sidebar-list {
 	display: flex;
-	align-items: center;
-	gap: 10px;
-	padding: 9px 10px;
-	border-radius: 12px;
-	font-family: 'Outfit', Arial, sans-serif;
-	font-size: 14px;
-	font-weight: 500;
-	color: var(--v2-body);
-	text-decoration: none;
-	transition: background .15s ease, color .15s ease;
+	flex-wrap: wrap;
+	gap: 8px;
 }
 
-body.cat-directory-page .catdir-sidebar-icon {
-	width: 20px;
-	height: 20px;
-	flex: 0 0 20px;
-	object-fit: contain;
-	opacity: .55;
+body.cat-directory-page .catdir-sidebar-item a {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	padding: 11px 16px;
+	border: 1px solid #E4E1DC;
+	border-radius: var(--radius-pill);
+	background: transparent;
+	color: var(--v2-body);
+	min-height: 44px;
+	white-space: nowrap;
+	text-decoration: none;
+	transition: background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
 
 body.cat-directory-page .catdir-sidebar-label {
-	flex: 1 1 auto;
-	min-width: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	font-size: 12.5px;
+	font-weight: 700;
+	letter-spacing: -.002em;
 }
 
 body.cat-directory-page .catdir-sidebar-count {
-	flex: 0 0 auto;
-	font-size: 12px;
-	font-weight: 600;
-	color: var(--v2-grey);
+	font-family: var(--font-mono);
+	font-size: 10.5px;
+	opacity: .72;
 }
 
 body.cat-directory-page .catdir-sidebar-item a:hover,
 body.cat-directory-page .catdir-sidebar-item a:focus {
-	background: #fff;
-	color: var(--v2-ink);
-}
-
-body.cat-directory-page .catdir-sidebar-item.is-active a {
-	background: var(--v2-accent-strong);
+	background: var(--v2-ink);
+	border-color: var(--v2-ink);
 	color: #fff;
 }
 
-body.cat-directory-page .catdir-sidebar-item.is-active .catdir-sidebar-icon { filter: brightness(0) invert(1); opacity: .9; }
-body.cat-directory-page .catdir-sidebar-item.is-active .catdir-sidebar-count { color: rgba(255, 255, 255, .7); }
+/* The chip for the section you are reading, marked by category-page.js. */
+body.cat-directory-page .catdir-sidebar-item.is-active a {
+	background: #F5F4F1;
+	border-color: var(--v2-ink);
+	color: var(--v2-ink);
+}
 
 body.cat-directory-page .catdir-sidebar-item[hidden] { display: none !important; }
 
 /* ---------------------------------------------------------------------
- * Toolbar - filter field and live tally, above the first section.
- * ------------------------------------------------------------------ */
-body.cat-directory-page .catdir-toolbar {
-	display: flex;
-	align-items: center;
-	gap: 16px;
-	flex-wrap: wrap;
-	margin: 0 0 26px;
-}
-
-body.cat-directory-page .catdir-search {
-	position: relative;
-	flex: 1 1 260px;
-	min-width: 200px;
-}
-
-body.cat-directory-page .catdir-search-icon {
-	position: absolute;
-	left: 18px;
-	top: 50%;
-	transform: translateY(-50%);
-	font-size: 14px;
-	opacity: .5;
-	pointer-events: none;
-}
-
-body.cat-directory-page .catdir-search-input {
-	width: 100%;
-	box-sizing: border-box;
-	background: var(--v2-field);
-	border: 1px solid transparent;
-	border-radius: 999px;
-	padding: 15px 20px 15px 46px;
-	font-family: 'Outfit', Arial, sans-serif;
-	font-size: 15px;
-	color: var(--v2-ink);
-	outline: none;
-	-webkit-appearance: none;
-	appearance: none;
-}
-
-body.cat-directory-page .catdir-search-input::placeholder { color: #9a9d9b; }
-
-body.cat-directory-page .catdir-search-input:focus {
-	background: #fff;
-	border-color: var(--v2-accent);
-	box-shadow: 0 0 0 4px rgba(235, 125, 46, .16);
-}
-
-body.cat-directory-page .catdir-tally {
-	font-family: 'Outfit', Arial, sans-serif;
-	font-size: 13px;
-	font-weight: 500;
-	letter-spacing: .6px;
-	text-transform: uppercase;
-	color: var(--v2-body);
-	margin: 0;
-}
-
-/* ---------------------------------------------------------------------
  * Sections
  * ------------------------------------------------------------------ */
+body.cat-directory-page .catdir-main,
+body.cat-directory-page .catdir-head,
+body.cat-directory-page .catdir-rail { min-width: 0; max-width: 100%; }
+
 body.cat-directory-page .catdir-section {
-	scroll-margin-top: 20px;
-	margin: 0 0 40px;
+	padding: 44px 0 0;
+	scroll-margin-top: 24px;
 }
-
-body.cat-directory-page .catdir-section-head {
-	display: flex;
-	align-items: baseline;
-	gap: 14px;
-	flex-wrap: wrap;
-	padding-bottom: 14px;
-	margin-bottom: 20px;
-	border-bottom: 1px solid rgba(24, 20, 16, .11);
-}
-
-body.cat-directory-page .catdir-section-title {
-	font-family: 'Anton', 'Raleway', Impact, sans-serif;
-	font-weight: 400;
-	text-transform: uppercase;
-	letter-spacing: -0.3px;
-	line-height: 1;
-	font-size: clamp(24px, 2.6vw, 34px);
-	color: var(--v2-ink);
-	margin: 0;
-}
-
-body.cat-directory-page .catdir-section-count {
-	font-family: 'Outfit', Arial, sans-serif;
-	font-size: 12px;
-	font-weight: 600;
-	letter-spacing: .3px;
-	color: #fff;
-	background: var(--v2-ink);
-	border-radius: 999px;
-	padding: 4px 12px;
-	white-space: nowrap;
-}
-
-body.cat-directory-page .catdir-section-more {
-	margin-left: auto;
-	font-family: 'Outfit', Arial, sans-serif;
-	font-size: 13px;
-	font-weight: 600;
-	letter-spacing: .3px;
-	text-transform: uppercase;
-	color: var(--v2-accent-strong);
-	text-decoration: none;
-	white-space: nowrap;
-}
-
-body.cat-directory-page .catdir-section-more::after {
-	content: '\2192';
-	margin-left: 7px;
-	display: inline-block;
-	transition: transform .15s ease;
-}
-
-body.cat-directory-page .catdir-section-more:hover { color: var(--v2-ink); }
-body.cat-directory-page .catdir-section-more:hover::after { transform: translateX(3px); }
 
 body.cat-directory-page .catdir-section[hidden] { display: none !important; }
 
+body.cat-directory-page .catdir-section-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 12px 16px;
+	padding-bottom: 18px;
+	margin-bottom: 24px;
+	border-bottom: 1px solid var(--v2-line);
+}
+
+body.cat-directory-page .catdir-section-num {
+	font-family: var(--font-mono);
+	font-size: 10.5px;
+	font-weight: 700;
+	letter-spacing: .14em;
+	color: var(--v2-ink);
+	order: 1;
+}
+
+body.cat-directory-page .catdir-section-title {
+	font-family: var(--font-display);
+	font-weight: var(--fw-black);
+	font-style: italic;
+	text-transform: uppercase;
+	letter-spacing: -.006em;
+	line-height: 1;
+	font-size: clamp(26px, 3vw, 36px);
+	color: var(--v2-ink);
+	margin: 0 auto 0 0;
+	order: 2;
+}
+
+body.cat-directory-page .catdir-section-count {
+	font-family: var(--font-mono);
+	font-size: 10.5px;
+	color: var(--text-muted);
+	white-space: nowrap;
+	order: 3;
+	margin-right: auto;
+}
+
+body.cat-directory-page .catdir-section-more {
+	order: 4;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-family: var(--font-mono);
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: .18em;
+	text-transform: uppercase;
+	color: var(--v2-body);
+	text-decoration: none;
+	border-bottom: 1px solid #DCD8D2;
+	padding-bottom: 3px;
+	white-space: nowrap;
+	transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+
+body.cat-directory-page .catdir-section-more:hover {
+	color: var(--v2-ink);
+	border-color: var(--amber-500);
+}
+
 /* ---------------------------------------------------------------------
- * Picture cards - the reference's grid tiles: artwork above, title under.
+ * Featured card beside the list of the rest.
  * ------------------------------------------------------------------ */
-body.cat-directory-page .catdir-grid {
+body.cat-directory-page .catdir-section-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(196px, 1fr));
-	gap: 20px;
+	grid-template-columns: repeat(auto-fit, minmax(268px, 1fr));
+	gap: 28px 40px;
+	align-items: start;
 }
 
 body.cat-directory-page .catdir-card { min-width: 0; }
@@ -299,27 +324,32 @@ body.cat-directory-page .catdir-card[hidden] { display: none !important; }
 body.cat-directory-page .catdir-card-link {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: 14px;
 	text-decoration: none;
-	height: 100%;
+	transition: transform var(--dur-base) var(--ease-out);
 }
 
-/* The inset hairline keeps a tile with a white-background diagram in it
- * from dissolving into the white panel behind the grid. */
+body.cat-directory-page .catdir-card-link:hover { transform: translateY(-3px); }
+
 body.cat-directory-page .catdir-card-thumb {
-	display: block;
 	position: relative;
+	display: block;
+	height: 216px;
+	border-radius: 14px;
 	overflow: hidden;
-	border-radius: 18px;
-	background: var(--v2-field);
-	box-shadow: inset 0 0 0 1px rgba(24, 20, 16, .08);
-	aspect-ratio: 4 / 3;
+	background: #EEE2DF;
 }
 
-/* Browsers without aspect-ratio keep a padding box of the same shape. */
-@supports not (aspect-ratio: 4 / 3) {
-	body.cat-directory-page .catdir-card-thumb { height: 0; padding-bottom: 75%; }
-}
+/* Eight brand-neutral tints, one per section, for the cards whose guide
+ * never had a featured image of its own. */
+body.cat-directory-page .catdir-section:nth-of-type(8n+1) .catdir-card-thumb { background: #EEE2DF; }
+body.cat-directory-page .catdir-section:nth-of-type(8n+2) .catdir-card-thumb { background: #E4EBE2; }
+body.cat-directory-page .catdir-section:nth-of-type(8n+3) .catdir-card-thumb { background: #E6E7ED; }
+body.cat-directory-page .catdir-section:nth-of-type(8n+4) .catdir-card-thumb { background: #F0E9DC; }
+body.cat-directory-page .catdir-section:nth-of-type(8n+5) .catdir-card-thumb { background: #E1E9ED; }
+body.cat-directory-page .catdir-section:nth-of-type(8n+6) .catdir-card-thumb { background: #ECE3D9; }
+body.cat-directory-page .catdir-section:nth-of-type(8n+7) .catdir-card-thumb { background: #E3E7DF; }
+body.cat-directory-page .catdir-section:nth-of-type(8n+8) .catdir-card-thumb { background: #EAE4DF; }
 
 body.cat-directory-page .catdir-card-img {
 	position: absolute;
@@ -328,65 +358,127 @@ body.cat-directory-page .catdir-card-img {
 	height: 100%;
 	object-fit: cover;
 	display: block;
-	transition: transform .35s ease;
+	transition: transform .35s var(--ease-out);
 }
 
-/* No featured image: the category's icon on the flat field, so the tile
- * still reads as artwork rather than as a broken image. */
+body.cat-directory-page .catdir-card-link:hover .catdir-card-img { transform: scale(1.04); }
+
 body.cat-directory-page .catdir-card-fallback {
 	position: absolute;
 	inset: 0;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background:
-		radial-gradient(120% 120% at 30% 12%, rgba(235, 125, 46, .14) 0%, rgba(235, 125, 46, 0) 62%),
-		var(--v2-field);
 }
 
 body.cat-directory-page .catdir-card-fallback-icon {
 	width: 46px;
 	height: 46px;
 	object-fit: contain;
-	opacity: .32;
-	transition: transform .35s ease;
+	opacity: .38;
 }
 
-body.cat-directory-page .catdir-card-title {
-	font-family: 'Outfit', Arial, sans-serif;
-	font-size: 15px;
-	font-weight: 500;
-	line-height: 1.4;
+body.cat-directory-page .catdir-card-scrim {
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(180deg, rgba(20, 13, 8, 0) 44%, rgba(20, 13, 8, .8) 100%);
+	pointer-events: none;
+}
+
+body.cat-directory-page .catdir-card-flag {
+	position: absolute;
+	left: 18px;
+	top: 16px;
+	background: rgba(255, 255, 255, .94);
 	color: var(--v2-ink);
-	transition: color .15s ease;
+	font-family: var(--font-mono);
+	font-size: 9px;
+	font-weight: 700;
+	letter-spacing: .16em;
+	text-transform: uppercase;
+	padding: 5px 10px;
+	border-radius: var(--radius-pill);
 }
 
-body.cat-directory-page .catdir-card-link:hover .catdir-card-img,
-body.cat-directory-page .catdir-card-link:focus .catdir-card-img { transform: scale(1.05); }
-
-body.cat-directory-page .catdir-card-link:hover .catdir-card-fallback-icon,
-body.cat-directory-page .catdir-card-link:focus .catdir-card-fallback-icon { transform: scale(1.08); }
-
-body.cat-directory-page .catdir-card-link:hover .catdir-card-title,
-body.cat-directory-page .catdir-card-link:focus .catdir-card-title { color: var(--v2-accent-strong); }
-
-body.cat-directory-page .catdir-card-link:focus-visible .catdir-card-thumb {
-	outline: 2px solid var(--v2-accent);
-	outline-offset: 3px;
+body.cat-directory-page .catdir-card-name {
+	position: absolute;
+	left: 18px;
+	right: 18px;
+	bottom: 16px;
+	font-family: var(--font-display);
+	font-weight: var(--fw-black);
+	font-style: italic;
+	text-transform: uppercase;
+	font-size: 20px;
+	line-height: 1.02;
+	color: #fff;
 }
 
 /* ---------------------------------------------------------------------
- * Filter result
+ * The list of remaining guides
+ * ------------------------------------------------------------------ */
+body.cat-directory-page .catdir-list {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+body.cat-directory-page .catdir-row-link {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	padding: 13px 2px;
+	border-bottom: 1px solid var(--v2-hairline);
+	color: var(--v2-body);
+	text-decoration: none;
+	transition: padding-left .18s var(--ease-out), color .18s var(--ease-out);
+}
+
+body.cat-directory-page .catdir-row-link:hover {
+	padding-left: 8px;
+	color: var(--v2-ink);
+}
+
+body.cat-directory-page .catdir-row-num {
+	flex-shrink: 0;
+	font-family: var(--font-mono);
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: .1em;
+	color: var(--text-muted);
+}
+
+body.cat-directory-page .catdir-row-name {
+	flex: 1;
+	min-width: 0;
+	font-size: 13.5px;
+	font-weight: 600;
+	line-height: 1.4;
+	letter-spacing: -.002em;
+}
+
+body.cat-directory-page .catdir-row-arrow {
+	flex-shrink: 0;
+	font-family: var(--font-mono);
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
+/* ---------------------------------------------------------------------
+ * Nothing matched the filter
  * ------------------------------------------------------------------ */
 body.cat-directory-page .catdir-empty {
-	font-family: 'Outfit', Arial, sans-serif;
-	font-size: 16px;
-	color: var(--v2-body);
-	background: var(--v2-field);
-	border-radius: 24px;
-	padding: 48px 26px;
+	font-family: var(--font-sans);
+	font-size: 13.5px;
+	color: var(--text-muted);
+	padding: 72px 0;
 	text-align: center;
 	margin: 0;
+}
+
+body.cat-directory-page .catdir-empty::before {
+	content: '';
+	display: block;
 }
 
 body.cat-directory-page .catdir-empty[hidden] { display: none !important; }
@@ -402,42 +494,38 @@ body.cat-directory-page .catdir-sr {
 }
 
 /* ---------------------------------------------------------------------
- * Responsive - the sidebar becomes a scrolling chip rail above the grid.
+ * Responsive
  * ------------------------------------------------------------------ */
 @media (max-width: 900px) {
-	body.cat-directory-page .page-hero-inner { padding: 52px 20px 84px; }
-
-	body.cat-directory-page .catdir-layout {
-		grid-template-columns: minmax(0, 1fr);
-		gap: 20px;
-	}
-
-	body.cat-directory-page .catdir-sidebar-inner {
-		top: 0;
-		z-index: 20;
-		padding: 12px;
-		border-radius: 18px;
-	}
-
-	body.cat-directory-page .catdir-sidebar-title { display: none; }
-
-	body.cat-directory-page .catdir-sidebar-list {
-		display: flex;
-		gap: 6px;
-		overflow-x: auto;
-		-webkit-overflow-scrolling: touch;
-	}
-
-	body.cat-directory-page .catdir-sidebar-item { flex: 0 0 auto; }
-	body.cat-directory-page .catdir-sidebar-item a { white-space: nowrap; }
-	body.cat-directory-page .catdir-sidebar-label { overflow: visible; }
-	body.cat-directory-page .catdir-section { scroll-margin-top: 76px; }
+	body.cat-directory-page .page-hero-inner { padding: 30px 20px 120px; }
+	body.cat-directory-page #main.wrapper { padding: 0 20px 52px; }
+	body.cat-directory-page .catdir-shell { padding: 26px 22px; }
+	body.cat-directory-page .catdir-section { padding-top: 34px; }
 }
 
-@media (max-width: 640px) {
-	body.cat-directory-page .page-hero-inner { padding: 38px 20px 66px; }
-	body.cat-directory-page .page-hero-blurb { font-size: 15px; }
-	body.cat-directory-page .catdir-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; }
-	body.cat-directory-page .catdir-card-title { font-size: 14px; }
-	body.cat-directory-page .catdir-section-more { margin-left: 0; flex-basis: 100%; }
+@media (max-width: 720px) {
+	body.cat-directory-page .page-hero-inner { padding: 26px 18px 96px; }
+	body.cat-directory-page #main.wrapper { padding: 0 14px 44px; margin-top: -72px; }
+	body.cat-directory-page .catdir-shell { padding: 20px 16px; border-radius: 16px; }
+	body.cat-directory-page .catdir-head-tools { flex-basis: 100%; justify-content: flex-start; }
+}
+
+@media (max-width: 620px) {
+	/* The chips become one scrolling row, bleeding to the panel's edges. */
+	body.cat-directory-page .catdir-sidebar-list {
+		flex-wrap: nowrap;
+		overflow-x: auto;
+		scrollbar-width: none;
+		margin: 0 -16px;
+		padding: 0 16px 2px;
+	}
+
+	body.cat-directory-page .catdir-sidebar-list::-webkit-scrollbar { display: none; }
+	body.cat-directory-page .catdir-sidebar-item { flex: 0 0 auto; }
+	body.cat-directory-page .catdir-section { padding-top: 30px; scroll-margin-top: 76px; }
+	body.cat-directory-page .catdir-section-grid { gap: 20px; }
+	body.cat-directory-page .catdir-card-thumb { height: 190px; }
+	body.cat-directory-page .catdir-row-link { min-height: 44px; padding: 11px 2px; }
+	body.cat-directory-page .catdir-section-count { margin-right: 0; }
+	body.cat-directory-page .catdir-section-more { order: 5; flex-basis: 100%; }
 }

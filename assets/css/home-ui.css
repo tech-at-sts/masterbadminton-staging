@@ -1,107 +1,115 @@
 /*
  * Homepage UI/UX layer.
  *
- * Loaded after the inline <style> block in templates/header.php so equal
- * specificity resolves in this file's favour. Selectors that have to beat
- * the per-page WPBakery CSS (which ContentExtractor re-emits inside <body>,
- * i.e. later in document order) are deliberately written with an extra
- * class of specificity - see .quick-nav #thct.
+ * Loaded after the inline <style> block in templates/header.php and after
+ * design-tokens.css, so it can lean on the shared --bc-*/--yellow-*/--font-*
+ * custom properties for the BadmintonClick visual language (black-first,
+ * shuttle-yellow + sale-red accents, condensed italic display type).
+ * Selectors that have to beat the per-page WPBakery CSS (which
+ * ContentExtractor re-emits inside <body>, i.e. later in document order) are
+ * deliberately written with an extra class of specificity - see
+ * .quick-nav #thct.
  *
  * Nothing here changes copy: every rule is layout, spacing or colour.
  */
 
-:root {
-	--mb-orange: #eb7d2e;
-	--mb-orange-dark: #c1602a;
-	--mb-navy: #1c2541;
-	--mb-cream: #faf5ea;
-	--mb-line: #e9e1d1;
-	--mb-muted: #9a9186;
-}
-
 /* ---------------------------------------------------------------------
  * 3. Hero call-to-action ("Are you a beginner? Click Here")
- * Replaces the thin grey top strip on the homepage with a real hero band.
+ * A yellow pill CTA with a black circular arrow, on the dark hero band.
  * ------------------------------------------------------------------ */
 .hero-cta {
-	background: linear-gradient(135deg, #1c2541 0%, #2d3a63 100%);
-	border-bottom: 3px solid var(--mb-orange);
+	background: transparent;
 }
 
 .hero-cta-inner {
-	max-width: 1140px;
+	max-width: 1200px;
 	margin: 0 auto;
-	padding: 38px 20px;
+	padding: 20px 32px 56px;
 	display: flex;
 	align-items: center;
-	justify-content: center;
-	gap: 18px;
+	justify-content: flex-start;
+	gap: 16px;
 	flex-wrap: wrap;
 }
 
 .hero-cta-icon {
-	width: 46px;
-	height: 46px;
+	width: 40px;
+	height: 40px;
 	flex-shrink: 0;
+	filter: brightness(0) invert(1);
+	opacity: .85;
 }
 
 .hero-cta-btn {
 	display: inline-flex;
 	align-items: center;
-	gap: 10px;
-	background: var(--mb-orange);
-	color: #fff;
-	font-family: 'Raleway', Arial, sans-serif;
-	font-size: 17px;
-	font-weight: 800;
-	letter-spacing: .3px;
+	gap: 14px;
+	background: var(--accent-energy);
+	color: var(--bc-black);
+	font-family: var(--font-sans);
+	font-size: 15px;
+	font-weight: 700;
+	letter-spacing: .02em;
 	text-decoration: none;
-	padding: 17px 38px;
-	border-radius: 999px;
-	box-shadow: 0 8px 22px rgba(235, 125, 46, .35);
-	transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
+	padding: 11px 11px 11px 26px;
+	border-radius: var(--radius-pill);
+	box-shadow: 0 16px 36px rgba(0, 0, 0, .35);
+	transition: transform var(--dur-base) var(--ease-out), filter var(--dur-base) var(--ease-out);
 }
 
 .hero-cta-btn::after {
 	content: '\2192';
-	font-size: 19px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 34px;
+	height: 34px;
+	border-radius: 50%;
+	background: var(--bc-black);
+	color: #fff;
+	font-size: 15px;
 	line-height: 1;
 }
 
 .hero-cta-btn:hover,
 .hero-cta-btn:focus {
-	background: #f28c3f;
-	color: #fff;
+	filter: brightness(1.08);
+	color: var(--bc-black);
 	transform: translateY(-2px);
-	box-shadow: 0 12px 28px rgba(235, 125, 46, .45);
 }
 
 @media (max-width: 640px) {
-	.hero-cta-inner { padding: 26px 18px; gap: 14px; }
-	.hero-cta-btn { font-size: 15px; padding: 14px 26px; text-align: center; }
-	.hero-cta-icon { width: 36px; height: 36px; }
+	.hero-cta-inner { padding: 16px 20px 44px; gap: 12px; }
+	.hero-cta-btn { font-size: 14px; padding: 10px 10px 10px 22px; }
+	.hero-cta-icon { width: 32px; height: 32px; }
 }
 
 /* ---------------------------------------------------------------------
- * 4. Sticky quick-nav tab bar (the 8-icon category strip)
+ * 4. Quick-nav tab bar (the 8-icon category strip)
+ *
  * The legacy markup is ul#thct with floated 130px <li>s; those rules live
  * in the per-page WPBakery <style> that is emitted inside <body>, so every
  * selector below carries the .quick-nav class to outrank them.
+ *
+ * This is the sticky white bar the strip wears when it sits in the page.
+ * On the homepage it is part of the hero band instead, marked .hero-strip
+ * and dressed by home-v2.css - so the sticky treatment excludes it rather
+ * than being undone rule by rule.
  * ------------------------------------------------------------------ */
-.quick-nav {
+.quick-nav:not(.hero-strip) {
 	position: -webkit-sticky;
 	position: sticky;
 	top: 0;
 	z-index: 25;
 	background: #fff;
-	border-top: 1px solid #ededed;
-	border-bottom: 1px solid #e2e2e2;
-	box-shadow: 0 4px 14px rgba(0, 0, 0, .06);
+	border-top: 1px solid var(--border);
+	border-bottom: 1px solid var(--border);
+	box-shadow: var(--shadow-sm);
 	margin: 28px 0 0;
 }
 
 .quick-nav-inner {
-	max-width: 1140px;
+	max-width: 1200px;
 	margin: 0 auto;
 	padding: 0 12px;
 	overflow-x: auto;
@@ -161,7 +169,7 @@
 	text-decoration: none;
 	border-bottom: 3px solid transparent;
 	border-radius: 10px 10px 0 0;
-	transition: background .15s ease, border-color .15s ease;
+	transition: background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
 }
 
 .quick-nav #thct li .quick-nav-icon {
@@ -171,8 +179,8 @@
 	width: 42px;
 	height: 42px;
 	border-radius: 50%;
-	background: var(--mb-cream);
-	transition: background .15s ease, transform .15s ease;
+	background: var(--surface-sunken);
+	transition: background var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
 
 /* Consistent icon sizing: the source PNGs vary, so box them identically. */
@@ -185,51 +193,50 @@
 }
 
 .quick-nav #thct li .quick-nav-label {
-	font-family: 'Raleway', Arial, sans-serif;
-	font-size: 11px;
+	font-family: var(--font-mono);
+	font-size: 10px;
 	font-weight: 700;
 	line-height: 1.25;
-	letter-spacing: .4px;
+	letter-spacing: .1em;
 	text-transform: uppercase;
-	color: #4a4a4a;
-	transition: color .15s ease;
+	color: var(--text-secondary);
+	transition: color var(--dur-fast) var(--ease-out);
 }
 
 .quick-nav #thct li .quick-nav-link:hover,
 .quick-nav #thct li .quick-nav-link:focus {
-	background: #fdf6ee;
-	border-bottom-color: #f3c9a3;
+	background: var(--surface-sunken);
+	border-bottom-color: var(--accent-energy);
 	outline: none;
 }
 
 .quick-nav #thct li .quick-nav-link:hover .quick-nav-icon,
 .quick-nav #thct li .quick-nav-link:focus .quick-nav-icon {
-	background: #f8e3cd;
+	background: var(--accent-energy);
 	transform: translateY(-2px);
 }
 
-.quick-nav #thct li .quick-nav-link:hover .quick-nav-label,
-.quick-nav #thct li .quick-nav-link:focus .quick-nav-label {
-	color: var(--mb-orange-dark);
+.quick-nav #thct li .quick-nav-link:hover .quick-nav-label {
+	color: var(--bc-black);
 }
 
 .quick-nav #thct li.is-active .quick-nav-link {
-	background: #fdf1e5;
-	border-bottom-color: var(--mb-orange);
+	background: var(--surface-sunken);
+	border-bottom-color: var(--bc-black);
 }
 
 .quick-nav #thct li.is-active .quick-nav-icon {
-	background: var(--mb-orange);
+	background: var(--bc-black);
 }
 
 .quick-nav #thct li.is-active .quick-nav-label {
-	color: var(--mb-orange-dark);
+	color: var(--bc-black);
 }
 
 @media (max-width: 900px) {
 	.quick-nav #thct { justify-content: flex-start; }
 	.quick-nav #thct li { flex: 0 0 auto; min-width: 84px; }
-	.quick-nav-label { font-size: 10px; }
+	.quick-nav-label { font-size: 9.5px; }
 }
 
 /* ---------------------------------------------------------------------
@@ -239,17 +246,17 @@
  * ------------------------------------------------------------------ */
 .cat-section.cat-directory {
 	background: #fff;
-	border: 1px solid var(--mb-line);
-	border-radius: 22px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius-xl);
 	padding: 0;
 	margin: 46px 0;
 	overflow: hidden;
-	box-shadow: 0 10px 34px rgba(28, 37, 65, .07);
+	box-shadow: var(--shadow-md);
 }
 
 .cat-directory-head {
-	background: var(--mb-cream);
-	border-bottom: 1px solid var(--mb-line);
+	background: var(--surface-sunken);
+	border-bottom: 1px solid var(--border);
 	padding: 34px 40px 28px;
 }
 
@@ -269,21 +276,19 @@
 }
 
 .cat-directory .cat-search-input {
-	border-radius: 999px;
+	border-radius: var(--radius-pill);
 	padding-left: 44px;
 }
 
 .cat-directory .cat-expand-all {
-	border-radius: 999px;
-	background: var(--mb-navy);
-	border-color: var(--mb-navy);
+	border-radius: var(--radius-pill);
+	background: var(--bc-black);
+	border-color: var(--bc-black);
 	color: #fff;
 }
 
 .cat-directory .cat-expand-all:hover {
-	background: var(--mb-orange);
-	border-color: var(--mb-orange);
-	color: #fff;
+	filter: brightness(1.4);
 }
 
 .cat-directory .cat-grid {
@@ -292,22 +297,22 @@
 }
 
 .cat-directory .cat-accordion {
-	border: 1px solid #efe9dc;
+	border: 1px solid var(--border);
 	box-shadow: none;
-	transition: border-color .15s ease, box-shadow .15s ease;
+	transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
 	scroll-margin-top: 104px;
 }
 
 .cat-directory .cat-accordion:hover,
 .cat-directory .cat-accordion[open] {
-	border-color: #f0cfaa;
-	box-shadow: 0 6px 18px rgba(28, 37, 65, .08);
+	border-color: var(--border-strong);
+	box-shadow: var(--shadow-md);
 }
 
 /* Brief highlight when a quick-nav tab jumps to this card. */
 .cat-directory .cat-accordion.is-targeted {
-	border-color: var(--mb-orange);
-	box-shadow: 0 0 0 3px rgba(235, 125, 46, .18);
+	border-color: var(--accent-energy);
+	box-shadow: 0 0 0 3px rgba(255, 212, 0, .35);
 }
 
 @media (max-width: 640px) {
@@ -321,10 +326,12 @@
  * ------------------------------------------------------------------ */
 .home-intro .wpb_wrapper > h2,
 .home-intro h2 {
-	font-family: 'Playfair Display', serif;
+	font-family: var(--font-display);
+	font-style: italic;
 	font-size: 36px;
 	font-weight: 800;
-	color: var(--mb-navy);
+	text-transform: uppercase;
+	color: var(--bc-black);
 	margin: 0 0 26px;
 	text-align: center;
 }
@@ -348,10 +355,10 @@
 	font-size: 17px;
 	line-height: 1.7;
 	font-weight: 700;
-	color: var(--mb-navy);
+	color: var(--bc-black);
 	margin: 0 0 20px;
 	padding-left: 14px;
-	border-left: 4px solid var(--mb-orange);
+	border-left: 4px solid var(--accent-energy);
 }
 
 .home-intro-list {
@@ -365,9 +372,9 @@
 
 .home-intro-list li {
 	list-style: none;
-	background: var(--mb-cream);
-	border: 1px solid #f0e9da;
-	border-radius: 14px;
+	background: var(--surface-sunken);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-lg);
 	padding: 18px 20px;
 	font-size: 15px;
 	line-height: 1.65;
@@ -375,7 +382,7 @@
 
 .home-intro-list li strong {
 	display: block;
-	color: var(--mb-navy);
+	color: var(--bc-black);
 	margin-bottom: 4px;
 }
 
@@ -387,11 +394,14 @@
 
 /* ---------------------------------------------------------------------
  * 8. Top navigation grouping (primary content vs. utility links)
+ * Desktop: a pill rail. Phone: header.php's inline <style> turns
+ * .nav-groups itself into the full-screen takeover panel (position:fixed);
+ * this file only supplies what goes inside it at both widths.
  * ------------------------------------------------------------------ */
 .nav-groups {
-	max-width: 1140px;
+	max-width: 1200px;
 	margin: 0 auto;
-	padding: 0 20px;
+	padding: 0 32px;
 	display: flex;
 	align-items: stretch;
 	justify-content: space-between;
@@ -423,7 +433,7 @@
 }
 
 .nav-list-utility .nav-item > a {
-	color: #cfcfcf;
+	color: rgba(255, 255, 255, .72);
 	font-size: 11px;
 }
 
@@ -432,18 +442,20 @@
 }
 
 .nav-item-store > a {
-	border: 1px solid rgba(235, 125, 46, .8);
+	background: #fff;
+	color: var(--bc-black) !important;
 	border-radius: 999px;
-	color: #f6a768 !important;
-	padding: 7px 16px !important;
+	padding: 8px 18px !important;
 	margin-left: 8px;
-	border-bottom-width: 1px !important;
+	font-weight: 700 !important;
+	letter-spacing: .1em !important;
+	text-transform: uppercase;
+	font-size: 10.5px !important;
 }
 
 .nav-item-store > a:hover {
-	background: var(--mb-orange);
-	color: #fff !important;
-	border-color: var(--mb-orange);
+	background: var(--accent-energy);
+	color: var(--bc-black) !important;
 }
 
 /* Mega-menu panel for the wider groups. */
@@ -471,22 +483,11 @@
 	right: 0;
 }
 
-@media (max-width: 767px) {
-	.nav-groups {
-		display: block;
-		padding: 0;
-		max-height: 0;
-		overflow: hidden;
-		transition: max-height .2s ease;
-	}
-
-	/* The toggle now lives at the top of the header, so the panel it opens
-	   is reached through .main-nav rather than as its direct sibling. */
-	.nav-toggle-checkbox:checked ~ .main-nav .nav-groups { max-height: 2000px; }
-
+/* Matches the nav's own collapse breakpoint in templates/header.php. */
+@media (max-width: 1100px) {
 	.nav-groups .nav-list { max-height: none; overflow: visible; }
 
-	.nav-list-utility { border-top: 1px solid #333; }
+	.nav-list-utility { border-top: 1px solid rgba(255, 255, 255, .14); margin-top: 10px; padding-top: 16px; }
 	.nav-list-utility::before { display: none; }
 
 	/* The mega panel's own "display:none" outranks the generic
@@ -501,8 +502,92 @@
 		padding: 0;
 	}
 
-	.nav-item-store > a { margin-left: 20px; display: inline-flex; }
+	.nav-item-store > a { margin-left: 0; display: inline-flex; }
 }
+
+/* ---------------------------------------------------------------------
+ * 10. Site footer base (every page). body.home-v2 in home-v2.css layers
+ * the rounded top corners and larger spacing on top of this.
+ * ------------------------------------------------------------------ */
+#colophon {
+	background: var(--bc-black);
+	padding: 40px 0 30px;
+}
+
+.site-footer-inner {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 0 20px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 20px;
+	text-align: center;
+}
+
+#colophon .menu {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 8px 24px;
+}
+
+#colophon .menu li { list-style: none; margin: 0; }
+
+#colophon .menu li a {
+	font-family: var(--font-sans);
+	font-size: 12px;
+	font-weight: 600;
+	color: rgba(255, 255, 255, .8);
+	text-decoration: none;
+}
+
+#colophon .menu li a:hover { color: var(--accent-energy); }
+
+.site-footer-divider {
+	width: 100%;
+	max-width: 700px;
+	height: 1px;
+	background: rgba(255, 255, 255, .12);
+}
+
+.site-footer-meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 14px 24px;
+}
+
+#colophon .textwidget,
+#colophon .textwidget a {
+	font-family: var(--font-mono);
+	font-size: 10.5px;
+	letter-spacing: .06em;
+	color: rgba(255, 255, 255, .62);
+}
+
+#colophon .textwidget strong { color: rgba(255, 255, 255, .88); font-weight: 700; }
+
+.site-footer-top {
+	background: transparent;
+	border: 1px solid rgba(255, 255, 255, .2);
+	border-radius: var(--radius-pill);
+	color: rgba(255, 255, 255, .8);
+	font-family: var(--font-mono);
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: .16em;
+	text-transform: uppercase;
+	padding: 9px 18px;
+	text-decoration: none;
+	display: inline-block;
+}
+
+.site-footer-top:hover { background: rgba(255, 255, 255, .1); color: #fff; }
 
 /* ---------------------------------------------------------------------
  * 9. "Where to Play" map (where-to-play-in-australia.html)
@@ -513,8 +598,8 @@
 	padding-bottom: 66%;
 	height: 0;
 	overflow: hidden;
-	border-radius: 14px;
-	box-shadow: 0 2px 10px rgba(0, 0, 0, .1);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-sm);
 	margin: 22px 0 30px;
 }
 
@@ -528,5 +613,5 @@
 }
 
 @media (max-width: 640px) {
-	.wtp-map-wrap { padding-bottom: 120%; border-radius: 10px; }
+	.wtp-map-wrap { padding-bottom: 120%; border-radius: var(--radius-md); }
 }

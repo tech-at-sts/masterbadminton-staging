@@ -137,8 +137,15 @@ final class ContentExtractor
         // them to know what they were written relative to.
         $this->links?->rewrite($xpath, $filePath);
 
-        (new HomepageLayout())->apply($dom, $xpath);
-        $shape = (new PostLayout())->apply($dom, $xpath, $main, Locale::of($this->publicPathOf($filePath)));
+        $lang = Locale::of($this->publicPathOf($filePath));
+
+        // The homepage layout hands up a hero of its own - headline, opening
+        // paragraph and the eight-category strip - and reflows the body into
+        // its own panels, so a page it claims is not also run through the
+        // article reflow: the two shapes are mutually exclusive, and letting
+        // both touch the same DOM only has them undo each other's work.
+        $homeShape = (new HomepageLayout())->apply($dom, $xpath, $lang);
+        $shape = $homeShape ?? (new PostLayout())->apply($dom, $xpath, $main, $lang);
 
         $pageStyle = $this->extractPageStyle($xpath);
 
@@ -148,7 +155,11 @@ final class ContentExtractor
         // the theme only ever named them in <title>. Rather than leave the
         // hero blank, or invent a name for the page, it borrows the one the
         // page already has, minus the site suffix every title repeats.
-        if ($shape !== null && ($shape['hero']['title'] ?? '') === '') {
+        // A hero that already names the page in two tones (the homepage's
+        // does) needs no title borrowed on top of it.
+        if ($shape !== null
+            && ($shape['hero']['title'] ?? '') === ''
+            && !isset($shape['hero']['lead'], $shape['hero']['key'])) {
             $shape['hero']['title'] = $this->headline($title ?? '');
         }
 

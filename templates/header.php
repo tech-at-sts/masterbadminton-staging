@@ -150,6 +150,10 @@ $chrome = $isChinese
 		'logo' => 'Master Badminton',
 		'top' => '回到顶部',
 		'switch' => 'English',
+		'learn' => '立即学习',
+		'store' => '商店',
+		'strip_prev' => '查看上一组分类',
+		'strip_next' => '查看更多分类',
 	]
 	: [
 		'beginner' => 'Are you a beginner? Click Here',
@@ -158,6 +162,10 @@ $chrome = $isChinese
 		'logo' => 'Master Badminton',
 		'top' => 'Back to Top',
 		'switch' => '中文',
+		'learn' => 'Learn now',
+		'store' => 'Store',
+		'strip_prev' => 'Show previous categories',
+		'strip_next' => 'Show more categories',
 	];
 
 // The homepage - English or the Chinese mirror - gets the prominent
@@ -179,7 +187,12 @@ $pageLayout = $pageLayout ?? '';
 $isPost = $pageLayout === 'post';
 $isArchive = $pageLayout === 'archive';
 
-$usesHomeVisual = $isHome || $isCategoryIndex || $isPost || $isArchive;
+// The homepage layout, recognised by App\Content\HomepageLayout from the
+// markup rather than from the URL - the export is reused by a couple of
+// other pages and by the Chinese mirror, and they all wear the same hero.
+$isHomeLayout = $pageLayout === 'home';
+
+$usesHomeVisual = $isHome || $isHomeLayout || $isCategoryIndex || $isPost || $isArchive;
 
 // One hero band serves all of them: the category directory authors its own
 // copy, article and listing pages hand theirs up from the extractor.
@@ -196,6 +209,21 @@ $beginnerHref = $localize('/category/badminton-videos/badminton-basics.html');
 $searchIcon = '<svg class="icon-search" viewBox="0 0 24 24" aria-hidden="true" focusable="false">'
 	. '<circle cx="11" cy="11" r="7" /><line x1="16.2" y1="16.2" x2="21" y2="21" />'
 	. '</svg>';
+
+/**
+ * A site asset's URL, stamped with the file's own last-modified time.
+ *
+ * Without it a returning reader keeps whatever copy of the stylesheet
+ * their browser already had, which after a redesign means new markup
+ * dressed in old rules. The stamp changes only when the file does, so the
+ * asset stays cacheable in between.
+ */
+$asset = static function (string $path): string {
+	$file = dirname(__DIR__) . $path;
+	$stamp = is_file($file) ? (string) filemtime($file) : '';
+
+	return $stamp === '' ? $path : $path . '?v=' . $stamp;
+};
 
 $isLinkActive = static function (string $href) use ($normalizedPath): bool {
 	if ($href === '/' || $href === '/zh') {
@@ -242,7 +270,9 @@ $langLabel = $chrome['switch'];
 	<link rel='stylesheet' href='https://masterbadminto.wpenginepowered.com/wp-content/uploads/gonchild.css' media='all' />
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-	<link href="https://fonts.googleapis.com/css2?family=Anton&family=Lato:wght@400;700&family=Outfit:wght@300;400;500;600;700&family=Raleway:wght@700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
+	<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,600;1,700;1,800;1,900&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+	<!-- BadmintonClick design tokens - colors, type and spacing shared by every stylesheet below. -->
+	<link rel="stylesheet" href="<?= htmlspecialchars($asset('/assets/css/design-tokens.css'), ENT_QUOTES, 'UTF-8') ?>" media="all" />
 	<style>
 		.page-container{padding-top:2px;padding-left:0 !important;padding-right:0 !important;}
 		li{color:#454545;}
@@ -251,57 +281,71 @@ $langLabel = $chrome['switch'];
 			.side-home-tw.wpb_column.vc_column_container.vc_col-sm-3{display:none;}
 		}
 
-		/* Site header / navigation */
-		.site-header{font-family:'Lato',Arial,sans-serif;}
+		/* ----------------------------------------------------------------
+		 * Site header / navigation - the same warm near-black band on every
+		 * page (the big hero title below it is added per-page, see .page-hero
+		 * and .hero-cta further down and in home-v2.css).
+		 * ------------------------------------------------------------- */
+		.site-header{font-family:var(--font-sans);background:var(--hero-2);}
 		.site-header a{text-decoration:none;}
-		.topbar{background:#3a3a3a;}
-		.topbar-inner{max-width:1140px;margin:0 auto;padding:9px 20px;display:flex;align-items:center;gap:8px;}
+		.topbar{background:rgba(0,0,0,.28);border-bottom:1px solid rgba(255,255,255,.1);}
+		.topbar-inner{max-width:1200px;margin:0 auto;padding:9px 20px;display:flex;align-items:center;gap:8px;}
 		.topbar-inner img{width:18px;height:18px;opacity:.85;}
-		.beginner-link{color:#b8b8b8;font-size:13px;font-weight:700;letter-spacing:.2px;}
+		.beginner-link{color:rgba(255,255,255,.72);font-size:13px;font-weight:700;letter-spacing:.2px;}
 		.beginner-link:hover{color:#fff;}
 
-		.header-middle{background:#fff;box-shadow:0 1px 0 rgba(0,0,0,.05);}
-		.header-middle-inner{max-width:1140px;margin:0 auto;padding:22px 20px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;}
-		.site-logo img{width:190px;display:block;}
-		.header-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
-		.site-search{position:relative;width:300px;max-width:100%;display:flex;}
-		.site-search input[type="text"]{background:#f4f4f5;border:1px solid transparent;border-radius:24px;padding:12px 44px 12px 18px;width:100%;font-size:14px;color:#444;font-family:'Lato',sans-serif;outline:none;}
-		.site-search input[type="text"]:focus{border-color:#eb7d2e;background:#fff;}
-		.site-search button{position:absolute;right:4px;top:4px;bottom:4px;width:38px;display:flex;align-items:center;justify-content:center;background:transparent;border:0;color:#8f8f8f;cursor:pointer;padding:0;}
-		.site-search button:hover{color:#eb7d2e;}
+		.header-middle{background:transparent;box-shadow:none;}
+		.header-middle-inner{max-width:1200px;margin:0 auto;padding:20px 32px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;}
+
+		/* Text wordmark - replaces the old raster logo so it reads cleanly on
+		   the dark header at every breakpoint. See design-tokens.css for the
+		   shared .bc-wordmark rules (also used in the mobile menu and footer). */
+		.site-logo{display:flex;}
+		.site-logo:hover .bc-wordmark-master{color:#fff;}
+
+		.header-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:flex-end;}
+		.site-search{position:relative;width:220px;max-width:100%;display:flex;align-items:center;gap:9px;border-bottom:1px solid rgba(255,255,255,.3);padding:6px 2px;}
+		.site-search input[type="text"]{background:transparent;border:0;padding:0;width:100%;font-size:13px;letter-spacing:.02em;color:#fff;font-family:var(--font-sans);outline:none;}
+		.site-search input[type="text"]::placeholder{color:rgba(255,255,255,.65);}
+		.site-search button{flex:0 0 auto;display:flex;align-items:center;justify-content:center;background:transparent;border:0;color:rgba(255,255,255,.75);cursor:pointer;padding:0;}
+		.site-search button:hover{color:var(--accent-energy);}
 
 		/* One magnifier, drawn in currentColor, so the control matches the
 		   type beside it instead of whatever the platform paints an emoji. */
-		.icon-search{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;display:block;}
+		.icon-search{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;display:block;}
 
-		.main-nav{background:#1f1f1f;}
+		.main-nav{background:transparent;}
 		/* Kept in the layout but invisible, rather than display:none, so the
 		   toggles stay reachable from the keyboard. */
 		.nav-toggle-checkbox,
 		.search-toggle-checkbox{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);}
-		.icon-btn{display:none;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;cursor:pointer;flex:0 0 auto;color:#3a3a3a;}
+		.icon-btn{display:none;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;cursor:pointer;flex:0 0 auto;color:#fff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);}
 		.nav-toggle-btn{flex-direction:column;gap:4px;}
-		.nav-toggle-btn span{display:block;width:19px;height:2px;background:currentColor;border-radius:2px;}
-		.icon-btn:hover{background:rgba(0,0,0,.06);}
+		.nav-toggle-btn span{display:block;width:18px;height:1.5px;background:currentColor;border-radius:1px;}
+		.icon-btn:hover{background:rgba(255,255,255,.18);}
 		.search-toggle-checkbox:focus-visible ~ .header-middle .search-toggle-btn,
-		.nav-toggle-checkbox:focus-visible ~ .header-middle .nav-toggle-btn{outline:2px solid #eb7d2e;outline-offset:2px;}
+		.nav-toggle-checkbox:focus-visible ~ .header-middle .nav-toggle-btn{outline:2px solid var(--accent-energy);outline-offset:2px;}
 		.nav-list,
 		.nav-list .nav-item,
 		.nav-dropdown,
 		.nav-dropdown li{list-style:none !important;list-style-type:none !important;margin:0;padding:0;}
-		.nav-list{max-width:1140px;margin:0 auto;padding:0 20px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;}
+		.nav-list{max-width:1200px;margin:0 auto;padding:6px 32px 16px;display:flex;align-items:center;justify-content:flex-start;gap:2px;flex-wrap:wrap;}
+		/* Panel furniture: only ever shown inside the mobile takeover menu
+		   (see the 1100px breakpoint below), never on the desktop rail. */
+		.nav-panel-head,
+		.nav-panel-search{display:none;}
 		.nav-item{position:relative;}
 		.nav-item > a,
-		.nav-item > .nav-parent{color:#fff;font-family:'Raleway',Arial,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:16px 9px;white-space:nowrap;display:flex;align-items:center;gap:4px;border-bottom:2px solid transparent;cursor:pointer;}
+		.nav-item > .nav-parent{color:rgba(255,255,255,.82);font-family:var(--font-sans);font-size:12px;font-weight:600;text-transform:none;letter-spacing:.02em;padding:8px 13px;white-space:nowrap;display:flex;align-items:center;gap:5px;border-bottom:0;border-radius:999px;cursor:pointer;transition:background var(--dur-fast) var(--ease-out),color var(--dur-fast) var(--ease-out);}
 		.nav-item > a:hover,
 		.nav-item > .nav-parent:hover,
 		.nav-item:hover > .nav-parent,
-		.nav-item:focus-within > .nav-parent,
-		.nav-item.is-active > a{border-bottom-color:#eb7d2e;}
-		.has-children > .nav-parent::after{content:'▾';font-size:9px;opacity:.7;}
+		.nav-item:focus-within > .nav-parent{background:rgba(255,255,255,.14);color:#fff;}
+		.nav-item.is-active > a{background:rgba(255,255,255,.14);color:#fff;}
+		.has-children > .nav-parent::after{content:'▾';font-size:7px;opacity:.65;}
 
-		.nav-dropdown{display:none;position:absolute;top:100%;left:0;z-index:30;background:#fff;border-radius:10px;box-shadow:0 12px 28px rgba(0,0,0,.16);padding:8px;margin-top:4px !important;min-width:230px;}
-		/* The panel is offset 4px below its parent, and that gap used to be
+		.nav-dropdown{display:none;position:absolute;top:100%;left:0;z-index:30;background:#fff;border-radius:14px;box-shadow:0 22px 48px rgba(0,0,0,.3);padding:10px;margin-top:8px !important;min-width:232px;}
+		/* The panel is offset below its parent, and that gap used to be
 		   dead: moving the pointer down into the menu left the <li> for long
 		   enough that :hover went false and the panel closed before it could
 		   be clicked. This invisible strip bridges the gap. It is a child of
@@ -311,63 +355,147 @@ $langLabel = $chrome['switch'];
 		.nav-dropdown::before{content:'';position:absolute;left:0;right:0;top:-8px;height:8px;}
 		.nav-item:hover > .nav-dropdown,
 		.nav-item:focus-within > .nav-dropdown{display:block;}
-		.nav-dropdown li a{display:block;padding:10px 14px;border-radius:6px;color:#3f3f3f;font-size:14px;font-family:'Lato',sans-serif;font-weight:400;}
-		.nav-dropdown li a:hover{background:#fbeee2;color:#eb7d2e;}
+		.nav-dropdown li a{display:block;padding:9px 13px;border-radius:9px;color:var(--text-secondary);font-size:12.5px;font-family:var(--font-sans);font-weight:600;white-space:nowrap;}
+		.nav-dropdown li a:hover{background:var(--surface-sunken);color:var(--bc-black);}
 
-		@media (max-width: 767px){
-			.header-middle-inner{padding:14px 20px;gap:12px;flex-wrap:nowrap;}
+		<?php /*
+			The nav rail collapses well before phone width: eleven items and
+			five dropdowns need about 1100px to sit on one line, and wrapping
+			them onto three lines instead is worse than the takeover panel.
+		*/ ?>
+		@media (max-width: 1100px){
+			.header-middle-inner{padding:18px 20px;gap:12px;flex-wrap:nowrap;}
 			/* The bar is one row: logo, then the two icon buttons. The search
 			   field is not in that row at all until it is asked for, and then
 			   it opens as a row of its own underneath. */
-			.header-actions{flex:0 0 auto;gap:4px;}
+			.header-actions{flex:0 0 auto;gap:6px;}
 			.site-search{display:none;}
 			.icon-btn{display:flex;}
 			/* An explicit ground, not inherit: the row is positioned outside
 			   the flow, so it would otherwise be transparent over whatever
 			   sits beneath the bar. */
-			.search-toggle-checkbox:checked ~ .header-middle .site-search{display:flex;position:absolute;left:0;right:0;top:100%;width:auto;padding:0 20px 14px;background:#fff;box-shadow:0 10px 20px rgba(0,0,0,.08);z-index:30;}
-			.search-toggle-checkbox:checked ~ .header-middle .site-search input[type="text"]{width:100%;}
-			.search-toggle-checkbox:checked ~ .header-middle .site-search button{right:24px;}
+			.search-toggle-checkbox:checked ~ .header-middle .site-search{display:flex;position:absolute;left:20px;right:20px;top:100%;width:auto;padding:12px 16px;background:var(--hero-overlay);border:1px solid rgba(255,255,255,.2);border-radius:14px;box-shadow:0 14px 30px rgba(0,0,0,.35);z-index:30;margin-top:8px;}
 			.header-middle{position:relative;}
-			.nav-list{flex-direction:column;align-items:stretch;padding:0;max-height:0;overflow:hidden;transition:max-height .2s ease;}
-			.nav-toggle-checkbox:checked ~ .main-nav .nav-list{max-height:2000px;}
-			.nav-item > a,.nav-item > .nav-parent{padding:12px 20px;border-bottom:1px solid #2c2c2c;}
-			.nav-dropdown,
-			.nav-item:hover > .nav-dropdown,
-			.nav-item:focus-within > .nav-dropdown{display:block;position:static;background:#181818;box-shadow:none;border-radius:0;margin:0 !important;padding:0;}
+			/* The nav rail collapses; opening it fills the screen edge-to-edge
+			   as a dark takeover panel, echoing the reference's full-screen
+			   mobile menu, without needing any script beyond the existing
+			   checkbox toggle. */
+			.main-nav{position:relative;}
+			/* .nav-groups (not .nav-list) is the fullscreen panel: it already
+			   wraps both the primary and utility <ul>s, so the two stack as
+			   one column instead of each becoming its own overlay. */
+			.main-nav .nav-groups{
+				position:fixed;inset:0;z-index:150;
+				/* nowrap matters: this is a column as tall as the viewport, and
+				   the menu is taller than that - left wrapping, the overflow
+				   breaks into a second and third column beside the first
+				   instead of scrolling. */
+				flex-direction:column;flex-wrap:nowrap;align-items:stretch;justify-content:flex-start;
+				max-width:none;margin:0;padding:22px 20px 48px;gap:0;
+				background:var(--hero-overlay);
+				overflow-y:auto;-webkit-overflow-scrolling:touch;
+				visibility:hidden;opacity:0;transition:opacity var(--dur-base) var(--ease-out);
+			}
+			.nav-toggle-checkbox:checked ~ .main-nav .nav-groups{visibility:visible;opacity:1;}
+
+			/* The panel's own wordmark, close button and search field. They
+			   are in the markup for every width and only shown in here. */
+			.main-nav .nav-panel-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex:0 0 auto;}
+			.main-nav .nav-panel-close{
+				display:flex;align-items:center;justify-content:center;
+				width:46px;height:46px;flex-shrink:0;
+				background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);border-radius:12px;
+				color:#fff;font-family:var(--font-mono);font-size:17px;line-height:1;cursor:pointer;
+			}
+			.main-nav .nav-panel-close:hover{background:rgba(255,255,255,.18);}
+			.main-nav .nav-panel-search{
+				display:flex;align-items:center;gap:10px;flex:0 0 auto;
+				margin:26px 0;padding:13px 18px;
+				border:1px solid rgba(255,255,255,.24);border-radius:999px;
+				color:rgba(255,255,255,.7);
+			}
+			.main-nav .nav-panel-search input[type="text"]{border:0;outline:0;background:transparent;width:100%;color:#fff;font-family:var(--font-sans);font-size:14px;}
+			.main-nav .nav-panel-search input[type="text"]::placeholder{color:rgba(255,255,255,.62);}
+			.main-nav .nav-panel-search button{flex:0 0 auto;display:flex;align-items:center;justify-content:center;background:transparent;border:0;padding:0;color:inherit;cursor:pointer;}
+
+			.main-nav .nav-list{max-width:none;margin:0;padding:0;flex-direction:column;align-items:stretch;gap:0;}
+
+			/* The three standalone links at the top are the display type; the
+			   group headings above the chip sets are small mono labels; the
+			   utility links at the foot are plain. */
+			.main-nav .nav-list-primary .nav-item:not(.has-children) > a{
+				padding:15px 2px;border-bottom:1px solid rgba(255,255,255,.1);border-radius:0;
+				font-family:var(--font-display);font-weight:900;font-style:italic;text-transform:uppercase;
+				font-size:24px;line-height:1;letter-spacing:-.01em;
+			}
+			.main-nav .nav-item.has-children > .nav-parent{
+				padding:24px 2px 10px;border-bottom:0;border-radius:0;
+				font-family:var(--font-mono);font-size:10px;font-weight:700;
+				letter-spacing:.2em;text-transform:uppercase;color:var(--accent-energy);
+			}
+			.main-nav .has-children > .nav-parent::after{display:none;}
+			.main-nav .nav-list-utility .nav-item > a{
+				padding:14px 2px;border-bottom:0;border-radius:0;min-height:44px;
+				font-family:var(--font-sans);font-size:14px;font-weight:600;
+				text-transform:none;letter-spacing:0;color:rgba(255,255,255,.86);
+			}
+			.main-nav .nav-list-primary .nav-item:not(.has-children) > a:hover,
+			.main-nav .nav-list-utility .nav-item > a:hover,
+			.main-nav .nav-list-primary .nav-item.is-active > a{background:transparent;color:var(--accent-energy);}
+			.main-nav .nav-item.has-children > .nav-parent:hover,
+			.main-nav .nav-item:hover > .nav-parent,
+			.main-nav .nav-item:focus-within > .nav-parent{background:transparent;color:var(--accent-energy);}
+
+			/* Every group is open in here - the panel is a map of the site,
+			   not a set of things to open one at a time. */
+			.main-nav .nav-dropdown,
+			.main-nav .nav-item:hover > .nav-dropdown,
+			.main-nav .nav-item:focus-within > .nav-dropdown{display:block;position:static;background:transparent;box-shadow:none;border-radius:0;margin:0 !important;padding:0;}
 			/* No hover on the stacked mobile menu, so no gap to bridge. */
-			.nav-dropdown::before{display:none;}
-			.nav-dropdown li a{color:#ccc;padding:10px 20px 10px 34px;}
-			.nav-dropdown li a:hover{background:#2c2c2c;color:#eb7d2e;}
+			.main-nav .nav-dropdown::before{display:none;}
+			.main-nav .nav-dropdown li{display:inline-block;}
+			.main-nav .nav-dropdown li a{display:inline-flex;align-items:center;min-height:44px;color:rgba(255,255,255,.88);padding:10px 15px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);font-family:var(--font-sans);font-size:13px;font-weight:600;margin:0 8px 8px 0;}
+			.main-nav .nav-dropdown li a:hover{background:#fff;color:var(--bc-black);}
+
+			/* The store closes the panel as a full-width button. */
+			.main-nav .nav-item-store{margin-top:8px;}
+			.main-nav .nav-item-store > a{
+				display:flex;align-items:center;justify-content:center;
+				background:#fff;color:var(--bc-black) !important;
+				padding:16px 22px !important;border-radius:999px;text-align:center;
+				font-size:12.5px !important;font-weight:700 !important;letter-spacing:.12em !important;text-transform:uppercase;
+			}
+			.main-nav .nav-item-store > a:hover{background:var(--accent-energy);color:var(--bc-black) !important;}
 		}
 
-		.lang-switch{position:fixed;bottom:16px;right:16px;background:#2a2a2a;color:#fff;font-size:12px;font-family:'Lato',sans-serif;padding:9px 16px;border-radius:24px;display:flex;align-items:center;gap:6px;box-shadow:0 6px 18px rgba(0,0,0,.25);z-index:40;text-decoration:none;}
-		.lang-switch:hover{background:#1a1a1a;color:#fff;}
+		.lang-switch{position:fixed;bottom:16px;right:16px;background:var(--bc-black);color:#fff;font-size:12px;font-family:var(--font-sans);font-weight:600;padding:9px 16px;border-radius:999px;display:flex;align-items:center;gap:6px;box-shadow:0 6px 18px rgba(0,0,0,.35);z-index:40;text-decoration:none;}
+		.lang-switch:hover{background:var(--neutral-800);color:#fff;}
 
-		/* "All Categories" section */
-		.cat-section{background:#faf5ea;border-radius:20px;padding:44px 40px;margin:36px 0;box-sizing:border-box;}
-		.cat-section-title{text-align:center;font-family:'Playfair Display',serif;font-size:34px;font-weight:800;color:#1c2541;margin:0 0 6px;}
-		.cat-section-subtitle{text-align:center;font-size:14px;color:#9a9186;margin:0 0 26px;font-family:'Lato',sans-serif;}
+		/* "All Categories" section (base styling; body.home-v2 in home-ui.css
+		   and home-v2.css layer the full BadmintonClick treatment on top). */
+		.cat-section{background:var(--surface-sunken);border-radius:var(--radius-xl);padding:44px 40px;margin:36px 0;box-sizing:border-box;}
+		.cat-section-title{text-align:center;font-family:var(--font-display);font-style:italic;font-weight:800;text-transform:uppercase;font-size:34px;color:var(--bc-black);margin:0 0 6px;}
+		.cat-section-subtitle{text-align:center;font-size:14px;color:var(--text-muted);margin:0 0 26px;font-family:var(--font-sans);}
 		.cat-section-controls{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;}
 		.cat-search-wrap{position:relative;flex:1;min-width:200px;}
-		.cat-search-icon{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:#b0a894;font-size:14px;}
-		.cat-search-input{width:100%;box-sizing:border-box;background:#fff;border:1px solid #e9e1d1;border-radius:10px;padding:13px 16px 13px 40px;font-size:14px;color:#4a3a26;font-family:'Lato',sans-serif;outline:none;}
-		.cat-search-input:focus{border-color:#eb7d2e;}
-		.cat-expand-all{background:#fff;border:1px solid #e9e1d1;border-radius:10px;padding:13px 20px;font-size:14px;font-weight:700;color:#1c2541;font-family:'Lato',sans-serif;cursor:pointer;white-space:nowrap;}
-		.cat-expand-all:hover{border-color:#eb7d2e;color:#eb7d2e;}
+		.cat-search-icon{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:14px;}
+		.cat-search-input{width:100%;box-sizing:border-box;background:#fff;border:1px solid var(--border);border-radius:var(--radius-pill);padding:13px 16px 13px 40px;font-size:14px;color:var(--text-primary);font-family:var(--font-sans);outline:none;}
+		.cat-search-input:focus{border-color:var(--accent-sale);}
+		.cat-expand-all{background:var(--bc-black);border:1px solid var(--bc-black);border-radius:var(--radius-pill);padding:13px 22px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;font-family:var(--font-sans);cursor:pointer;white-space:nowrap;}
+		.cat-expand-all:hover{filter:brightness(1.4);}
 		.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-		.cat-accordion{background:#fff;border-radius:14px;box-shadow:0 2px 6px rgba(28,37,65,.05);overflow:hidden;align-self:start;}
-		.cat-accordion summary{list-style:none;cursor:pointer;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:'Playfair Display',serif;font-weight:700;font-size:16px;color:#1c2541;}
+		.cat-accordion{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;align-self:start;}
+		.cat-accordion summary{list-style:none;cursor:pointer;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--font-display);font-style:italic;font-weight:800;text-transform:uppercase;font-size:17px;color:var(--bc-black);}
 		.cat-accordion summary::-webkit-details-marker{display:none;}
 		.cat-accordion-meta{display:flex;align-items:center;gap:12px;flex-shrink:0;}
-		.cat-accordion-count{background:#f6dfc4;color:#c1602a;font-size:12px;font-weight:700;border-radius:999px;padding:3px 11px;font-family:'Lato',sans-serif;}
-		.cat-accordion-chevron{color:#b0a894;font-size:15px;transition:transform .15s;display:inline-block;}
+		.cat-accordion-count{background:var(--surface-sunken);color:var(--text-secondary);font-size:11px;font-weight:700;border-radius:999px;padding:3px 11px;font-family:var(--font-mono);}
+		.cat-accordion-chevron{color:var(--text-muted);font-size:15px;transition:transform .15s;display:inline-block;}
 		.cat-accordion[open] .cat-accordion-chevron{transform:rotate(90deg);}
-		.cat-accordion-body{padding:0 22px 20px;border-top:1px solid #f3ede1;padding-top:14px;}
+		.cat-accordion-body{padding:0 22px 20px;border-top:1px solid var(--border);padding-top:14px;}
 		.cat-accordion-body ul{list-style:none !important;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;}
 		.cat-accordion-body li{padding:0;}
-		.cat-accordion-body a{color:#8a5a3b;text-decoration:none;font-size:13px;font-weight:600;font-family:'Lato',sans-serif;}
-		.cat-accordion-body a:hover{color:#c1602a;text-decoration:underline;}
+		.cat-accordion-body a{color:var(--text-secondary);text-decoration:none;font-size:13px;font-weight:600;font-family:var(--font-sans);}
+		.cat-accordion-body a:hover{color:var(--bc-black);text-decoration:underline;}
 
 		@media (max-width: 640px){
 			.cat-section{padding:28px 20px;}
@@ -377,23 +505,23 @@ $langLabel = $chrome['switch'];
 	</style>
 
 	<!-- Homepage UI layer. Loaded last so it wins ties against the rules above. -->
-	<link rel="stylesheet" href="/assets/css/home-ui.css" media="all" />
+	<link rel="stylesheet" href="<?= htmlspecialchars($asset('/assets/css/home-ui.css'), ENT_QUOTES, 'UTF-8') ?>" media="all" />
 	<?php if ($usesHomeVisual): ?>
 	<!-- Homepage visual language. Scoped to body.home-v2; see the file header. -->
-	<link rel="stylesheet" href="/assets/css/home-v2.css" media="all" />
+	<link rel="stylesheet" href="<?= htmlspecialchars($asset('/assets/css/home-v2.css'), ENT_QUOTES, 'UTF-8') ?>" media="all" />
 	<?php endif; ?>
 	<?php if ($isCategoryIndex): ?>
 	<!-- Category directory layer. Scoped to body.cat-directory-page; builds on home-v2. -->
-	<link rel="stylesheet" href="/assets/css/category-page.css" media="all" />
+	<link rel="stylesheet" href="<?= htmlspecialchars($asset('/assets/css/category-page.css'), ENT_QUOTES, 'UTF-8') ?>" media="all" />
 	<?php endif; ?>
 	<?php if ($isPost || $isArchive): ?>
 	<!-- Article and listing layer. Scoped to body.post-v2 / body.archive-v2; builds on home-v2. -->
-	<link rel="stylesheet" href="/assets/css/post-page.css" media="all" />
+	<link rel="stylesheet" href="<?= htmlspecialchars($asset('/assets/css/post-page.css'), ENT_QUOTES, 'UTF-8') ?>" media="all" />
 	<?php endif; ?>
 
 	<script src="https://masterbadminto.wpenginepowered.com/wp-includes/js/jquery/jquery.min.js"></script>
 </head>
-<body class="wp-theme-gon wp-child-theme-gon-child header-v2 wide layout-fullwidth ts_desktop<?= $usesHomeVisual ? ' home-v2' : '' ?><?= $isCategoryIndex ? ' cat-directory-page' : '' ?><?= $isPost ? ' post-v2' : '' ?><?= $isArchive ? ' archive-v2' : '' ?>">
+<body class="wp-theme-gon wp-child-theme-gon-child header-v2 wide layout-fullwidth ts_desktop<?= $usesHomeVisual ? ' home-v2' : '' ?><?= $isHome || $isHomeLayout ? ' home-page' : '' ?><?= $isCategoryIndex ? ' cat-directory-page' : '' ?><?= $isPost ? ' post-v2' : '' ?><?= $isArchive ? ' archive-v2' : '' ?>">
 <div id="page" class="hfeed site">
 
 	<header class="site-header">
@@ -418,8 +546,9 @@ $langLabel = $chrome['switch'];
 
 		<div class="header-middle">
 			<div class="header-middle-inner">
-				<a class="site-logo" href="<?= htmlspecialchars($localize('/'), ENT_QUOTES, 'UTF-8') ?>">
-					<img src="https://masterbadminto.wpenginepowered.com/wp-content/uploads/2016/05/masw.png" alt="<?= htmlspecialchars($chrome['logo'], ENT_QUOTES, 'UTF-8') ?>" title="<?= htmlspecialchars($chrome['logo'], ENT_QUOTES, 'UTF-8') ?>" />
+				<a class="site-logo bc-wordmark" href="<?= htmlspecialchars($localize('/'), ENT_QUOTES, 'UTF-8') ?>" aria-label="<?= htmlspecialchars($chrome['logo'], ENT_QUOTES, 'UTF-8') ?>" title="<?= htmlspecialchars($chrome['logo'], ENT_QUOTES, 'UTF-8') ?>">
+					<span class="bc-wordmark-master">MASTER</span>
+					<span class="bc-wordmark-sub"><span class="bc-wordmark-rule"></span><span class="bc-wordmark-badminton">BADMINTON</span><span class="bc-wordmark-rule"></span></span>
 				</a>
 				<div class="header-actions">
 					<form class="site-search" method="get" action="<?= htmlspecialchars($localize('/'), ENT_QUOTES, 'UTF-8') ?>">
@@ -440,6 +569,23 @@ $langLabel = $chrome['switch'];
 
 		<nav class="main-nav">
 			<div class="nav-groups">
+			<?php /*
+				The takeover menu's own head and search field. Both are
+				hidden until the panel opens (see the 1100px breakpoint in
+				the stylesheet above): the bar keeps its own wordmark and
+				search, and the panel covers them.
+			*/ ?>
+				<div class="nav-panel-head">
+					<div class="bc-wordmark bc-wordmark-sm" aria-hidden="true">
+						<span class="bc-wordmark-master">MASTER</span>
+						<span class="bc-wordmark-sub"><span class="bc-wordmark-rule"></span><span class="bc-wordmark-badminton">BADMINTON</span><span class="bc-wordmark-rule"></span></span>
+					</div>
+					<label for="nav-toggle" class="nav-panel-close" aria-label="<?= htmlspecialchars($chrome['menu'], ENT_QUOTES, 'UTF-8') ?>">&#215;</label>
+				</div>
+				<form class="nav-panel-search" method="get" action="<?= htmlspecialchars($localize('/'), ENT_QUOTES, 'UTF-8') ?>">
+					<button type="submit" aria-label="<?= htmlspecialchars($chrome['search'], ENT_QUOTES, 'UTF-8') ?>"><?= $searchIcon ?></button>
+					<input type="text" value="" name="s" placeholder="<?= htmlspecialchars($chrome['search'], ENT_QUOTES, 'UTF-8') ?>" autocomplete="off" />
+				</form>
 			<?php foreach ($navGroups as $groupName => $groupItems): ?>
 				<?php if ($groupItems === []) { continue; } ?>
 				<ul class="nav-list nav-list-<?= htmlspecialchars($groupName, ENT_QUOTES, 'UTF-8') ?>">
@@ -479,10 +625,15 @@ $langLabel = $chrome['switch'];
 
 		<?php if ($hero !== null): ?>
 		<?php
-			// Two shapes of title: the directory pages set lead/key for the
-			// two-tone display treatment, article and listing pages hand up
-			// their own heading as one string.
+			// Two shapes of title: the homepage and the directory pages set
+			// lead/key for the two-tone display treatment, article and
+			// listing pages hand up their own heading as one string.
 			$heroTwoTone = isset($hero['lead'], $hero['key']);
+
+			// The homepage's hero carries the page's own call to action and
+			// the eight-category strip along the bottom of the band.
+			$heroStrip = is_array($hero['strip'] ?? null) ? $hero['strip'] : [];
+			$heroJump = (string) ($hero['jump'] ?? '');
 		?>
 		<section class="page-hero<?= isset($hero['variant']) ? ' page-hero-' . htmlspecialchars($hero['variant'], ENT_QUOTES, 'UTF-8') : '' ?>">
 			<div class="page-hero-inner">
@@ -500,11 +651,58 @@ $langLabel = $chrome['switch'];
 				<?php if (($hero['meta'] ?? '') !== ''): ?>
 				<p class="page-hero-meta"><?= htmlspecialchars($hero['meta'], ENT_QUOTES, 'UTF-8') ?></p>
 				<?php endif; ?>
+
+				<?php if ($heroJump !== ''): ?>
+				<div class="hero-actions">
+					<a class="hero-btn hero-btn-primary" href="<?= htmlspecialchars($heroJump, ENT_QUOTES, 'UTF-8') ?>">
+						<span class="hero-btn-label"><?= htmlspecialchars($chrome['learn'], ENT_QUOTES, 'UTF-8') ?></span>
+						<span class="hero-btn-icon" aria-hidden="true">&#8595;</span>
+					</a>
+					<a class="hero-btn hero-btn-ghost" href="<?= htmlspecialchars($beginnerHref, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($chrome['beginner'], ENT_QUOTES, 'UTF-8') ?></a>
+				</div>
+				<?php endif; ?>
+
+				<?php if ($heroStrip !== []): ?>
+				<?php /*
+					The eight-category strip, handed up by HomepageLayout
+					from the page's own icon strip. It keeps the .quick-nav /
+					#thct / .quick-nav-link contract assets/js/home-ui.js
+					reads, so clicking a column still opens the matching
+					category card further down the page.
+				*/ ?>
+				<nav class="quick-nav hero-strip" aria-label="<?= htmlspecialchars((string) ($hero['strip_label'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+					<?php /*
+						The strip is a scrolling row once the eight columns
+						stop fitting. These say so, and step it along; they
+						stay hidden until assets/js/home-ui.js measures that
+						there is actually something to scroll to.
+					*/ ?>
+					<button type="button" class="hero-strip-arrow hero-strip-prev" aria-label="<?= htmlspecialchars($chrome['strip_prev'], ENT_QUOTES, 'UTF-8') ?>">&#8249;</button>
+					<button type="button" class="hero-strip-arrow hero-strip-next" aria-label="<?= htmlspecialchars($chrome['strip_next'], ENT_QUOTES, 'UTF-8') ?>">&#8250;</button>
+					<div class="quick-nav-inner">
+						<ul id="thct">
+							<?php foreach ($heroStrip as $column): ?>
+							<li>
+								<a class="quick-nav-link" href="<?= htmlspecialchars((string) $column['href'], ENT_QUOTES, 'UTF-8') ?>">
+									<span class="quick-nav-label"><?= htmlspecialchars((string) $column['label'], ENT_QUOTES, 'UTF-8') ?></span>
+									<span class="quick-nav-count"><?= htmlspecialchars((string) $column['count'], ENT_QUOTES, 'UTF-8') ?></span>
+								</a>
+							</li>
+							<?php endforeach; ?>
+						</ul>
+					</div>
+				</nav>
+				<?php endif; ?>
 			</div>
 		</section>
 		<?php endif; ?>
 
-		<?php if ($isHome): ?>
+		<?php /*
+			The beginner call-to-action band, for a homepage whose export did
+			not give HomepageLayout the shape it needed to build the hero
+			above (which carries the same link as one of its two buttons).
+		*/ ?>
+		<?php if ($isHome && $hero === null): ?>
 		<section class="hero-cta">
 			<div class="hero-cta-inner">
 				<img class="hero-cta-icon" src="/wp-content/uploads/2016/09/icon-badminton-1.png" alt="" />
