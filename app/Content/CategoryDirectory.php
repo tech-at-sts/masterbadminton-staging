@@ -62,6 +62,8 @@ final class CategoryDirectory
             'hero_blurb' => 'Every badminton topic on Master Badminton in one place - pick a category and go straight to the guide you need.',
             'sidebar' => 'Categories',
             'view_all' => 'View section',
+            'start_here' => 'Start here',
+            'clear' => 'Clear',
         ],
         '/zh/categories' => [
             'title' => '所有羽毛球分类 - Master Badminton',
@@ -76,6 +78,8 @@ final class CategoryDirectory
             'hero_blurb' => 'Master Badminton 的所有羽毛球主题都在这里 - 选择一个分类，直接前往你需要的教程。',
             'sidebar' => '分类',
             'view_all' => '查看该分类',
+            'start_here' => '从这里开始',
+            'clear' => '清除',
         ],
     ];
 
@@ -517,8 +521,10 @@ final class CategoryDirectory
     }
 
     /**
-     * The page: a sticky sidebar of sections beside the sections
-     * themselves, each one a grid of picture cards.
+     * The page: one white panel carrying a label/search/tally row, a rail
+     * of section chips that follows you down the page, and the sections
+     * themselves - each a featured picture card beside a numbered list of
+     * the rest of its guides.
      *
      * @param list<array{id: string, title: string, label: string, href: string, icon: ?string, guides: list<array{href: string, title: string, image: ?string}>}> $categories
      * @param array<string, string> $copy
@@ -533,52 +539,37 @@ final class CategoryDirectory
 
         $sections = '';
 
-        foreach ($categories as $category) {
-            $sections .= $this->renderSection($category, $copy);
+        foreach ($categories as $index => $category) {
+            $sections .= $this->renderSection($category, $copy, $index + 1);
         }
 
         return '<div class="page-container catdir-page">'
-            . '<div class="catdir-layout">'
-            . $this->renderSidebar($categories, $copy)
-            . '<div class="catdir-main">'
-            . $this->renderToolbar($copy, $total)
+            . '<div class="catdir-shell">'
+            . $this->renderHead($copy, $total)
+            . $this->renderRail($categories, $copy)
+            . '<main class="catdir-main">'
             . $sections
             . '<p class="catdir-empty" data-category-empty hidden>' . $this->text($copy['empty']) . '</p>'
-            . '</div>'
+            . '</main>'
             . '</div>'
             . '</div>';
     }
 
     /**
-     * @param list<array{id: string, title: string, label: string, href: string, icon: ?string, guides: list<array{href: string, title: string, image: ?string}>}> $categories
+     * The panel's top row: what this page is, the filter field, and the
+     * live count of what the filter is showing.
+     *
      * @param array<string, string> $copy
      */
-    private function renderSidebar(array $categories, array $copy): string
-    {
-        $html = '<aside class="catdir-sidebar"><nav class="catdir-sidebar-inner" aria-label="' . $this->attr($copy['sidebar']) . '">'
-            . '<h2 class="catdir-sidebar-title">' . $this->text($copy['sidebar']) . '</h2>'
-            . '<ul class="catdir-sidebar-list">';
-
-        foreach ($categories as $category) {
-            $html .= '<li class="catdir-sidebar-item" data-sidebar-item="' . $this->attr($category['id']) . '">'
-                . '<a href="#' . $this->attr($category['id']) . '">'
-                . $this->iconTag($category['icon'], 'catdir-sidebar-icon')
-                . '<span class="catdir-sidebar-label">' . $this->text($category['label']) . '</span>'
-                . '<span class="catdir-sidebar-count">' . count($category['guides']) . '</span>'
-                . '</a></li>';
-        }
-
-        return $html . '</ul></nav></aside>';
-    }
-
-    /** @param array<string, string> $copy */
-    private function renderToolbar(array $copy, int $total): string
+    private function renderHead(array $copy, int $total): string
     {
         // The singular form travels with the element: the filter script
         // swaps the number inside this string as you type, and has no way
         // to know how the language it is written in forms a plural.
-        return '<div class="catdir-toolbar">'
-            . '<div class="catdir-search"><span class="catdir-search-icon" aria-hidden="true">🔍</span>'
+        return '<div class="catdir-head">'
+            . '<span class="catdir-head-label">' . $this->text($copy['sidebar']) . '</span>'
+            . '<div class="catdir-head-tools">'
+            . '<div class="catdir-search"><span class="catdir-search-icon" aria-hidden="true">&#9906;</span>'
             . '<input type="search" class="catdir-search-input" data-category-search'
             . ' aria-label="' . $this->attr($copy['search']) . '"'
             . ' placeholder="' . $this->attr($copy['search']) . '" /></div>'
@@ -586,45 +577,88 @@ final class CategoryDirectory
             . ' data-tally-one="' . $this->attr($this->plural($copy, 'guides', 1)) . '">'
             . $this->text($this->plural($copy, 'guides', $total))
             . '</p>'
+            . '</div>'
             . '</div>';
     }
 
     /**
+     * The rail of section chips. It keeps the data-sidebar-item hooks
+     * assets/js/category-page.js reads, so a chip still marks the section
+     * you are reading and takes over its jump link.
+     *
+     * @param list<array{id: string, title: string, label: string, href: string, icon: ?string, guides: list<array{href: string, title: string, image: ?string}>}> $categories
+     * @param array<string, string> $copy
+     */
+    private function renderRail(array $categories, array $copy): string
+    {
+        $html = '<nav class="catdir-rail catdir-sidebar-inner" aria-label="' . $this->attr($copy['sidebar']) . '">'
+            . '<ul class="catdir-sidebar-list">';
+
+        foreach ($categories as $category) {
+            $html .= '<li class="catdir-sidebar-item" data-sidebar-item="' . $this->attr($category['id']) . '">'
+                . '<a href="#' . $this->attr($category['id']) . '">'
+                . '<span class="catdir-sidebar-label">' . $this->text($category['label']) . '</span>'
+                . '<span class="catdir-sidebar-count">' . count($category['guides']) . '</span>'
+                . '</a></li>';
+        }
+
+        return $html . '</ul></nav>';
+    }
+
+    /**
+     * One category: its number, name, count and "view section" link, then
+     * its first guide as a picture card beside the rest of them as a list.
+     *
+     * The first guide is the featured one simply because it is first - the
+     * homepage lists the entry point for each category at the top, and
+     * that order is carried across rather than re-sorted here.
+     *
      * @param array{id: string, title: string, label: string, href: string, icon: ?string, guides: list<array{href: string, title: string, image: ?string}>} $category
      * @param array<string, string> $copy
      */
-    private function renderSection(array $category, array $copy): string
+    private function renderSection(array $category, array $copy, int $number): string
     {
-        $cards = '';
+        $guides = $category['guides'];
+        $featured = array_shift($guides);
 
-        foreach ($category['guides'] as $guide) {
-            $cards .= $this->renderCard($guide, $category);
+        $rows = '';
+
+        foreach ($guides as $index => $guide) {
+            $rows .= $this->renderRow($guide, $index + 2);
         }
 
         $more = $category['href'] === '' ? '' :
             '<a class="catdir-section-more" href="' . $this->attr($category['href']) . '">'
             . $this->text($copy['view_all'])
-            . '<span class="catdir-sr"> ' . $this->text($category['title']) . '</span></a>';
+            . '<span class="catdir-sr"> ' . $this->text($category['title']) . '</span>'
+            . '<span aria-hidden="true">&#8594;</span></a>';
 
         return '<section class="catdir-section" id="' . $this->attr($category['id']) . '" data-category-section'
             . ' data-category-name="' . $this->attr($this->haystack($category)) . '">'
             . '<div class="catdir-section-head">'
+            . '<span class="catdir-section-num">' . $this->text(str_pad((string) $number, 2, '0', STR_PAD_LEFT)) . '</span>'
             . '<h2 class="catdir-section-title">' . $this->text($category['title']) . '</h2>'
             . '<span class="catdir-section-count">' . $this->text($this->plural($copy, 'guides', count($category['guides']))) . '</span>'
             . $more
             . '</div>'
-            . '<div class="catdir-grid">' . $cards . '</div>'
+            . '<div class="catdir-section-grid">'
+            . ($featured === null ? '' : $this->renderFeatured($featured, $category, $copy))
+            . '<div class="catdir-list">' . $rows . '</div>'
+            . '</div>'
             . '</section>';
     }
 
     /**
+     * The featured card: the guide's own og:image where it has one, and a
+     * flat tint carrying the category's icon where it does not - the way
+     * the live listing falls back to a plain placeholder.
+     *
      * @param array{href: string, title: string, image: ?string} $guide
      * @param array{id: string, title: string, label: string, href: string, icon: ?string, guides: list<array{href: string, title: string, image: ?string}>} $category
+     * @param array<string, string> $copy
      */
-    private function renderCard(array $guide, array $category): string
+    private function renderFeatured(array $guide, array $category, array $copy): string
     {
-        // No featured image: the tile carries the category's icon instead,
-        // the way the live listing falls back to a plain placeholder.
         $thumb = $guide['image'] !== null
             ? '<img class="catdir-card-img" src="' . $this->attr($guide['image']) . '" alt="" loading="lazy" decoding="async" />'
             : '<span class="catdir-card-fallback">' . $this->iconTag($category['icon'], 'catdir-card-fallback-icon') . '</span>';
@@ -632,8 +666,28 @@ final class CategoryDirectory
         return '<article class="catdir-card' . ($guide['image'] === null ? ' catdir-card-no-image' : '') . '"'
             . ' data-category-card data-category-title="' . $this->attr($guide['title']) . '">'
             . '<a class="catdir-card-link" href="' . $this->attr($guide['href']) . '">'
-            . '<span class="catdir-card-thumb">' . $thumb . '</span>'
-            . '<span class="catdir-card-title">' . $this->text($guide['title']) . '</span>'
+            . '<span class="catdir-card-thumb">'
+            . $thumb
+            . '<span class="catdir-card-scrim" aria-hidden="true"></span>'
+            . '<span class="catdir-card-flag">' . $this->text($copy['start_here']) . '</span>'
+            . '<span class="catdir-card-name">' . $this->text($guide['title']) . '</span>'
+            . '</span>'
+            . '</a></article>';
+    }
+
+    /**
+     * One row in the list beside the featured card.
+     *
+     * @param array{href: string, title: string, image: ?string} $guide
+     */
+    private function renderRow(array $guide, int $number): string
+    {
+        return '<article class="catdir-card catdir-row" data-category-card'
+            . ' data-category-title="' . $this->attr($guide['title']) . '">'
+            . '<a class="catdir-row-link" href="' . $this->attr($guide['href']) . '">'
+            . '<span class="catdir-row-num">' . $this->text(str_pad((string) $number, 2, '0', STR_PAD_LEFT)) . '</span>'
+            . '<span class="catdir-row-name">' . $this->text($guide['title']) . '</span>'
+            . '<span class="catdir-row-arrow" aria-hidden="true">&#8594;</span>'
             . '</a></article>';
     }
 

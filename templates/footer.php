@@ -23,8 +23,17 @@ $footerItems = [
 	<footer id="colophon">
 		<div class="footer-container">
 			<div class="end-footer footer-area">
-				<div class="container no-padding">
-					<div class="ts-col-24">
+				<div class="site-footer-inner">
+					<?php /*
+						One row on the homepage - the wordmark against the
+						links - and a centred stack everywhere else; both are
+						the same two parts, see assets/css/home-v2.css.
+					*/ ?>
+					<div class="site-footer-top-row">
+						<div class="bc-wordmark bc-wordmark-sm site-footer-wordmark" aria-hidden="true">
+							<span class="bc-wordmark-master">MASTER</span>
+							<span class="bc-wordmark-sub"><span class="bc-wordmark-rule"></span><span class="bc-wordmark-badminton">BADMINTON</span><span class="bc-wordmark-rule"></span></span>
+						</div>
 						<div id="nav_menu-15" class="widget-container widget_nav_menu">
 							<div class="menu-footer-container"><ul id="menu-footer" class="menu">
 								<?php foreach ($footerItems as $item): ?>
@@ -32,11 +41,13 @@ $footerItems = [
 								<?php endforeach; ?>
 							</ul></div>
 						</div>
-						<div id="text-2" class="widget-container widget_text">
-							<div class="textwidget">
-								<div style="font-size: 12px;color: white;">
-									<strong>By David Tee,</strong> Copyright &copy; 2010-<?= date('Y') ?> <a href="<?= htmlspecialchars($localize('/'), ENT_QUOTES, 'UTF-8') ?>">masterbadminton.com</a>
-								</div>
+					</div>
+					<div class="site-footer-divider" aria-hidden="true"></div>
+					<div id="text-2" class="widget-container widget_text">
+						<div class="textwidget">
+							<div class="site-footer-meta">
+								<span><strong>By David Tee,</strong> Copyright &copy; 2010-<?= date('Y') ?> <a href="<?= htmlspecialchars($localize('/'), ENT_QUOTES, 'UTF-8') ?>">masterbadminton.com</a></span>
+								<a class="site-footer-top" href="javascript:void(0)" onclick="window.scrollTo({top:0,behavior:'smooth'});"><?= htmlspecialchars($chrome['top'], ENT_QUOTES, 'UTF-8') ?></a>
 							</div>
 						</div>
 					</div>
@@ -53,10 +64,11 @@ $footerItems = [
 <script src="https://masterbadminto.wpenginepowered.com/wp-content/themes/gon/js/include_scripts.js"></script>
 <script src="https://masterbadminto.wpenginepowered.com/wp-content/themes/gon/js/main.js"></script>
 <script src="https://masterbadminto.wpenginepowered.com/wp-content/themes/gon/js/select2.min.js"></script>
-<script src="/assets/js/home-ui.js" defer></script>
-<script src="/assets/js/category-page.js" defer></script>
+<?php /* Stamped like the stylesheets - see $asset in templates/header.php. */ ?>
+<script src="<?= htmlspecialchars($asset('/assets/js/home-ui.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
+<script src="<?= htmlspecialchars($asset('/assets/js/category-page.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
 <?php if ($isPost): ?>
-<script src="/assets/js/post-page.js" defer></script>
+<script src="<?= htmlspecialchars($asset('/assets/js/post-page.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
 <?php endif; ?>
 </body>
 </html>

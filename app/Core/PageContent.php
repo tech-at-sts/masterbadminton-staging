@@ -10,10 +10,13 @@ final class PageContent
      * @param string $layout shape the extractor recognised the page as -
      *                       '', 'post' or 'archive'. The shared header uses
      *                       it to pick the body class and stylesheet.
-     * @param array<string, string>|null $hero copy for the header's hero
+     * @param array<string, mixed>|null $hero copy for the header's hero
      *                       band, when the page has one. Keys: eyebrow,
      *                       plus either title or lead+key, and optionally
-     *                       blurb, meta and variant.
+     *                       blurb, meta and variant. The homepage's hero
+     *                       also carries jump, strip_label and strip - the
+     *                       eight-category strip, as a list of
+     *                       {label, count, href} rows.
      */
     public function __construct(
         public readonly string $title,
@@ -25,7 +28,7 @@ final class PageContent
     }
 
     /**
-     * @return array{title: string, description: string, html: string, layout: string, hero: array<string, string>|null}
+     * @return array{title: string, description: string, html: string, layout: string, hero: array<string, mixed>|null}
      */
     public function toArray(): array
     {
@@ -39,7 +42,7 @@ final class PageContent
     }
 
     /**
-     * @param array{title: string, description: string, html: string, layout?: string, hero?: array<string, string>|null} $data
+     * @param array{title: string, description: string, html: string, layout?: string, hero?: array<string, mixed>|null} $data
      */
     public static function fromArray(array $data): self
     {
