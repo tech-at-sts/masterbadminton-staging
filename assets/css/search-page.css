@@ -1,0 +1,477 @@
+/*
+ * Search results (/search, /zh/search).
+ *
+ * Built by App\Content\SearchResults. The page is the category directory's
+ * shape - one white panel lifted over the hero band, a head row carrying
+ * the field and the tally, a row of chips, then the rows themselves - so
+ * the two pages that list the site to you read as one family rather than
+ * as two designs.
+ *
+ * The visual language is the homepage's, so home-v2.css loads first
+ * (templates/header.php gives the page the same body.home-v2 class) and
+ * this file adds only what the results page itself needs.
+ *
+ * Everything is scoped under body.search-v2 so no other page can pick
+ * these rules up. Tokens (--v2-*) come from home-v2.css; --bc-*, --font-*,
+ * --radius-* etc. come from design-tokens.css.
+ */
+
+/* ---------------------------------------------------------------------
+ * Hero - the directory's band: shorter than the homepage's, the query
+ * itself in the blurb under the title.
+ * ------------------------------------------------------------------ */
+body.search-v2 .page-hero-inner {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 34px 32px 132px;
+}
+
+body.search-v2 .page-hero-title {
+	font-size: clamp(42px, 6.4vw, 78px);
+	line-height: .9;
+	letter-spacing: -.008em;
+	margin: 0 0 22px;
+}
+
+body.search-v2 .page-hero-title .v2-head-lead { color: rgba(255, 255, 255, .48); }
+body.search-v2 .page-hero-title .v2-head-key { color: #fff; }
+
+body.search-v2 .page-hero-blurb {
+	font-size: 16px;
+	line-height: 1.62;
+	color: rgba(255, 255, 255, .8);
+	max-width: 52ch;
+}
+
+/* ---------------------------------------------------------------------
+ * The panel
+ * ------------------------------------------------------------------ */
+body.search-v2 #main.wrapper {
+	background: transparent;
+	border-radius: 0;
+	box-shadow: none;
+	padding: 0 32px 72px;
+	margin: -104px auto 0;
+}
+
+/* The legacy theme makes .page-container a flex container, which would
+ * size the panel to its widest child instead of to its column. */
+body.search-v2 .search-page { display: block; }
+
+body.search-v2 .search-shell {
+	background: #fff;
+	border-radius: 20px;
+	box-shadow: 0 30px 70px rgba(22, 17, 12, .11);
+	padding: clamp(26px, 3.6vw, 48px);
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
+	max-width: 100%;
+}
+
+/* ---------------------------------------------------------------------
+ * Head row - label, the field itself, the tally
+ * ------------------------------------------------------------------ */
+body.search-v2 .search-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px 20px;
+	padding: 0 2px 16px;
+	border-bottom: 1px solid var(--v2-line);
+}
+
+body.search-v2 .search-head-label {
+	font-family: var(--font-mono);
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: .2em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+}
+
+body.search-v2 .search-head-tools {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	flex: 1 1 320px;
+	justify-content: flex-end;
+}
+
+body.search-v2 .search-field {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	border: 1px solid #E4E1DC;
+	border-radius: var(--radius-pill);
+	padding: 6px 6px 6px 16px;
+	color: var(--text-muted);
+	flex: 1 1 260px;
+	max-width: 420px;
+	transition: border-color var(--dur-fast) var(--ease-out);
+}
+
+body.search-v2 .search-field:focus-within { border-color: var(--v2-ink); }
+
+body.search-v2 .search-field-icon {
+	font-size: 12px;
+	line-height: 1;
+	opacity: .7;
+	pointer-events: none;
+}
+
+body.search-v2 .search-field-input {
+	width: 100%;
+	box-sizing: border-box;
+	background: transparent;
+	border: 0;
+	border-radius: 0;
+	padding: 0;
+	font-family: var(--font-sans);
+	font-size: 13px;
+	color: var(--text-primary);
+	outline: none;
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+body.search-v2 .search-field-input::placeholder { color: var(--text-muted); }
+
+body.search-v2 .search-field-submit {
+	flex: 0 0 auto;
+	background: var(--v2-ink);
+	color: #fff;
+	border: 0;
+	border-radius: var(--radius-pill);
+	padding: 10px 18px;
+	font-family: var(--font-sans);
+	font-size: 10.5px;
+	font-weight: 700;
+	letter-spacing: .12em;
+	text-transform: uppercase;
+	cursor: pointer;
+	transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+
+body.search-v2 .search-field-submit:hover {
+	background: var(--v2-energy);
+	color: var(--bc-black);
+}
+
+body.search-v2 .search-tally {
+	flex-shrink: 0;
+	font-family: var(--font-mono);
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: .12em;
+	color: var(--v2-ink);
+	margin: 0;
+}
+
+/* ---------------------------------------------------------------------
+ * Facet chips - the categories this query actually hit, from the
+ * homepage's own grid. One scrolling row once they stop fitting.
+ * ------------------------------------------------------------------ */
+body.search-v2 .search-facet-list {
+	list-style: none !important;
+	margin: 0;
+	padding: 0 0 2px;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+body.search-v2 .search-facet { list-style: none !important; margin: 0; padding: 0; }
+
+body.search-v2 .search-facet > a {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 34px;
+	padding: 7px 14px;
+	border: 1px solid var(--v2-line);
+	border-radius: var(--radius-pill);
+	text-decoration: none;
+	background: #fff;
+	transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+
+body.search-v2 .search-facet > a:hover { border-color: var(--v2-ink); }
+
+body.search-v2 .search-facet-label {
+	font-family: var(--font-sans);
+	font-size: 12.5px;
+	font-weight: 600;
+	color: var(--text-secondary);
+}
+
+body.search-v2 .search-facet-count {
+	font-family: var(--font-mono);
+	font-size: 10px;
+	font-weight: 700;
+	color: var(--text-muted);
+}
+
+body.search-v2 .search-facet.is-active > a {
+	background: var(--v2-ink);
+	border-color: var(--v2-ink);
+}
+
+body.search-v2 .search-facet.is-active .search-facet-label { color: #fff; }
+body.search-v2 .search-facet.is-active .search-facet-count { color: rgba(255, 255, 255, .62); }
+
+/* ---------------------------------------------------------------------
+ * The results
+ * ------------------------------------------------------------------ */
+body.search-v2 .search-results {
+	list-style: none !important;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+body.search-v2 .search-hit {
+	list-style: none !important;
+	display: flex;
+	gap: 18px;
+	padding: 22px 2px;
+	border-bottom: 1px solid var(--v2-hairline);
+}
+
+body.search-v2 .search-hit:last-child { border-bottom: 0; }
+
+body.search-v2 .search-hit-num {
+	flex: 0 0 auto;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	font-weight: 700;
+	color: var(--text-muted);
+	padding-top: 4px;
+	min-width: 24px;
+}
+
+body.search-v2 .search-hit-body { min-width: 0; }
+
+body.search-v2 .search-hit-title {
+	font-family: var(--font-display);
+	font-style: italic;
+	font-weight: 800;
+	text-transform: uppercase;
+	font-size: clamp(17px, 2vw, 21px);
+	line-height: 1.12;
+	letter-spacing: -.004em;
+	margin: 0 0 7px;
+}
+
+body.search-v2 .search-hit-title a {
+	color: var(--v2-ink);
+	text-decoration: none;
+}
+
+body.search-v2 .search-hit-title a:hover {
+	color: var(--v2-accent);
+	text-decoration: underline;
+	text-decoration-thickness: 1px;
+	text-underline-offset: 3px;
+}
+
+body.search-v2 .search-hit-snippet {
+	font-family: var(--font-sans);
+	font-size: 13.5px;
+	line-height: 1.62;
+	color: var(--v2-body);
+	margin: 0 0 8px;
+}
+
+/* The matched terms. A tinted ground rather than the browser's default
+ * yellow block, which fights the shuttle yellow the rest of the site
+ * uses for its own accents. */
+body.search-v2 .search-hit-snippet mark {
+	background: var(--yellow-300);
+	color: var(--bc-black);
+	border-radius: 3px;
+	padding: 0 2px;
+	font-weight: 600;
+}
+
+body.search-v2 .search-hit-meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 6px 14px;
+	margin: 0;
+	font-family: var(--font-mono);
+	font-size: 10px;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+}
+
+body.search-v2 .search-hit-cat strong {
+	color: var(--v2-ink);
+	font-weight: 700;
+}
+
+/* The URL is there to tell two similarly-named guides apart, not to be
+ * read - so it stays quiet, and never widens the row. */
+body.search-v2 .search-hit-path {
+	color: var(--neutral-400);
+	text-transform: none;
+	letter-spacing: .02em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 100%;
+}
+
+/* ---------------------------------------------------------------------
+ * Nothing typed yet, and nothing found
+ * ------------------------------------------------------------------ */
+body.search-v2 .search-prompt {
+	font-family: var(--font-sans);
+	font-size: 14px;
+	line-height: 1.7;
+	color: var(--text-muted);
+	padding: 64px 0;
+	text-align: center;
+	margin: 0;
+	max-width: 46ch;
+	margin-inline: auto;
+}
+
+body.search-v2 .search-empty {
+	padding: 56px 0 64px;
+	text-align: center;
+}
+
+body.search-v2 .search-empty-lead {
+	font-family: var(--font-display);
+	font-style: italic;
+	font-weight: 800;
+	text-transform: uppercase;
+	font-size: clamp(20px, 2.6vw, 26px);
+	color: var(--v2-ink);
+	margin: 0 0 10px;
+}
+
+body.search-v2 .search-empty-help {
+	font-family: var(--font-sans);
+	font-size: 13.5px;
+	color: var(--text-muted);
+	margin: 0 0 22px;
+}
+
+body.search-v2 .search-empty-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 9px;
+	background: var(--v2-ink);
+	color: #fff;
+	text-decoration: none;
+	border-radius: var(--radius-pill);
+	padding: 14px 24px;
+	font-family: var(--font-sans);
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: .12em;
+	text-transform: uppercase;
+}
+
+body.search-v2 .search-empty-link:hover {
+	background: var(--v2-energy);
+	color: var(--bc-black);
+}
+
+/* ---------------------------------------------------------------------
+ * Pager
+ * ------------------------------------------------------------------ */
+body.search-v2 .search-pager {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 14px;
+	flex-wrap: wrap;
+	padding-top: 22px;
+	border-top: 1px solid var(--v2-line);
+}
+
+body.search-v2 .search-pager-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 40px;
+	padding: 10px 18px;
+	border: 1px solid var(--v2-line);
+	border-radius: var(--radius-pill);
+	text-decoration: none;
+	font-family: var(--font-sans);
+	font-size: 11.5px;
+	font-weight: 700;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+	color: var(--v2-ink);
+}
+
+body.search-v2 a.search-pager-link:hover {
+	background: var(--v2-ink);
+	border-color: var(--v2-ink);
+	color: #fff;
+}
+
+body.search-v2 .search-pager-link.is-disabled {
+	color: var(--neutral-300);
+	border-color: var(--v2-hairline);
+}
+
+body.search-v2 .search-pager-where {
+	font-family: var(--font-mono);
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: .12em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+}
+
+/* ---------------------------------------------------------------------
+ * Responsive
+ * ------------------------------------------------------------------ */
+@media (max-width: 900px) {
+	body.search-v2 .page-hero-inner { padding: 30px 20px 120px; }
+	body.search-v2 #main.wrapper { padding: 0 20px 52px; }
+	body.search-v2 .search-shell { padding: 26px 22px; }
+}
+
+@media (max-width: 720px) {
+	body.search-v2 .page-hero-inner { padding: 26px 18px 96px; }
+	body.search-v2 #main.wrapper { padding: 0 14px 44px; margin-top: -72px; }
+	body.search-v2 .search-shell { padding: 20px 16px; border-radius: 16px; }
+	body.search-v2 .search-head-tools { flex-basis: 100%; justify-content: flex-start; }
+	body.search-v2 .search-tally { order: 3; }
+}
+
+@media (max-width: 620px) {
+	/* The chips become one scrolling row, bleeding to the panel's edges -
+	 * the same move the directory's section rail makes. */
+	body.search-v2 .search-facet-list {
+		flex-wrap: nowrap;
+		overflow-x: auto;
+		scrollbar-width: none;
+		margin: 0 -16px;
+		padding: 0 16px 2px;
+	}
+
+	body.search-v2 .search-facet-list::-webkit-scrollbar { display: none; }
+	body.search-v2 .search-facet { flex: 0 0 auto; }
+
+	body.search-v2 .search-hit { gap: 12px; padding: 18px 2px; }
+	body.search-v2 .search-hit-num { min-width: 20px; font-size: 10px; }
+	body.search-v2 .search-field { flex-basis: 100%; }
+	body.search-v2 .search-pager { justify-content: center; }
+	body.search-v2 .search-pager-where { order: 3; flex-basis: 100%; text-align: center; }
+}

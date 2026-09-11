@@ -58,4 +58,14 @@ final class Request
     {
         return $this->path;
     }
+
+    /**
+     * The HTTP verb, upper-cased. Read by the front controller before it
+     * redirects a legacy "?s=" URL at the search page: a redirect is the
+     * right answer to a GET or a HEAD, and nothing else.
+     */
+    public function method(): string
+    {
+        return strtoupper((string) ($this->server['REQUEST_METHOD'] ?? 'GET'));
+    }
 }

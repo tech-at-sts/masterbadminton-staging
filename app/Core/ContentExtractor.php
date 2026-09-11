@@ -70,6 +70,7 @@ final class ContentExtractor
             __FILE__,
             __DIR__ . '/LinkRewriter.php',
             __DIR__ . '/Locale.php',
+            __DIR__ . '/MirrorTitle.php',
             __DIR__ . '/SiteLinks.php',
             dirname(__DIR__) . '/Content/HomepageLayout.php',
             dirname(__DIR__) . '/Content/PostLayout.php',
@@ -121,6 +122,12 @@ final class ContentExtractor
 
         $title = $this->firstText($xpath, '//title');
         $description = $this->firstAttribute($xpath, '//meta[@name="description"]', 'content');
+
+        // On the Chinese mirror the exported <title> is still English -
+        // TranslatePress never touched the element - so the page's own
+        // Chinese heading is used instead. Asked here, before the strips
+        // and the layout transforms below start moving headings around.
+        $title = MirrorTitle::resolve($title ?? '', $this->publicPathOf($filePath), $xpath);
 
         $main = $xpath->query('//div[@id="main"]')->item(0)
             ?? $xpath->query('//div[@id="primary"]')->item(0);
