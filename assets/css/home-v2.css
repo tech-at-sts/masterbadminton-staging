@@ -462,6 +462,19 @@ body.home-v2 .hero-strip #thct li .quick-nav-link:focus {
 body.home-v2 .hero-strip #thct li:first-child .quick-nav-link:hover,
 body.home-v2 .hero-strip #thct li:first-child .quick-nav-link:focus { padding-left: 8px; }
 
+/* home-ui.css paints the label black on hover, which is invisible against the
+ * dark hero. Re-point it (and the count) at the shuttle yellow; these carry
+ * .quick-nav-link:hover so they outrank that rule. */
+body.home-v2 .hero-strip #thct li .quick-nav-link:hover .quick-nav-label,
+body.home-v2 .hero-strip #thct li .quick-nav-link:focus .quick-nav-label {
+	color: var(--v2-energy);
+}
+
+body.home-v2 .hero-strip #thct li .quick-nav-link:hover .quick-nav-count,
+body.home-v2 .hero-strip #thct li .quick-nav-link:focus .quick-nav-count {
+	color: rgba(255, 255, 255, .75);
+}
+
 body.home-v2 .hero-strip #thct li.is-active .quick-nav-link { color: #fff; }
 body.home-v2 .hero-strip #thct li.is-active .quick-nav-count { color: var(--v2-energy); }
 
