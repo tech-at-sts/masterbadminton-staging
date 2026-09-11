@@ -180,6 +180,26 @@ $isHome = in_array($normalizedPath, ['/', '/zh'], true);
 // beginner call-to-action.
 $isCategoryIndex = \App\Content\CategoryDirectory::handles($normalizedPath);
 
+// The search results page (/search, /zh/search), built by
+// App\Content\SearchResults. Same deal as the directory: no exported file,
+// dressed in the homepage's visual language, its own hero band - which it
+// hands up through PageContent because half of it is the reader's query.
+$isSearch = \App\Content\SearchResults::handles($normalizedPath);
+
+// What the header's own field should be showing. On the results page that
+// is the query being displayed, so the field a reader corrects is the one
+// they typed into; everywhere else it starts empty.
+$searchTerms = $isSearch && is_string($_GET['s'] ?? null)
+	? \App\Content\SearchIndex::clean($_GET['s'])
+	: '';
+
+// Where both header forms submit. The field has carried the name "s" since
+// the WordPress days and still does, so old inbound "?s=" links keep
+// working (index.php forwards them here) - what changed is that the form
+// now points at a page that reads it. It used to submit to "/", which read
+// nothing, so the magnifier only ever reloaded the homepage.
+$searchAction = $localize('/search');
+
 // Article pages and post listings, recognised by App\Content\PostLayout
 // from the markup rather than from the URL, wear the same visual language
 // with a stylesheet of their own on top.
@@ -192,7 +212,7 @@ $isArchive = $pageLayout === 'archive';
 // other pages and by the Chinese mirror, and they all wear the same hero.
 $isHomeLayout = $pageLayout === 'home';
 
-$usesHomeVisual = $isHome || $isHomeLayout || $isCategoryIndex || $isPost || $isArchive;
+$usesHomeVisual = $isHome || $isHomeLayout || $isCategoryIndex || $isSearch || $isPost || $isArchive;
 
 // One hero band serves all of them: the category directory authors its own
 // copy, article and listing pages hand theirs up from the extractor.
@@ -254,7 +274,14 @@ $langLabel = $chrome['switch'];
 		carries the same on/off switch - see index.php - so the two never
 		disagree about whether a crawler is welcome.
 	*/ ?>
-	<meta name="robots" content="<?= SiteVisibility::indexable() ? 'index, follow' : 'noindex, nofollow' ?>" />
+	<?php /*
+		A results page is noindex whatever the switch says: it is one of
+		an unbounded number of URLs (one per query) whose content is not
+		the site's own, and the pages it lists are in the sitemap in their
+		own right. "follow" so the results themselves still pass a crawler
+		on to those pages.
+	*/ ?>
+	<meta name="robots" content="<?= $isSearch ? 'noindex, follow' : (SiteVisibility::indexable() ? 'index, follow' : 'noindex, nofollow') ?>" />
 
 	<title><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?></title>
 	<?php if ($description !== ''): ?>
@@ -514,6 +541,10 @@ $langLabel = $chrome['switch'];
 	<!-- Category directory layer. Scoped to body.cat-directory-page; builds on home-v2. -->
 	<link rel="stylesheet" href="<?= htmlspecialchars($asset('/assets/css/category-page.css'), ENT_QUOTES, 'UTF-8') ?>" media="all" />
 	<?php endif; ?>
+	<?php if ($isSearch): ?>
+	<!-- Search results layer. Scoped to body.search-v2; builds on home-v2. -->
+	<link rel="stylesheet" href="<?= htmlspecialchars($asset('/assets/css/search-page.css'), ENT_QUOTES, 'UTF-8') ?>" media="all" />
+	<?php endif; ?>
 	<?php if ($isPost || $isArchive): ?>
 	<!-- Article and listing layer. Scoped to body.post-v2 / body.archive-v2; builds on home-v2. -->
 	<link rel="stylesheet" href="<?= htmlspecialchars($asset('/assets/css/post-page.css'), ENT_QUOTES, 'UTF-8') ?>" media="all" />
@@ -521,7 +552,7 @@ $langLabel = $chrome['switch'];
 
 	<script src="https://masterbadminto.wpenginepowered.com/wp-includes/js/jquery/jquery.min.js"></script>
 </head>
-<body class="wp-theme-gon wp-child-theme-gon-child header-v2 wide layout-fullwidth ts_desktop<?= $usesHomeVisual ? ' home-v2' : '' ?><?= $isHome || $isHomeLayout ? ' home-page' : '' ?><?= $isCategoryIndex ? ' cat-directory-page' : '' ?><?= $isPost ? ' post-v2' : '' ?><?= $isArchive ? ' archive-v2' : '' ?>">
+<body class="wp-theme-gon wp-child-theme-gon-child header-v2 wide layout-fullwidth ts_desktop<?= $usesHomeVisual ? ' home-v2' : '' ?><?= $isHome || $isHomeLayout ? ' home-page' : '' ?><?= $isCategoryIndex ? ' cat-directory-page' : '' ?><?= $isSearch ? ' search-v2' : '' ?><?= $isPost ? ' post-v2' : '' ?><?= $isArchive ? ' archive-v2' : '' ?>">
 <div id="page" class="hfeed site">
 
 	<header class="site-header">
@@ -551,8 +582,8 @@ $langLabel = $chrome['switch'];
 					<span class="bc-wordmark-sub"><span class="bc-wordmark-rule"></span><span class="bc-wordmark-badminton">BADMINTON</span><span class="bc-wordmark-rule"></span></span>
 				</a>
 				<div class="header-actions">
-					<form class="site-search" method="get" action="<?= htmlspecialchars($localize('/'), ENT_QUOTES, 'UTF-8') ?>">
-						<input type="text" value="" name="s" placeholder="<?= htmlspecialchars($chrome['search'], ENT_QUOTES, 'UTF-8') ?>" autocomplete="off" />
+					<form class="site-search" method="get" action="<?= htmlspecialchars($searchAction, ENT_QUOTES, 'UTF-8') ?>" role="search">
+						<input type="text" value="<?= htmlspecialchars($searchTerms, ENT_QUOTES, 'UTF-8') ?>" name="s" placeholder="<?= htmlspecialchars($chrome['search'], ENT_QUOTES, 'UTF-8') ?>" autocomplete="off" />
 						<button type="submit" aria-label="<?= htmlspecialchars($chrome['search'], ENT_QUOTES, 'UTF-8') ?>"><?= $searchIcon ?></button>
 					</form>
 					<?php /*
@@ -582,9 +613,9 @@ $langLabel = $chrome['switch'];
 					</div>
 					<label for="nav-toggle" class="nav-panel-close" aria-label="<?= htmlspecialchars($chrome['menu'], ENT_QUOTES, 'UTF-8') ?>">&#215;</label>
 				</div>
-				<form class="nav-panel-search" method="get" action="<?= htmlspecialchars($localize('/'), ENT_QUOTES, 'UTF-8') ?>">
+				<form class="nav-panel-search" method="get" action="<?= htmlspecialchars($searchAction, ENT_QUOTES, 'UTF-8') ?>" role="search">
 					<button type="submit" aria-label="<?= htmlspecialchars($chrome['search'], ENT_QUOTES, 'UTF-8') ?>"><?= $searchIcon ?></button>
-					<input type="text" value="" name="s" placeholder="<?= htmlspecialchars($chrome['search'], ENT_QUOTES, 'UTF-8') ?>" autocomplete="off" />
+					<input type="text" value="<?= htmlspecialchars($searchTerms, ENT_QUOTES, 'UTF-8') ?>" name="s" placeholder="<?= htmlspecialchars($chrome['search'], ENT_QUOTES, 'UTF-8') ?>" autocomplete="off" />
 				</form>
 			<?php foreach ($navGroups as $groupName => $groupItems): ?>
 				<?php if ($groupItems === []) { continue; } ?>

@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace App\Core;
 
 use App\Content\CategoryDirectory;
+use App\Content\SearchResults;
 
 /**
  * Answers two questions about a public URL path: does this site actually
  * serve it, and what is it called in a given language.
  *
- * "Serves it" is asked of the Router (plus the one virtual page that has no
- * exported file, the category directory) rather than re-implemented, so
+ * "Serves it" is asked of the Router (plus the pages that have no exported
+ * file - the category directory and search) rather than re-implemented, so
  * aliases and the document-root-through-a-symlink case are handled in one
  * place. Answers are memoised for the life of a request because the header
  * asks about every navigation target on every page render.
@@ -30,8 +31,13 @@ final class SiteLinks
 
     public function exists(string $publicPath): bool
     {
+        // Search is listed here so the header's own form action is
+        // localized like everything else: without it /zh/search looks
+        // unserved, and a reader on the mirror is handed the English
+        // search page by the button in their own header.
         return $this->exists[$publicPath] ??= $this->router->resolve($publicPath) !== null
-            || CategoryDirectory::handles($publicPath);
+            || CategoryDirectory::handles($publicPath)
+            || SearchResults::handles($publicPath);
     }
 
     /**

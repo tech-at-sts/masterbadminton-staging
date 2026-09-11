@@ -33,11 +33,19 @@ final class Sitemap
 
     /**
      * Files that are not pages a reader would land on. The exporter wrote a
-     * feed.html/feed.xml beside almost every page, and saved a handful of
+     * feed.html/feed.xml beside almost every page, and saved a few hundred
      * query-string URLs (index.html?p=332) as files of their own, which are
      * duplicates of the posts they pointed at.
+     *
+     * The "?" in those names is matched three ways because the filename on
+     * disk is not the same byte sequence everywhere: a Linux checkout keeps
+     * the literal "?", a Windows one cannot and stores U+F03F in its place,
+     * and the clause was originally written with no separator at all - which
+     * matched neither, so every one of these duplicates was being published
+     * in the sitemap (and, once there was a search index built from the same
+     * list, returned twice for every query).
      */
-    private const SKIP_FILE_PATTERN = '~(^|/)(feed|comments-feed)\.html$|(^|/)index\.htmlp=|(^|/)xmlrpc|(^|/)wp-login~i';
+    private const SKIP_FILE_PATTERN = '~(^|/)(feed|comments-feed)\.html$|(^|/)index\.html[?\x{F03F}]?p=\d|(^|/)xmlrpc|(^|/)wp-login~iu';
 
     /** Sitemaps must stay under 50,000 URLs; this tree is far short of that, but the cap is enforced anyway. */
     private const MAX_URLS = 50000;

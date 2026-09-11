@@ -5,10 +5,12 @@ declare(strict_types=1);
 require __DIR__ . '/app/bootstrap.php';
 
 use App\Content\CategoryDirectory;
+use App\Content\SearchResults;
 use App\Content\Sitemap;
 use App\Core\ContentCache;
 use App\Core\ContentExtractor;
 use App\Core\LinkRewriter;
+use App\Core\Locale;
 use App\Core\PageContent;
 use App\Core\Request;
 use App\Core\Router;
@@ -62,6 +64,38 @@ if ($request->path() === '/sitemap.xml') {
     header('Content-Type: application/xml; charset=UTF-8');
     header('Cache-Control: public, max-age=3600');
     echo $xml;
+    exit;
+}
+
+// Site search. Like the category directory it has no exported file of its
+// own, so it is answered before the legacy tree is consulted.
+//
+// Results are never cached: the page is a function of the query string,
+// which ContentCache does not key on, and a shared cache in front of this
+// would otherwise hand one reader's results to the next. The index behind
+// it is cached - see App\Content\SearchIndex.
+if (SearchResults::handles($request->path())) {
+    header('Cache-Control: no-store');
+
+    $layout->render(
+        (new SearchResults(__DIR__, $siteLinks))->build($request->path(), $_GET),
+        $request->path(),
+    );
+    exit;
+}
+
+// The header's search field has submitted "s" since the WordPress days,
+// and for a while it submitted it to "/" - where nothing read it, so the
+// magnifier just reloaded the homepage. Those URLs are still in browser
+// histories and in whatever links to them, so any "?s=" on a path that is
+// not the search page is sent to the search page for the same language
+// rather than quietly ignored.
+$legacyQuery = is_string($_GET['s'] ?? null) ? trim($_GET['s']) : '';
+
+if ($legacyQuery !== '' && in_array($request->method(), ['GET', 'HEAD'], true)) {
+    $target = Locale::to('/search', Locale::of($request->path()));
+
+    header('Location: ' . $target . '?' . http_build_query(['s' => $legacyQuery]), true, 302);
     exit;
 }
 
