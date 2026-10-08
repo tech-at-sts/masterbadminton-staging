@@ -191,3 +191,88 @@
 	window.addEventListener('hashchange', syncFromHash);
 	syncFromHash();
 }());
+
+/*
+ * The category cards (.cat-accordion) are native <details>, which snap
+ * open and shut. Clicking a card's summary instead slides its guide list
+ * open or closed. The list's own height is what animates, not the card's,
+ * so the tile above it is never clipped mid-slide. Opening a card from
+ * script ("Expand all", search, a quick-nav jump) still snaps, as do
+ * visitors who asked for reduced motion.
+ */
+(function () {
+	'use strict';
+
+	var cards = document.querySelectorAll('.cat-accordion');
+
+	if (cards.length === 0 || !Element.prototype.animate) {
+		return;
+	}
+
+	Array.prototype.forEach.call(cards, function (card) {
+		var summary = card.querySelector('summary');
+		var body = card.querySelector('.cat-accordion-body');
+		var running = null;
+
+		if (!summary || !body) {
+			return;
+		}
+
+		summary.addEventListener('click', function (event) {
+			if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+				return;
+			}
+
+			event.preventDefault();
+
+			// Opening mid-close (or the reverse) turns around from wherever
+			// the list currently is rather than jumping to an end.
+			var closing = card.open && !(running && running.closing);
+			var from = null;
+
+			if (running) {
+				var now = window.getComputedStyle(body);
+				from = {
+					height: body.getBoundingClientRect().height + 'px',
+					paddingTop: now.paddingTop,
+					paddingBottom: now.paddingBottom,
+					opacity: now.opacity
+				};
+
+				running.animation.cancel();
+			}
+
+			card.open = true;
+
+			var style = window.getComputedStyle(body);
+			var full = {
+				height: body.offsetHeight + 'px',
+				paddingTop: style.paddingTop,
+				paddingBottom: style.paddingBottom,
+				opacity: 1
+			};
+			var shut = { height: '0px', paddingTop: '0px', paddingBottom: '0px', opacity: 0 };
+			var start = from || (closing ? full : shut);
+
+			body.style.overflow = 'hidden';
+			body.style.boxSizing = 'border-box';
+
+			var animation = body.animate([start, closing ? shut : full], {
+				duration: 320,
+				easing: 'cubic-bezier(.2, .7, .2, 1)'
+			});
+
+			running = { animation: animation, closing: closing };
+
+			animation.onfinish = function () {
+				running = null;
+				body.style.overflow = '';
+				body.style.boxSizing = '';
+
+				if (closing) {
+					card.open = false;
+				}
+			};
+		});
+	});
+}());

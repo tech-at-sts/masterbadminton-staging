@@ -230,6 +230,12 @@ $searchIcon = '<svg class="icon-search" viewBox="0 0 24 24" aria-hidden="true" f
 	. '<circle cx="11" cy="11" r="7" /><line x1="16.2" y1="16.2" x2="21" y2="21" />'
 	. '</svg>';
 
+// Drawn like the magnifier above, for the header's language switcher.
+$globeIcon = '<svg class="icon-globe" viewBox="0 0 24 24" aria-hidden="true" focusable="false">'
+	. '<circle cx="12" cy="12" r="9" /><line x1="3" y1="12" x2="21" y2="12" />'
+	. '<path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18z" />'
+	. '</svg>';
+
 /**
  * A site asset's URL, stamped with the file's own last-modified time.
  *
@@ -266,7 +272,10 @@ $langLabel = $chrome['switch'];
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<link rel="shortcut icon" href="/wp-content/uploads/2016/09/favi.png" />
+	<link rel="icon" href="<?= htmlspecialchars($asset('/favicon.ico'), ENT_QUOTES, 'UTF-8') ?>" sizes="any" />
+	<link rel="icon" type="image/png" sizes="32x32" href="<?= htmlspecialchars($asset('/assets/images/favicon-32.png'), ENT_QUOTES, 'UTF-8') ?>" />
+	<link rel="icon" type="image/png" sizes="192x192" href="<?= htmlspecialchars($asset('/assets/images/favicon-192.png'), ENT_QUOTES, 'UTF-8') ?>" />
+	<link rel="apple-touch-icon" href="<?= htmlspecialchars($asset('/assets/images/apple-touch-icon.png'), ENT_QUOTES, 'UTF-8') ?>" />
 	<?php /*
 		SiteVisibility::indexable() is off by default, which is what keeps
 		this deployment out of search results until it is turned on
@@ -495,8 +504,17 @@ $langLabel = $chrome['switch'];
 			.main-nav .nav-item-store > a:hover{background:var(--accent-energy);color:var(--bc-black) !important;}
 		}
 
-		.lang-switch{position:fixed;bottom:16px;right:16px;background:var(--bc-black);color:#fff;font-size:12px;font-family:var(--font-sans);font-weight:600;padding:9px 16px;border-radius:999px;display:flex;align-items:center;gap:6px;box-shadow:0 6px 18px rgba(0,0,0,.35);z-index:40;text-decoration:none;}
-		.lang-switch:hover{background:var(--neutral-800);color:#fff;}
+		/* The language switcher sits in the header bar beside search, styled
+		   like the bar's icon buttons. It used to float bottom-right, where the
+		   back-to-top button covered it. */
+		.lang-switch{display:flex;align-items:center;gap:7px;flex:0 0 auto;height:36px;padding:0 14px;border-radius:999px;color:#fff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);font-family:var(--font-sans);font-size:12px;font-weight:600;letter-spacing:.02em;white-space:nowrap;text-decoration:none;}
+		.lang-switch:hover{background:rgba(255,255,255,.18);color:#fff;}
+		.lang-switch:focus-visible{outline:2px solid var(--accent-energy);outline-offset:2px;}
+		.icon-globe{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;display:block;}
+		@media (max-width: 1100px){.lang-switch{height:44px;padding:0 14px;}}
+		/* On a phone the logo and three controls only fit on one row with the
+		   switcher reduced to its globe, a round button like the other two. */
+		@media (max-width: 520px){.lang-switch{width:44px;padding:0;justify-content:center;}.lang-switch span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}.lang-switch .icon-globe{width:17px;height:17px;}}
 
 		/* "All Categories" section (base styling; body.home-v2 in home-ui.css
 		   and home-v2.css layer the full BadmintonClick treatment on top). */
@@ -592,6 +610,7 @@ $langLabel = $chrome['switch'];
 						underneath. Both labels sit here, side by side, so the
 						hamburger no longer takes a second row to itself.
 					*/ ?>
+					<a class="lang-switch" href="<?= htmlspecialchars($langHref, ENT_QUOTES, 'UTF-8') ?>" lang="<?= htmlspecialchars(Locale::htmlLang($otherLang), ENT_QUOTES, 'UTF-8') ?>" hreflang="<?= htmlspecialchars(Locale::htmlLang($otherLang), ENT_QUOTES, 'UTF-8') ?>" title="<?= htmlspecialchars($langLabel, ENT_QUOTES, 'UTF-8') ?>"><?= $globeIcon ?><span><?= htmlspecialchars($langLabel, ENT_QUOTES, 'UTF-8') ?></span></a>
 					<label for="search-toggle" class="icon-btn search-toggle-btn" aria-label="<?= htmlspecialchars($chrome['search'], ENT_QUOTES, 'UTF-8') ?>"><?= $searchIcon ?></label>
 					<label for="nav-toggle" class="icon-btn nav-toggle-btn" aria-label="<?= htmlspecialchars($chrome['menu'], ENT_QUOTES, 'UTF-8') ?>"><span></span><span></span><span></span></label>
 				</div>
@@ -742,7 +761,5 @@ $langLabel = $chrome['switch'];
 		</section>
 		<?php endif; ?>
 	</header>
-
-	<a class="lang-switch" href="<?= htmlspecialchars($langHref, ENT_QUOTES, 'UTF-8') ?>">🌐 <?= htmlspecialchars($langLabel, ENT_QUOTES, 'UTF-8') ?></a>
 
 	<div id="main" class="wrapper">
