@@ -30,6 +30,12 @@
 	pad: 2 "0";
 }
 
+/* In-page jump links (the hero's "Learn now" button) glide to their
+   section instead of snapping, unless the visitor asked for less motion. */
+@media (prefers-reduced-motion: no-preference) {
+	html:has(body.home-v2) { scroll-behavior: smooth; }
+}
+
 body.home-v2 {
 	--v2-accent: var(--accent-sale);       /* sale red - link/active accent on light grounds */
 	--v2-accent-strong: var(--red-600);    /* darker red for hover states */
