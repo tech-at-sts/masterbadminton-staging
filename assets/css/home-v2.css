@@ -1221,8 +1221,6 @@ body.home-page #colophon .menu { justify-content: flex-end; gap: 10px 26px; }
 body.home-page .site-footer-divider { display: none; }
 body.home-page .site-footer-meta { padding-top: 22px; }
 
-body.home-v2 .lang-switch { background: var(--v2-ink); }
-
 /* ---------------------------------------------------------------------
  * Responsive
  * ------------------------------------------------------------------ */
