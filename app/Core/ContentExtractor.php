@@ -362,6 +362,20 @@ final class ContentExtractor
 
         foreach (iterator_to_array($xpath->query($query)) as $node) {
             $parent = $node->parentNode;
+
+            // The export sometimes leaves a Facebook widget div unclosed, so
+            // the parser nests everything after it inside the widget - on
+            // /disclaimer that was the whole page, which vanished with it.
+            // The widgets themselves carry at most one paragraph of prose (the
+            // "Leave me a comment below" prompt, in several spellings), so a
+            // wrapper holding more than that is page content caught in the
+            // net: it is unwrapped (children kept, wrapper dropped).
+            if ($parent instanceof \DOMElement && $this->holdsPageText($xpath, $node)) {
+                while ($node->firstChild !== null) {
+                    $parent->insertBefore($node->firstChild, $node);
+                }
+            }
+
             $node->parentNode?->removeChild($node);
 
             // The iframe's own wrapper carries no id/class of its own and is
@@ -379,6 +393,34 @@ final class ContentExtractor
         foreach (iterator_to_array($xpath->query('//comment()[contains(., "Facebook")]')) as $comment) {
             $comment->parentNode?->removeChild($comment);
         }
+    }
+
+    /**
+     * Whether a node holds at least two paragraphs of real text - not
+     * whitespace, not &nbsp; spacers, not the script a paragraph sometimes
+     * carries, not the stray ">" its CDATA tail leaves behind. Fifteen
+     * characters is a short sentence in either language. See the unwrap in
+     * stripFacebookWidgets().
+     */
+    private function holdsPageText(\DOMXPath $xpath, \DOMNode $node): bool
+    {
+        $paragraphs = 0;
+
+        foreach ($xpath->query('.//p', $node) as $paragraph) {
+            $text = '';
+
+            foreach ($xpath->query('.//text()[not(ancestor::script or ancestor::style)]', $paragraph) as $piece) {
+                $text .= $piece->nodeValue;
+            }
+
+            $text = (string) preg_replace('/[\s\x{00A0}]+/u', '', $text);
+
+            if (mb_strlen($text) >= 15 && ++$paragraphs >= 2) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
