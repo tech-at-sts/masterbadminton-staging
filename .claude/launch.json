@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "php-dev",
+      "runtimeExecutable": "php",
+      "runtimeArgs": ["-S", "localhost:8080", "-t", ".", "C:/Users/J/AppData/Local/Temp/claude/C--Users-J-Documents-GitHub-masterbadminton-staging/bf0c8dd2-18cf-4499-94f4-a4aa6ccc788f/scratchpad/router.php"],
+      "port": 8080
+    }
+  ]
+}
