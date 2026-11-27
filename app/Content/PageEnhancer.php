@@ -66,6 +66,10 @@ final class PageEnhancer
             'author_heading' => 'About the author',
             'author_bio' => 'David Tee has run Master Badminton since 2010, writing free guides on badminton technique, rules, tactics and equipment for players at every level, and answering readers\' questions about the game.',
             'image' => '%s - image %d',
+            'lang' => 'en',
+            'video' => 'Video',
+            'map' => 'Map',
+            'star' => 'star',
         ],
         Locale::CHINESE => [
             'by' => '作者：%s',
@@ -77,7 +81,16 @@ final class PageEnhancer
             'author_heading' => '关于作者',
             'author_bio' => 'David Tee 自 2010 年起运营 Master Badminton，为各个水平的球员撰写免费的羽毛球技术、规则、战术和装备指南，并解答读者的提问。',
             'image' => '%s - 图 %d',
+            'lang' => 'zh',
+            'video' => '视频',
+            'map' => '地图',
+            'star' => '星级',
         ],
+    ];
+
+    /** English page => its Chinese counterpart, where the slugs differ. */
+    private const ZH_SLUGS = [
+        '/category/badminton-articles/badminton-basics.html' => '/zh/badminton-basics.html',
     ];
 
     /** Attributes an <img> legitimately carries (data-* and aria-* are kept too). */
@@ -273,6 +286,17 @@ final class PageEnhancer
                 $img->setAttribute('alt', mb_strlen($clean) > 125 ? rtrim(mb_substr($clean, 0, 122)) . '...' : $clean);
             }
 
+            // On the Chinese mirror the export kept the English alt text
+            // TranslatePress never translated ("star", "badminton drive"),
+            // and English filenames are no description for a Chinese
+            // reader. Alt text without a single Chinese character is
+            // replaced with Chinese drawn from the page itself.
+            if ($copy['lang'] === 'zh' && trim($img->getAttribute('alt')) !== '' && !self::hasHan($img->getAttribute('alt'))) {
+                $img->setAttribute('alt', strtolower(trim($img->getAttribute('alt'))) === 'star'
+                    ? $copy['star']
+                    : $this->altFor($xpath, $img, $headline, $index, $copy));
+            }
+
             if (trim($img->getAttribute('alt')) === '' && !$this->isDecorative($img)) {
                 $img->setAttribute('alt', $this->altFor($xpath, $img, $headline, $index, $copy));
             } elseif (!$img->hasAttribute('alt')) {
@@ -320,9 +344,11 @@ final class PageEnhancer
             if ($iframe instanceof \DOMElement) {
                 $iframe->setAttribute('loading', 'lazy');
 
-                if (trim($iframe->getAttribute('title')) === '') {
+                $current = trim($iframe->getAttribute('title'));
+
+                if ($current === '' || ($copy['lang'] === 'zh' && !self::hasHan($current))) {
                     $src = $iframe->getAttribute('src');
-                    $iframe->setAttribute('title', str_contains($src, 'google.com/maps') ? 'Map' : (str_contains($src, 'youtube') ? 'Video' : $headline));
+                    $iframe->setAttribute('title', str_contains($src, 'google.com/maps') ? $copy['map'] : (str_contains($src, 'youtube') ? $copy['video'] : $headline));
                 }
             }
         }
@@ -348,7 +374,10 @@ final class PageEnhancer
      */
     private function altFor(\DOMXPath $xpath, \DOMElement $img, string $headline, int $index, array $copy): string
     {
-        $fromName = $this->altFromFilename($img->getAttribute('src'));
+        $zh = $copy['lang'] === 'zh';
+
+        // A filename is English, so it describes nothing to a Chinese reader.
+        $fromName = $zh ? '' : $this->altFromFilename($img->getAttribute('src'));
 
         if ($fromName !== '') {
             return $fromName;
@@ -356,14 +385,22 @@ final class PageEnhancer
 
         $title = trim($img->getAttribute('title'));
 
-        if ($title !== '' && mb_strlen($title) <= 120) {
+        if ($title !== '' && mb_strlen($title) <= 120 && (!$zh || self::hasHan($title))) {
             return $title;
         }
 
         $heading = $xpath->query('preceding::*[self::h2 or self::h3][1]', $img)->item(0);
         $headingText = $heading instanceof \DOMElement ? trim((string) preg_replace('~\s+~u', ' ', $heading->textContent)) : '';
 
-        if ($headingText !== '' && mb_strlen($headingText) <= 100) {
+        if ($zh && !self::hasHan($headingText)) {
+            $headingText = '';
+        }
+
+        if ($zh && $headingText !== '' && mb_strlen($headingText) <= 60) {
+            return $headingText . ($headline !== '' && $headline !== $headingText ? ' - ' . $headline : '');
+        }
+
+        if (!$zh && $headingText !== '' && mb_strlen($headingText) <= 100) {
             return $headline !== '' && !str_contains(mb_strtolower($headingText), 'badminton')
                 ? $headingText . ' - ' . $headline
                 : $headingText;
@@ -733,7 +770,7 @@ final class PageEnhancer
         $position = array_search($neutral, self::LEARNING_PATH, true);
 
         if ($position !== false && isset(self::LEARNING_PATH[$position + 1])) {
-            $next = $this->links->localized(self::LEARNING_PATH[$position + 1], $locale);
+            $next = $this->localizedPage(self::LEARNING_PATH[$position + 1], $locale);
 
             if ($this->links->exists($next)) {
                 $html .= '<nav class="next-lesson" aria-label="' . self::e($copy['next']) . '">'
@@ -747,7 +784,7 @@ final class PageEnhancer
         $related = [];
 
         foreach ($this->posts->related($neutral, 6) as $post) {
-            $target = Canonical::path($this->links->localized($post['path'], $locale), $this->links);
+            $target = Canonical::path($this->localizedPage($post['path'], $locale), $this->links);
 
             if ($target === $path || $target === Canonical::path($path, $this->links) || !$this->links->exists($target) || count($related) >= 4) {
                 continue;
@@ -788,7 +825,10 @@ final class PageEnhancer
         if ($file !== null) {
             $html = (string) @file_get_contents($file);
 
-            if (preg_match('~<div[^>]*class="[^"]*entry-content[^"]*"[^>]*>\s*<h1[^>]*>(.*?)</h1>~is', $html, $m) === 1
+            // The heading follows the content wrapper, sometimes after a
+            // template comment ("<!-- Blog Date -->") - which the mirror
+            // needs, because its <title> was left in English.
+            if (preg_match('~<div[^>]*class="[^"]*entry-content[^"]*"[^>]*>(?:\s|<!--.*?-->)*<h1[^>]*>(.*?)</h1>~is', $html, $m) === 1
                 || preg_match('~<h1[^>]*class="[^"]*page-title[^"]*"[^>]*>(.*?)</h1>~is', $html, $m) === 1) {
                 $text = trim(html_entity_decode(strip_tags($m[1]), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
 
@@ -1023,6 +1063,29 @@ final class PageEnhancer
         $node = $xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " ' . $class . ' ")]', $context)->item(0);
 
         return $node instanceof \DOMElement ? $node : null;
+    }
+
+    /**
+     * A page's address in $locale. A few pages sit at a different slug in
+     * the Chinese mirror than in the English tree (the same mapping the
+     * header's navigation uses), so prefixing "/zh" cannot find them.
+     */
+    private function localizedPage(string $path, string $locale): string
+    {
+        if ($locale === Locale::CHINESE) {
+            $canonical = Canonical::path($path, $this->links);
+
+            if (isset(self::ZH_SLUGS[$canonical]) && $this->links->exists(self::ZH_SLUGS[$canonical])) {
+                return self::ZH_SLUGS[$canonical];
+            }
+        }
+
+        return $this->links->localized($path, $locale);
+    }
+
+    private static function hasHan(string $text): bool
+    {
+        return preg_match('~\p{Han}~u', $text) === 1;
     }
 
     private static function e(string $value): string
