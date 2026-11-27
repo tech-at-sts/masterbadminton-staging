@@ -183,6 +183,10 @@ final class SeoOverrides
             'title' => 'Badminton Drop Shot: Fast and Slow Drops Explained',
             'description' => 'How to play the badminton drop shot: the fast and slow drop, the backhand drop, deception, and when a drop wins you the rally.',
         ],
+        '/badminton-scoring-3x15.html' => [
+            'title' => 'Badminton 3x15 Scoring System: New Rules From 2027',
+            'description' => 'Badminton\'s new 3x15 scoring explained: games to 15, a two-point lead from 14-all, capped at 21. Approved by the BWF in April 2026, used from 2027.',
+        ],
         '/contact.html' => [
             'title' => 'Contact Master Badminton',
             'description' => 'Get in touch with Master Badminton: send a question about badminton rules, technique or equipment, or a note about the site.',

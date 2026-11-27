@@ -8,6 +8,7 @@ Measurements and rules follow the BWF Laws of Badminton. Each core guide opens w
 
 - [Badminton rules](https://www.masterbadminton.com/badminton-rules.html): the basic rules for all levels - rally scoring to 21, serving, in and out, faults and lets
 - [Badminton scoring system](https://www.masterbadminton.com/badminton-scoring.html): 21-point rally scoring, deuce and the 30-point cap, which court to serve from
+- [3x15 scoring system (from 2027)](https://www.masterbadminton.com/badminton-scoring-3x15.html): the BWF's new format approved in April 2026 - games to 15, two-point lead from 14-14, capped at 21
 - [Badminton court size](https://www.masterbadminton.com/badminton-court-size.html): every court dimension in metres and feet, net height, singles vs doubles boundaries
 - [Doubles rules](https://www.masterbadminton.com/badminton-rules-doubles.html): doubles service courts, serving order and boundaries
 - [Badminton faults](https://www.masterbadminton.com/badminton-fouls.html): the five most common faults and their penalty

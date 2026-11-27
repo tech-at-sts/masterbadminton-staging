@@ -144,6 +144,16 @@ final class PageEnhancer
 
             $body = $this->firstByClass($xpath, 'post-body', $main);
 
+            $notice = GuideEnhancements::notice($path);
+
+            if ($body !== null && $notice !== '') {
+                $noticeNode = $this->fragment($dom, $notice);
+
+                if ($noticeNode !== null) {
+                    $body->insertBefore($noticeNode, $body->firstChild);
+                }
+            }
+
             if ($body !== null && $guide !== []) {
                 $this->addGuide($dom, $body, $guide, $copy);
 
