@@ -11,9 +11,10 @@
 
 declare(strict_types=1);
 
+use App\Core\AssetUrl;
 use App\Core\Locale;
+use App\Core\SeoHead;
 use App\Core\SiteLinks;
-use App\Core\SiteVisibility;
 
 // Every label carries its Chinese counterpart, so the mirror's chrome
 // speaks the mirror's language. A missing translation simply falls back to
@@ -42,7 +43,7 @@ $navItems = [
 		'label_zh' => '打球技巧',
 		'children' => [
 			['label' => 'Rules', 'label_zh' => '比赛规则', 'href' => '/badminton-rules.html'],
-			['label' => 'Badminton Basics', 'label_zh' => '羽毛球基础', 'href' => '/category/badminton-videos/badminton-basics.html'],
+			['label' => 'Badminton Basics', 'label_zh' => '羽毛球基础', 'href' => '/category/badminton-articles/badminton-basics.html'],
 			['label' => 'Badminton Strokes', 'label_zh' => '击球动作', 'href' => '/badminton-strokes.html'],
 			['label' => 'Techniques and Shots', 'label_zh' => '技术与球路', 'href' => '/badminton-techniques.html'],
 			['label' => 'Net Play', 'label_zh' => '网前球', 'href' => '/badminton-net-play.html'],
@@ -78,8 +79,10 @@ $navItems = [
 		],
 	],
 	['label' => 'Contact', 'label_zh' => '联系我们', 'href' => '/contact.html', 'group' => 'utility'],
-	['label' => 'Ask a Question', 'label_zh' => '提问', 'href' => 'https://masterbadminton.com/badminton-questions.html', 'group' => 'utility'],
-	['label' => 'Store', 'label_zh' => '商店', 'href' => 'https://badmintonclick.com.au/', 'target' => '_blank', 'group' => 'utility', 'variant' => 'store'],
+	// The old /badminton-questions.html page was never exported (it 404ed,
+	// on the bare domain); the questions archive is the live equivalent.
+	['label' => 'Ask a Question', 'label_zh' => '提问', 'href' => '/category/questions.html', 'group' => 'utility'],
+	['label' => 'Store', 'label_zh' => '商店', 'href' => 'https://badmintonclick.com.au/', 'target' => '_blank', 'rel' => 'noopener', 'group' => 'utility', 'variant' => 'store'],
 ];
 
 // Same items, same order, same labels - only split into two visual groups
@@ -125,6 +128,7 @@ $localize = static function (string $href) use ($siteLinks, $lang, $isChinese): 
 	// tree, so prefixing "/zh" cannot find them. Those are named rather than
 	// guessed; everything else follows the page-for-page rule.
 	$aliases = [
+		'/category/badminton-articles/badminton-basics.html' => '/zh/badminton-basics.html',
 		'/category/badminton-videos/badminton-basics.html' => '/zh/badminton-basics.html',
 	];
 
@@ -220,7 +224,7 @@ $hero = $isCategoryIndex
 	? \App\Content\CategoryDirectory::hero($normalizedPath)
 	: ($pageHero ?? null);
 
-$beginnerHref = $localize('/category/badminton-videos/badminton-basics.html');
+$beginnerHref = $localize('/category/badminton-articles/badminton-basics.html');
 
 // The search control used to be the 🔍 emoji, which every platform paints
 // in its own colour and its own shape - a blue disc on some, a grey outline
@@ -266,44 +270,43 @@ $otherLang = Locale::other($lang);
 $counterpart = Locale::to($normalizedPath, $otherLang);
 $langHref = $siteLinks->exists($counterpart) ? $counterpart : Locale::to('/', $otherLang);
 $langLabel = $chrome['switch'];
+
+// Robots, canonical, hreflang, Open Graph, Twitter Card and JSON-LD - see
+// App\Core\SeoHead. $pageMeta is handed up by the page pipeline.
+$seoHead = new SeoHead($title, $description, $normalizedPath, is_array($pageMeta ?? null) ? $pageMeta : [], $isSearch, $siteLinks);
+
+// WordPress theme files: served from this site once they are in the
+// repository, from WP Engine until then - see App\Core\AssetUrl and
+// bin/mirror-wp-assets.php.
+$wp = static fn (string $path): string => htmlspecialchars(AssetUrl::resolve($path), ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>
 <html lang="<?= htmlspecialchars(Locale::htmlLang($lang), ENT_QUOTES, 'UTF-8') ?>">
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<?php /* Google Tag Manager - as high in <head> as possible, as Google asks. */ ?>
+	<?= SeoHead::analyticsHead() ?>
 	<link rel="icon" href="<?= htmlspecialchars($asset('/favicon.ico'), ENT_QUOTES, 'UTF-8') ?>" sizes="any" />
 	<link rel="icon" type="image/png" sizes="32x32" href="<?= htmlspecialchars($asset('/assets/images/favicon-32.png'), ENT_QUOTES, 'UTF-8') ?>" />
 	<link rel="icon" type="image/png" sizes="192x192" href="<?= htmlspecialchars($asset('/assets/images/favicon-192.png'), ENT_QUOTES, 'UTF-8') ?>" />
 	<link rel="apple-touch-icon" href="<?= htmlspecialchars($asset('/assets/images/apple-touch-icon.png'), ENT_QUOTES, 'UTF-8') ?>" />
 	<?php /*
-		SiteVisibility::indexable() is off by default, which is what keeps
-		this deployment out of search results until it is turned on
-		explicitly (normally: only on production, never here). robots.txt
-		carries the same on/off switch - see index.php - so the two never
-		disagree about whether a crawler is welcome.
+		Robots: open on the production host (www.masterbadminton.com),
+		closed on every other host such as the Railway preview URL - see
+		App\Core\SiteVisibility. robots.txt carries the same switch (see
+		index.php), so the two never disagree. Search results pages are
+		always "noindex, follow".
 	*/ ?>
-	<?php /*
-		A results page is noindex whatever the switch says: it is one of
-		an unbounded number of URLs (one per query) whose content is not
-		the site's own, and the pages it lists are in the sitemap in their
-		own right. "follow" so the results themselves still pass a crawler
-		on to those pages.
-	*/ ?>
-	<meta name="robots" content="<?= $isSearch ? 'noindex, follow' : (SiteVisibility::indexable() ? 'index, follow' : 'noindex, nofollow') ?>" />
-
 	<title><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?></title>
-	<?php if ($description !== ''): ?>
-	<meta name="description" content="<?= htmlspecialchars($description, ENT_QUOTES, 'UTF-8') ?>" />
-	<?php endif; ?>
-	<link rel="canonical" href="<?= htmlspecialchars($currentPath, ENT_QUOTES, 'UTF-8') ?>" />
+	<?= $seoHead->render() ?>
 
-	<link rel='stylesheet' href='https://masterbadminto.wpenginepowered.com/wp-content/themes/gon/css/reset.css' media='all' />
-	<link rel='stylesheet' href='https://masterbadminto.wpenginepowered.com/wp-content/themes/gon/style.css' media='all' />
-	<link rel='stylesheet' href='https://masterbadminto.wpenginepowered.com/wp-content/themes/gon-child/style.css' media='all' />
-	<link rel='stylesheet' href='https://masterbadminto.wpenginepowered.com/wp-content/themes/gon/css/font-awesome.css' media='all' />
-	<link rel='stylesheet' href='https://masterbadminto.wpenginepowered.com/wp-content/themes/gon/css/responsive.css' media='all' />
-	<link rel='stylesheet' href='https://masterbadminto.wpenginepowered.com/wp-content/uploads/gonchild.css' media='all' />
+	<link rel="stylesheet" href="<?= $wp('/wp-content/themes/gon/css/reset.css') ?>" media="all" />
+	<link rel="stylesheet" href="<?= $wp('/wp-content/themes/gon/style.css') ?>" media="all" />
+	<link rel="stylesheet" href="<?= $wp('/wp-content/themes/gon-child/style.css') ?>" media="all" />
+	<link rel="stylesheet" href="<?= $wp('/wp-content/themes/gon/css/font-awesome.css') ?>" media="all" />
+	<link rel="stylesheet" href="<?= $wp('/wp-content/themes/gon/css/responsive.css') ?>" media="all" />
+	<link rel="stylesheet" href="<?= $wp('/wp-content/uploads/gonchild.css') ?>" media="all" />
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 	<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,600;1,700;1,800;1,900&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
@@ -568,9 +571,16 @@ $langLabel = $chrome['switch'];
 	<link rel="stylesheet" href="<?= htmlspecialchars($asset('/assets/css/post-page.css'), ENT_QUOTES, 'UTF-8') ?>" media="all" />
 	<?php endif; ?>
 
-	<script src="https://masterbadminto.wpenginepowered.com/wp-includes/js/jquery/jquery.min.js"></script>
+	<!-- Guide summaries, FAQs, fact tables, author box, related guides, contact and signup forms. -->
+	<link rel="stylesheet" href="<?= htmlspecialchars($asset('/assets/css/seo-components.css'), ENT_QUOTES, 'UTF-8') ?>" media="all" />
+
+	<?php /* Served from this repository - it used to load from WP Engine. */ ?>
+	<script src="<?= htmlspecialchars($asset('/assets/vendor/jquery-3.7.1.min.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+	<script>jQuery.migrateMute = true;</script>
+	<script src="<?= htmlspecialchars($asset('/assets/vendor/jquery-migrate-3.4.1.min.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 </head>
 <body class="wp-theme-gon wp-child-theme-gon-child header-v2 wide layout-fullwidth ts_desktop<?= $usesHomeVisual ? ' home-v2' : '' ?><?= $isHome || $isHomeLayout ? ' home-page' : '' ?><?= $isCategoryIndex ? ' cat-directory-page' : '' ?><?= $isSearch ? ' search-v2' : '' ?><?= $isPost ? ' post-v2' : '' ?><?= $isArchive ? ' archive-v2' : '' ?>">
+<?= SeoHead::analyticsBody() ?>
 <div id="page" class="hfeed site">
 
 	<header class="site-header">
@@ -664,7 +674,7 @@ $langLabel = $chrome['switch'];
 								<?php endforeach; ?>
 							</ul>
 						<?php else: ?>
-							<a href="<?= htmlspecialchars($itemHref, ENT_QUOTES, 'UTF-8') ?>"<?= isset($item['target']) ? ' target="' . htmlspecialchars($item['target'], ENT_QUOTES, 'UTF-8') . '"' : '' ?>><?= htmlspecialchars($navLabel($item), ENT_QUOTES, 'UTF-8') ?></a>
+							<a href="<?= htmlspecialchars($itemHref, ENT_QUOTES, 'UTF-8') ?>"<?= isset($item['target']) ? ' target="' . htmlspecialchars($item['target'], ENT_QUOTES, 'UTF-8') . '"' : '' ?><?= isset($item['rel']) ? ' rel="' . htmlspecialchars($item['rel'], ENT_QUOTES, 'UTF-8') . '"' : '' ?>><?= htmlspecialchars($navLabel($item), ENT_QUOTES, 'UTF-8') ?></a>
 						<?php endif; ?>
 					</li>
 				<?php endforeach; ?>

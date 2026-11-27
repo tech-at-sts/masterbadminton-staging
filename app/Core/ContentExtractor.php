@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Core;
 
 use App\Content\HomepageLayout;
+use App\Content\PageEnhancer;
+use App\Content\PostIndex;
 use App\Content\PostLayout;
 
 /**
@@ -45,7 +47,9 @@ final class ContentExtractor
                     expandBtn.addEventListener('click', function () {
                         var allOpen = cards.every(function (card) { return card.open; });
                         cards.forEach(function (card) { card.open = !allOpen; });
-                        expandBtn.textContent = allOpen ? 'Expand all' : 'Collapse all';
+                        expandBtn.textContent = allOpen
+                            ? (expandBtn.getAttribute('data-label-expand') || 'Expand all')
+                            : (expandBtn.getAttribute('data-label-collapse') || 'Collapse all');
                     });
                 }
             });
@@ -72,8 +76,17 @@ final class ContentExtractor
             __DIR__ . '/Locale.php',
             __DIR__ . '/MirrorTitle.php',
             __DIR__ . '/SiteLinks.php',
+            __DIR__ . '/AssetUrl.php',
+            __DIR__ . '/SiteConfig.php',
+            __DIR__ . '/SourceMeta.php',
+            __DIR__ . '/Router.php',
             dirname(__DIR__) . '/Content/HomepageLayout.php',
             dirname(__DIR__) . '/Content/PostLayout.php',
+            dirname(__DIR__) . '/Content/PageEnhancer.php',
+            dirname(__DIR__) . '/Content/GuideEnhancements.php',
+            dirname(__DIR__) . '/Content/SeoOverrides.php',
+            dirname(__DIR__) . '/Content/SeoText.php',
+            dirname(__DIR__) . '/Content/PostIndex.php',
         ];
         $parts = [];
 
@@ -137,7 +150,7 @@ final class ContentExtractor
         $this->stripLegacyLanguageSwitcher($xpath);
         $this->stripFacebookWidgets($xpath);
         $this->stripHomeCategoryColumn($dom, $xpath);
-        $hasCategorySections = $this->convertCategoryGridToAccordion($dom, $xpath);
+        $hasCategorySections = $this->convertCategoryGridToAccordion($dom, $xpath, Locale::of($this->publicPathOf($filePath)));
 
         // Before any layout surgery: the transforms below move anchors
         // around, and the rewriter needs to see them where the export put
@@ -153,6 +166,26 @@ final class ContentExtractor
         // both touch the same DOM only has them undo each other's work.
         $homeShape = (new HomepageLayout())->apply($dom, $xpath, $lang);
         $shape = $homeShape ?? (new PostLayout())->apply($dom, $xpath, $main, $lang);
+
+        // SEO, performance and E-E-A-T pass: image URLs and alt text,
+        // lazy-loading, guide summaries and FAQs, byline and related guides,
+        // and the facts the header turns into meta tags and structured data.
+        $hero = $shape['hero'] ?? null;
+        $seo = (new PageEnhancer(new SiteLinks($this->baseDir), new PostIndex($this->baseDir)))->apply(
+            $dom,
+            $xpath,
+            $main instanceof \DOMElement ? $main : null,
+            $this->urlPathOf($filePath),
+            (string) ($shape['layout'] ?? ''),
+            $hero,
+            $title ?? '',
+            $description ?? '',
+            SourceMeta::read($filePath),
+        );
+
+        if ($shape !== null) {
+            $shape['hero'] = $hero;
+        }
 
         $pageStyle = $this->extractPageStyle($xpath);
 
@@ -171,11 +204,12 @@ final class ContentExtractor
         }
 
         return new PageContent(
-            $title !== null && $title !== '' ? $title : self::DEFAULT_TITLE,
-            $description ?? '',
+            $seo['title'] !== '' ? $seo['title'] : self::DEFAULT_TITLE,
+            $seo['description'],
             $pageStyle . $content . ($hasCategorySections ? self::CATEGORY_SECTION_SCRIPT : ''),
             $shape['layout'] ?? '',
             $shape['hero'] ?? null,
+            $seo['meta'],
         );
     }
 
@@ -201,6 +235,30 @@ final class ContentExtractor
         }
 
         return '/' . str_replace(DIRECTORY_SEPARATOR, '/', substr($file, strlen($base) + 1));
+    }
+
+    /**
+     * The URL a source file is served at: "/badminton-rules.html" for
+     * badminton-rules.html/index.html, "/" for the root index, and the
+     * post's own address for a "-comment-form" copy (see Router).
+     */
+    private function urlPathOf(string $filePath): string
+    {
+        $path = $this->publicPathOf($filePath);
+
+        if ($path === '/index.html') {
+            return '/';
+        }
+
+        if (str_ends_with($path, '/index.html')) {
+            $path = substr($path, 0, -strlen('/index.html'));
+        }
+
+        if (str_ends_with($path, Router::COMMENT_FORM_SUFFIX)) {
+            $path = substr($path, 0, -strlen(Router::COMMENT_FORM_SUFFIX)) . '.html';
+        }
+
+        return $path === '' ? '/' : $path;
     }
 
     private function firstText(\DOMXPath $xpath, string $query): ?string
@@ -466,8 +524,10 @@ final class ContentExtractor
      * collapse. Returns whether a section was built, so the caller knows
      * whether to attach the small script that drives search/expand-all.
      */
-    private function convertCategoryGridToAccordion(\DOMDocument $dom, \DOMXPath $xpath): bool
+    private function convertCategoryGridToAccordion(\DOMDocument $dom, \DOMXPath $xpath, string $locale = Locale::ENGLISH): bool
     {
+        $zh = $locale === Locale::CHINESE;
+
         $rows = iterator_to_array($xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " catfrbn ")]'));
 
         if ($rows === []) {
@@ -551,12 +611,12 @@ final class ContentExtractor
 
         $sectionTitle = $dom->createElement('h2');
         $sectionTitle->setAttribute('class', 'cat-section-title');
-        $sectionTitle->textContent = 'All Categories';
+        $sectionTitle->textContent = $zh ? '所有分类' : 'All Categories';
         $section->appendChild($sectionTitle);
 
         $subtitle = $dom->createElement('p');
         $subtitle->setAttribute('class', 'cat-section-subtitle');
-        $subtitle->textContent = count($cards) . ' categories · click to expand';
+        $subtitle->textContent = $zh ? count($cards) . ' 个分类 · 点击展开' : count($cards) . ' categories · click to expand';
         $section->appendChild($subtitle);
 
         $controls = $dom->createElement('div');
@@ -573,7 +633,8 @@ final class ContentExtractor
         $searchInput = $dom->createElement('input');
         $searchInput->setAttribute('type', 'text');
         $searchInput->setAttribute('class', 'cat-search-input');
-        $searchInput->setAttribute('placeholder', 'Search categories or topics…');
+        $searchInput->setAttribute('placeholder', $zh ? '搜索分类或主题…' : 'Search categories or topics…');
+        $searchInput->setAttribute('aria-label', $zh ? '搜索分类或主题' : 'Search categories or topics');
         $searchInput->setAttribute('data-cat-search', '');
         $searchWrap->appendChild($searchInput);
 
@@ -583,7 +644,9 @@ final class ContentExtractor
         $expandBtn->setAttribute('type', 'button');
         $expandBtn->setAttribute('class', 'cat-expand-all');
         $expandBtn->setAttribute('data-cat-expand-all', '');
-        $expandBtn->textContent = 'Expand all';
+        $expandBtn->textContent = $zh ? '全部展开' : 'Expand all';
+        $expandBtn->setAttribute('data-label-expand', $zh ? '全部展开' : 'Expand all');
+        $expandBtn->setAttribute('data-label-collapse', $zh ? '全部收起' : 'Collapse all');
         $controls->appendChild($expandBtn);
 
         $section->appendChild($controls);

@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Content;
 
+use App\Core\Canonical;
 use App\Core\Locale;
+use App\Core\Router;
 use App\Core\SiteLinks;
+use App\Core\SourceMeta;
 
 /**
  * Builds /sitemap.xml from the exported tree itself.
@@ -54,6 +57,18 @@ final class Sitemap
         private readonly string $baseDir,
         private readonly SiteLinks $links,
     ) {
+    }
+
+    /** Changes whenever the code that decides what goes in the file does. */
+    public static function fingerprint(): string
+    {
+        $parts = [];
+
+        foreach ([__FILE__, dirname(__DIR__) . '/Core/Router.php', dirname(__DIR__) . '/Core/SourceMeta.php', dirname(__DIR__) . '/Core/Canonical.php'] as $source) {
+            $parts[] = is_file($source) ? (string) filemtime($source) : '0';
+        }
+
+        return substr(sha1(implode('|', $parts)), 0, 12);
     }
 
     /**
@@ -106,15 +121,26 @@ final class Sitemap
 
             $path = $this->publicPath($relative);
 
+            // A "-comment-form" copy is listed under the post's own address,
+            // which is where the Router serves it and where its own
+            // canonical points; the copy's address only redirects there.
+            if (str_ends_with($path, Router::COMMENT_FORM_SUFFIX)) {
+                $path = substr($path, 0, -strlen(Router::COMMENT_FORM_SUFFIX)) . '.html';
+            }
+
             // "foo/index.html" and a flat "foo.html" can both back the same
             // URL; whichever is seen first wins, and the Router agrees
             // because it tries the directory form first too.
-            if (isset($found[$path]) || !$this->links->exists($path)) {
+            if (isset($found[$path]) || !$this->links->exists($path) || Canonical::isDuplicate($path, $this->links)) {
                 continue;
             }
 
-            $mtime = filemtime($file);
-            $found[$path] = $mtime === false ? null : $mtime;
+            // The date WordPress recorded the page as last changed. The file's
+            // own mtime is only the date of the last git checkout, which
+            // would tell crawlers every page changed on every deploy.
+            $modified = SourceMeta::read($file)['modified'];
+            $time = $modified !== '' ? strtotime($modified) : false;
+            $found[$path] = $time === false ? null : $time;
         }
 
         $found = $this->dropDuplicates($found);

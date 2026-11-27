@@ -17,6 +17,10 @@ final class PageContent
      *                       also carries jump, strip_label and strip - the
      *                       eight-category strip, as a list of
      *                       {label, count, href} rows.
+     * @param array<string, mixed> $meta SEO facts about the page that the
+     *                       header turns into tags: published, modified,
+     *                       image, type, breadcrumbs, faq, noindex. See
+     *                       App\Core\SeoHead for the keys it reads.
      */
     public function __construct(
         public readonly string $title,
@@ -24,11 +28,12 @@ final class PageContent
         public readonly string $html,
         public readonly string $layout = '',
         public readonly ?array $hero = null,
+        public readonly array $meta = [],
     ) {
     }
 
     /**
-     * @return array{title: string, description: string, html: string, layout: string, hero: array<string, mixed>|null}
+     * @return array{title: string, description: string, html: string, layout: string, hero: array<string, mixed>|null, meta: array<string, mixed>}
      */
     public function toArray(): array
     {
@@ -38,11 +43,12 @@ final class PageContent
             'html' => $this->html,
             'layout' => $this->layout,
             'hero' => $this->hero,
+            'meta' => $this->meta,
         ];
     }
 
     /**
-     * @param array{title: string, description: string, html: string, layout?: string, hero?: array<string, mixed>|null} $data
+     * @param array{title: string, description: string, html: string, layout?: string, hero?: array<string, mixed>|null, meta?: array<string, mixed>} $data
      */
     public static function fromArray(array $data): self
     {
@@ -52,6 +58,7 @@ final class PageContent
             $data['html'],
             $data['layout'] ?? '',
             $data['hero'] ?? null,
+            $data['meta'] ?? [],
         );
     }
 }

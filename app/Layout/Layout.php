@@ -34,6 +34,7 @@ final class Layout
         $currentPath = $requestPath;
         $pageLayout = $page->layout;
         $pageHero = $page->hero;
+        $pageMeta = $page->meta;
 
         include $this->headerTemplate;
         echo $page->html;

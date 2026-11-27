@@ -40,6 +40,12 @@ final class SiteLinks
             || SearchResults::handles($publicPath);
     }
 
+    /** The exported file that supplies a URL's content, or null. */
+    public function sourceFile(string $publicPath): ?string
+    {
+        return $this->router->resolve($publicPath);
+    }
+
     /**
      * The given path spelled in $locale when that spelling is actually
      * served, and the path itself otherwise.
