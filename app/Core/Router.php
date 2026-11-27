@@ -71,7 +71,28 @@ final class Router
             }
         }
 
+        // For some pages the exporter wrote the page itself to
+        // "<slug>/feed.html" and never wrote "<slug>/index.html", so the
+        // page 404ed (the Badminton Strategy guide among them). Taken only
+        // when the file really is a page - most feed.html files are feeds.
+        if ($path !== '' && str_ends_with($path, '.html')) {
+            $feedCopy = $this->safeFile($path . '/feed.html');
+
+            if ($feedCopy !== null && self::isPage($feedCopy)) {
+                return $feedCopy;
+            }
+        }
+
         return null;
+    }
+
+
+    /** Whether an exported file is a full page rather than a feed. */
+    public static function isPage(string $file): bool
+    {
+        $html = (string) @file_get_contents($file);
+
+        return stripos($html, '<!DOCTYPE html') !== false && str_contains($html, '<div id="main"');
     }
 
     private function safeFile(string $relativePath): ?string

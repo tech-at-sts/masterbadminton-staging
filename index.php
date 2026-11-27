@@ -10,6 +10,7 @@ use App\Content\PostIndex;
 use App\Content\SearchResults;
 use App\Content\Sitemap;
 use App\Core\AssetUrl;
+use App\Core\Canonical;
 use App\Core\ContentCache;
 use App\Core\ContentExtractor;
 use App\Core\LinkRewriter;
@@ -55,6 +56,19 @@ $legacyRedirects = [
 if (isset($legacyRedirects[$request->path()]) && $router->resolve($request->path()) === null) {
     header('Location: ' . $legacyRedirects[$request->path()], true, 301);
     exit;
+}
+
+// Pages the export left at more than one address (the beginners' guide
+// in three categories, "/page/1", flat ".html" twins of archives) send
+// readers and crawlers to the one canonical URL - see App\Core\Canonical.
+if (in_array($request->method(), ['GET', 'HEAD'], true) && !SearchResults::handles($request->path())) {
+    $canonicalPath = Canonical::path($request->path(), $siteLinks);
+
+    if ($canonicalPath !== $request->path() && $siteLinks->exists($request->path())) {
+        $query = (string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_QUERY);
+        header('Location: ' . $canonicalPath . ($query !== '' ? '?' . $query : ''), true, 301);
+        exit;
+    }
 }
 
 // The export's "-comment-form" copies of a post are a second address for
@@ -213,7 +227,7 @@ $sourceFile = $router->resolve($request->path());
 // results still use, send it to the file that holds the page.
 if ($sourceFile === null && $request->path() !== '/' && !str_ends_with($request->path(), '.html')
     && $router->resolve($request->path() . '.html') !== null) {
-    header('Location: ' . $request->path() . '.html', true, 301);
+    header('Location: ' . Canonical::path($request->path() . '.html', $siteLinks), true, 301);
     exit;
 }
 
