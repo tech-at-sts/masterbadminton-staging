@@ -58,14 +58,16 @@ $scan = static function (string $dir) use (&$scan, $skipDirs): iterable {
 };
 
 $paths = [];
-$pattern = '~(?:' . LEGACY_HOSTS . ')(/wp-(?:content|includes)/[^\s"\'()<>\\\\,]+)~i';
+// Absolute URLs on a legacy host, and relative ones ("../wp-content/...",
+// "/wp-content/...") that the export left pointing at files it never saved.
+$pattern = '~(?:' . LEGACY_HOSTS . '|(?:\.\./)+|(?<=["\'(=\s]))/?(wp-(?:content|includes)/[^\s"\'()<>\\\\,]+)~i';
 
 foreach ($scan($root) as $file) {
     $text = (string) file_get_contents($file);
 
     if (preg_match_all($pattern, $text, $matches) > 0) {
         foreach ($matches[1] as $path) {
-            $paths[normalise($path)] = true;
+            $paths[normalise('/' . ltrim($path, '/'))] = true;
         }
     }
 }
@@ -81,7 +83,10 @@ $failed = [];
 while ($queue !== []) {
     $path = array_shift($queue);
 
-    if ($path === '' || str_contains($path, '..')) {
+    // Directory listings, wildcards ("/wp-content/*" in a robots rule) and
+    // server-side code are not assets to copy.
+    if ($path === '' || str_contains($path, '..') || str_contains($path, '*') || str_ends_with($path, '/')
+        || preg_match('~\.(php|phtml|phar)$~i', $path) === 1) {
         continue;
     }
 
@@ -186,6 +191,23 @@ function cssReferences(string $css, string $cssPath): array
 
 function download(string $url): ?string
 {
+    // libcurl honours HTTPS_PROXY / NO_PROXY and the system CA bundle;
+    // PHP's stream wrapper does neither, so it is only the fallback.
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_TIMEOUT => 60,
+            CURLOPT_USERAGENT => 'masterbadminton-asset-mirror/1.0',
+        ]);
+        $body = curl_exec($ch);
+        $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        curl_close($ch);
+
+        return is_string($body) && $status === 200 ? $body : null;
+    }
+
     $context = stream_context_create([
         'http' => [
             'timeout' => 30,
