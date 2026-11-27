@@ -109,3 +109,30 @@
 .newsletter-form button:hover { background: #fff; color: var(--bc-black); }
 .newsletter-cta .newsletter-note { font-size: 12px; margin: 12px 0 0; color: rgba(255,255,255,.55); }
 @media (max-width: 560px) { .newsletter-form { flex-direction: column; } }
+
+/* ------------------------------------------------------------------
+ * Accessibility
+ * ---------------------------------------------------------------- */
+
+/* Skip link: off-screen until it receives keyboard focus. */
+.skip-link {
+	position: absolute; left: 12px; top: -60px; z-index: 1000;
+	padding: 10px 16px; border-radius: 8px; background: var(--accent-energy); color: var(--bc-black) !important;
+	font-family: var(--font-sans); font-weight: 700; font-size: 14px; text-decoration: none !important;
+	transition: top .15s ease-out;
+}
+.skip-link:focus { top: 12px; outline: 2px solid var(--bc-black); outline-offset: 2px; }
+#site-main:focus { outline: none; }
+
+/* The search fields are type="search" for assistive tech; keep the bar's own look. */
+.site-search input[type="search"], .nav-panel-search input[type="search"] {
+	-webkit-appearance: none; appearance: none; background: transparent; border: 0; padding: 0; width: 100%;
+	color: #fff; font-family: var(--font-sans); outline: none;
+}
+.site-search input[type="search"] { font-size: 13px; letter-spacing: .02em; }
+.nav-panel-search input[type="search"] { font-size: 14px; }
+.site-search input[type="search"]::placeholder, .nav-panel-search input[type="search"]::placeholder { color: rgba(255,255,255,.65); }
+.site-search input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
+
+/* Footer links: at least 24 x 24 px to tap (WCAG 2.2 target size). */
+#menu-footer a, .site-footer-meta a { display: inline-flex; align-items: center; min-height: 24px; min-width: 24px; padding: 6px 4px; }

@@ -158,6 +158,8 @@ $chrome = $isChinese
 		'store' => '商店',
 		'strip_prev' => '查看上一组分类',
 		'strip_next' => '查看更多分类',
+		'search_label' => '搜索本站',
+		'skip' => '跳到正文',
 	]
 	: [
 		'beginner' => 'Are you a beginner? Click Here',
@@ -170,6 +172,8 @@ $chrome = $isChinese
 		'store' => 'Store',
 		'strip_prev' => 'Show previous categories',
 		'strip_next' => 'Show more categories',
+		'search_label' => 'Search the site',
+		'skip' => 'Skip to content',
 	];
 
 // The homepage - English or the Chinese mirror - gets the prominent
@@ -304,12 +308,17 @@ $wp = static fn (string $path): string => htmlspecialchars(AssetUrl::resolve($pa
 	<link rel="stylesheet" href="<?= $wp('/wp-content/themes/gon/css/reset.css') ?>" media="all" />
 	<link rel="stylesheet" href="<?= $wp('/wp-content/themes/gon/style.css') ?>" media="all" />
 	<link rel="stylesheet" href="<?= $wp('/wp-content/themes/gon-child/style.css') ?>" media="all" />
-	<link rel="stylesheet" href="<?= $wp('/wp-content/themes/gon/css/font-awesome.css') ?>" media="all" />
+	<?php /* No page uses a Font Awesome icon class, so its stylesheet loads without blocking the first paint. */ ?>
+	<link rel="stylesheet" href="<?= $wp('/wp-content/themes/gon/css/font-awesome.css') ?>" media="print" onload="this.media='all'" />
+	<noscript><link rel="stylesheet" href="<?= $wp('/wp-content/themes/gon/css/font-awesome.css') ?>" media="all" /></noscript>
 	<link rel="stylesheet" href="<?= $wp('/wp-content/themes/gon/css/responsive.css') ?>" media="all" />
 	<link rel="stylesheet" href="<?= $wp('/wp-content/uploads/gonchild.css') ?>" media="all" />
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-	<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,600;1,700;1,800;1,900&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+	<?php /* Web fonts use display=swap, so text shows in a fallback font at once; the stylesheet need not block rendering. */ ?>
+	<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,600;1,700;1,800;1,900&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" />
+	<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,600;1,700;1,800;1,900&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+	<noscript><link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,600;1,700;1,800;1,900&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" /></noscript>
 	<!-- BadmintonClick design tokens - colors, type and spacing shared by every stylesheet below. -->
 	<link rel="stylesheet" href="<?= htmlspecialchars($asset('/assets/css/design-tokens.css'), ENT_QUOTES, 'UTF-8') ?>" media="all" />
 	<style>
@@ -575,12 +584,19 @@ $wp = static fn (string $path): string => htmlspecialchars(AssetUrl::resolve($pa
 	<link rel="stylesheet" href="<?= htmlspecialchars($asset('/assets/css/seo-components.css'), ENT_QUOTES, 'UTF-8') ?>" media="all" />
 
 	<?php /* Served from this repository - it used to load from WP Engine. */ ?>
-	<script src="<?= htmlspecialchars($asset('/assets/vendor/jquery-3.7.1.min.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
-	<script>jQuery.migrateMute = true;</script>
-	<script src="<?= htmlspecialchars($asset('/assets/vendor/jquery-migrate-3.4.1.min.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+	<?php /*
+		Deferred, so the parser never stops for them. Nothing in the page
+		content runs jQuery inline; the theme scripts that use it are
+		deferred too (templates/footer.php), and deferred scripts run in
+		document order, so jQuery is always ready before they run.
+	*/ ?>
+	<script src="<?= htmlspecialchars($asset('/assets/vendor/jquery-3.7.1.min.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
+	<script src="<?= htmlspecialchars($asset('/assets/js/jquery-compat.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
+	<script src="<?= htmlspecialchars($asset('/assets/vendor/jquery-migrate-3.4.1.min.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
 </head>
 <body class="wp-theme-gon wp-child-theme-gon-child header-v2 wide layout-fullwidth ts_desktop<?= $usesHomeVisual ? ' home-v2' : '' ?><?= $isHome || $isHomeLayout ? ' home-page' : '' ?><?= $isCategoryIndex ? ' cat-directory-page' : '' ?><?= $isSearch ? ' search-v2' : '' ?><?= $isPost ? ' post-v2' : '' ?><?= $isArchive ? ' archive-v2' : '' ?>">
 <?= SeoHead::analyticsBody() ?>
+<a class="skip-link" href="#site-main"><?= htmlspecialchars($chrome['skip'], ENT_QUOTES, 'UTF-8') ?></a>
 <div id="page" class="hfeed site">
 
 	<header class="site-header">
@@ -611,7 +627,7 @@ $wp = static fn (string $path): string => htmlspecialchars(AssetUrl::resolve($pa
 				</a>
 				<div class="header-actions">
 					<form class="site-search" method="get" action="<?= htmlspecialchars($searchAction, ENT_QUOTES, 'UTF-8') ?>" role="search">
-						<input type="text" value="<?= htmlspecialchars($searchTerms, ENT_QUOTES, 'UTF-8') ?>" name="s" placeholder="<?= htmlspecialchars($chrome['search'], ENT_QUOTES, 'UTF-8') ?>" autocomplete="off" />
+						<input type="search" value="<?= htmlspecialchars($searchTerms, ENT_QUOTES, 'UTF-8') ?>" name="s" placeholder="<?= htmlspecialchars($chrome['search'], ENT_QUOTES, 'UTF-8') ?>" aria-label="<?= htmlspecialchars($chrome['search_label'], ENT_QUOTES, 'UTF-8') ?>" autocomplete="off" />
 						<button type="submit" aria-label="<?= htmlspecialchars($chrome['search'], ENT_QUOTES, 'UTF-8') ?>"><?= $searchIcon ?></button>
 					</form>
 					<?php /*
@@ -644,7 +660,7 @@ $wp = static fn (string $path): string => htmlspecialchars(AssetUrl::resolve($pa
 				</div>
 				<form class="nav-panel-search" method="get" action="<?= htmlspecialchars($searchAction, ENT_QUOTES, 'UTF-8') ?>" role="search">
 					<button type="submit" aria-label="<?= htmlspecialchars($chrome['search'], ENT_QUOTES, 'UTF-8') ?>"><?= $searchIcon ?></button>
-					<input type="text" value="<?= htmlspecialchars($searchTerms, ENT_QUOTES, 'UTF-8') ?>" name="s" placeholder="<?= htmlspecialchars($chrome['search'], ENT_QUOTES, 'UTF-8') ?>" autocomplete="off" />
+					<input type="search" value="<?= htmlspecialchars($searchTerms, ENT_QUOTES, 'UTF-8') ?>" name="s" placeholder="<?= htmlspecialchars($chrome['search'], ENT_QUOTES, 'UTF-8') ?>" aria-label="<?= htmlspecialchars($chrome['search_label'], ENT_QUOTES, 'UTF-8') ?>" autocomplete="off" />
 				</form>
 			<?php foreach ($navGroups as $groupName => $groupItems): ?>
 				<?php if ($groupItems === []) { continue; } ?>
@@ -773,3 +789,4 @@ $wp = static fn (string $path): string => htmlspecialchars(AssetUrl::resolve($pa
 	</header>
 
 	<div id="main" class="wrapper">
+	<main id="site-main" tabindex="-1">

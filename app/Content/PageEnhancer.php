@@ -80,6 +80,13 @@ final class PageEnhancer
         ],
     ];
 
+    /** Attributes an <img> legitimately carries (data-* and aria-* are kept too). */
+    private const IMG_ATTRIBUTES = [
+        'src', 'srcset', 'sizes', 'alt', 'title', 'width', 'height', 'loading', 'decoding', 'fetchpriority',
+        'class', 'id', 'style', 'align', 'border', 'hspace', 'vspace', 'usemap', 'ismap', 'crossorigin',
+        'referrerpolicy', 'role', 'longdesc', 'itemprop', 'lang', 'dir',
+    ];
+
     /** Filename words that describe nothing. */
     private const JUNK_WORDS = [
         'img', 'image', 'images', 'pic', 'picture', 'photo', 'dsc', 'dscn', 'fotolia', 'shutterstock', 'istock',
@@ -153,6 +160,7 @@ final class PageEnhancer
             }
 
             $this->cleanLegacyComments($xpath, $main);
+            $this->removeDeadForms($xpath, $main);
             $this->removeArchiveJunk($xpath, $main);
             $this->rootAssetPaths($xpath, $main);
             $this->fixImages($xpath, $main, $headline, $copy);
@@ -232,6 +240,29 @@ final class PageEnhancer
 
             $index++;
 
+            // ...and the same cut-off markup can spill stray attributes onto
+            // the image ("button-readmore", href="...") - drop anything an
+            // <img> does not take.
+            foreach (iterator_to_array($img->attributes) as $attribute) {
+                $name = strtolower($attribute->nodeName);
+
+                if (!str_starts_with($name, 'data-') && !str_starts_with($name, 'aria-')
+                    && !in_array($name, self::IMG_ATTRIBUTES, true)) {
+                    $img->removeAttribute($attribute->nodeName);
+                }
+            }
+
+            // Some excerpts were cut off mid-markup by the export, leaving an
+            // image's alt text holding the rest of the card's HTML ("Lee
+            // Chong </div> <!-- Blog Read More Button --> <a class=...").
+            // Keep the words before the markup, tidy the whitespace.
+            $alt = $img->getAttribute('alt');
+
+            if (str_contains($alt, '<') || preg_match('~\s{3,}~u', $alt) === 1) {
+                $clean = trim((string) preg_replace('~\s+~u', ' ', explode('<', $alt)[0]));
+                $img->setAttribute('alt', mb_strlen($clean) > 125 ? rtrim(mb_substr($clean, 0, 122)) . '...' : $clean);
+            }
+
             if (trim($img->getAttribute('alt')) === '' && !$this->isDecorative($img)) {
                 $img->setAttribute('alt', $this->altFor($xpath, $img, $headline, $index, $copy));
             } elseif (!$img->hasAttribute('alt')) {
@@ -249,6 +280,24 @@ final class PageEnhancer
             }
 
             $img->setAttribute('decoding', 'async');
+        }
+
+        // Share widgets carry the page's address for the share itself;
+        // point them at the canonical https://www address rather than the
+        // old http:// domain, which only reaches the page via a redirect.
+        foreach ($xpath->query('.//*[@data-link or @data-url or @data-href or @data-permalink]', $main) as $node) {
+            if (!$node instanceof \DOMElement) {
+                continue;
+            }
+
+            foreach (['data-link', 'data-url', 'data-href', 'data-permalink'] as $attr) {
+                $value = $node->getAttribute($attr);
+
+                if ($value !== '' && preg_match('~^(https?:)?//(www\.)?masterbadminton\.com(/.*)?$~i', $value, $m) === 1) {
+                    $sharePath = (string) parse_url(($m[3] ?? '') !== '' ? $m[3] : '/', PHP_URL_PATH);
+                    $node->setAttribute($attr, SiteConfig::siteUrl() . Canonical::path($sharePath, $this->links));
+                }
+            }
         }
 
         foreach ($xpath->query('.//source[@srcset]', $main) as $source) {
@@ -448,6 +497,22 @@ final class PageEnhancer
             if ($table instanceof \DOMElement && $xpath->query('.//div[starts-with(@id, "comment_")]', $table)->length === 0) {
                 $table->parentNode?->removeChild($table);
             }
+        }
+    }
+
+    /**
+     * WordPress's comment form posted to wp-comments-post.php on a server
+     * that no longer exists, so anything typed into it was lost. The form
+     * goes, together with the "Leave a comment" block that holds it.
+     */
+    private function removeDeadForms(\DOMXPath $xpath, \DOMElement $main): void
+    {
+        $query = './/form[contains(@action, "wp-comments-post") or contains(@data-trp-original-action, "wp-comments-post")]';
+
+        foreach (iterator_to_array($xpath->query($query, $main)) as $form) {
+            $block = $xpath->query('ancestor::*[@id="respond" or @id="comments" or @id="comment-wrapper"][last()]', $form)->item(0);
+            $target = $block instanceof \DOMElement ? $block : $form;
+            $target->parentNode?->removeChild($target);
         }
     }
 
