@@ -400,7 +400,8 @@ final class CategoryDirectory
 
         $url = trim(html_entity_decode($match[1], ENT_QUOTES, 'UTF-8'));
 
-        return $this->images[$path] = ($url === '' ? null : $url);
+        // Served from this site once the file is in the repository.
+        return $this->images[$path] = ($url === '' ? null : \App\Core\AssetUrl::resolve($url));
     }
 
     /**

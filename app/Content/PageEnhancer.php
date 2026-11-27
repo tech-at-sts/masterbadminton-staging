@@ -216,6 +216,12 @@ final class PageEnhancer
                 }
             }
 
+            // Pinterest's "pin it" image must be an absolute URL.
+            if ($img->hasAttribute('data-pin-media')) {
+                $pin = AssetUrl::resolve($img->getAttribute('data-pin-media'));
+                $img->setAttribute('data-pin-media', str_starts_with($pin, '/') ? SiteConfig::siteUrl() . $pin : $pin);
+            }
+
             foreach (['srcset', 'data-srcset', 'data-lazy-srcset'] as $attr) {
                 if ($img->hasAttribute($attr)) {
                     $img->setAttribute($attr, AssetUrl::resolveSrcset($img->getAttribute($attr)));

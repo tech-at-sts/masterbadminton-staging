@@ -27,7 +27,7 @@ Analytics tags only load on the indexable host, so staging traffic never reaches
 
 ## Before cancelling WP Engine
 
-The theme CSS/JS and ~230 images are still loaded from `masterbadminto.wpenginepowered.com` because they are not in this repository yet. The site serves any of these files locally as soon as it exists in the repo, so:
+All theme CSS/JS and images now live in this repository (mirrored 27 Nov 2026), so the site no longer loads anything from WP Engine. If new references are ever added, re-run the script below to pick them up.
 
 ```bash
 php bin/mirror-wp-assets.php --dry-run   # list what is missing
