@@ -77,6 +77,7 @@ final class ContentExtractor
             __DIR__ . '/MirrorTitle.php',
             __DIR__ . '/SiteLinks.php',
             __DIR__ . '/AssetUrl.php',
+            __DIR__ . '/Canonical.php',
             __DIR__ . '/SiteConfig.php',
             __DIR__ . '/SourceMeta.php',
             __DIR__ . '/Router.php',
@@ -252,6 +253,10 @@ final class ContentExtractor
 
         if (str_ends_with($path, '/index.html')) {
             $path = substr($path, 0, -strlen('/index.html'));
+        }
+
+        if (str_ends_with($path, '.html/feed.html')) {
+            $path = substr($path, 0, -strlen('/feed.html'));
         }
 
         if (str_ends_with($path, Router::COMMENT_FORM_SUFFIX)) {

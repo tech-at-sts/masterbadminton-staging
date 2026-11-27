@@ -52,6 +52,18 @@ final class LinkRewriter
         'masterbadminto.wpenginepowered.com',
     ];
 
+    /** target() result for a link to a page of this site that does not exist. */
+    private const DEAD = "\0dead";
+
+    /** Old pages that were never exported, and the page that replaces them. */
+    private const MOVED = [
+        '/badminton-questions.html' => '/category/questions.html',
+        '/category/questions' => '/category/questions.html',
+    ];
+
+    /** @var array<string, string>|null */
+    private ?array $caseIndex = null;
+
     public function __construct(
         private readonly string $baseDir,
         private readonly SiteLinks $links,
@@ -72,17 +84,36 @@ final class LinkRewriter
         }
 
         $locale = Locale::of('/' . $baseTreeDir);
+        $dead = [];
 
-        foreach ($xpath->query('//a[@href]') as $anchor) {
+        foreach (iterator_to_array($xpath->query('//a[@href]')) as $anchor) {
             if (!$anchor instanceof \DOMElement) {
                 continue;
             }
 
             $target = $this->target($anchor->getAttribute('href'), $baseTreeDir, $locale);
 
-            if ($target !== null) {
+            if ($target === self::DEAD) {
+                $dead[] = $anchor;
+            } elseif ($target !== null) {
                 $anchor->setAttribute('href', $target);
             }
+        }
+
+        // Links to pages of this site that no longer exist keep their text
+        // and lose the link.
+        foreach ($dead as $anchor) {
+            $parent = $anchor->parentNode;
+
+            if ($parent === null) {
+                continue;
+            }
+
+            while ($anchor->firstChild !== null) {
+                $parent->insertBefore($anchor->firstChild, $anchor);
+            }
+
+            $parent->removeChild($anchor);
         }
     }
 
@@ -148,13 +179,83 @@ final class LinkRewriter
             return null;
         }
 
-        foreach ($this->candidates($this->publicPath($treePath), $locale) as $candidate) {
-            if ($this->links->exists($candidate)) {
-                return $candidate . $suffix;
+        foreach ($this->alternatives($this->publicPath($treePath)) as $publicPath) {
+            foreach ($this->candidates($publicPath, $locale) as $candidate) {
+                if ($this->links->exists($candidate)) {
+                    return Canonical::path($candidate, $this->links) . $suffix;
+                }
             }
         }
 
+        // An absolute link to this site's own domain that resolves to
+        // nothing points at a page the export never captured. It is
+        // reported as dead so rewrite() can turn it into plain text instead
+        // of sending readers (and crawlers) to a 404.
+        // The same for a relative link to a page (".html") that does not
+        // exist on this site.
+        if ($host === null && str_ends_with(strtolower(rtrim($path, '/')), '.html')) {
+            return self::DEAD;
+        }
+
+        if ($host !== null && !preg_match('~^/?(wp-content|wp-includes|wp-json|wp-admin|feed|comments|xmlrpc)~', ltrim($path, '/'))
+            && !str_contains($path, '/feed')) {
+            return self::DEAD;
+        }
+
         return null;
+    }
+
+    /**
+     * Other spellings of a path that the old site answered to: without the
+     * ".html" WordPress sometimes added, with a different letter case, or
+     * a page that has since moved.
+     *
+     * @return list<string>
+     */
+    private function alternatives(string $publicPath): array
+    {
+        $paths = [$publicPath];
+
+        $neutral = Locale::neutral($publicPath);
+
+        if (isset(self::MOVED[$neutral])) {
+            $paths[] = self::MOVED[$neutral];
+        }
+
+        if ($publicPath !== '/' && !str_ends_with($publicPath, '.html')) {
+            $paths[] = $publicPath . '.html';
+        }
+
+        // Single-segment paths whose case differs from the file on disk
+        // ("yonex-all-england-final-2010.html" for
+        // "Yonex-All-England-Final-2010.html").
+        if (substr_count($publicPath, '/') === 1) {
+            $actual = $this->caseIndex()[strtolower(ltrim($publicPath, '/'))] ?? null;
+
+            if ($actual !== null) {
+                $paths[] = '/' . $actual;
+            }
+        }
+
+        return array_values(array_unique($paths));
+    }
+
+    /** @return array<string, string> lower-cased root entry => its real name */
+    private function caseIndex(): array
+    {
+        if ($this->caseIndex !== null) {
+            return $this->caseIndex;
+        }
+
+        $this->caseIndex = [];
+
+        foreach (@scandir($this->baseDir) ?: [] as $entry) {
+            if ($entry[0] !== '.') {
+                $this->caseIndex[strtolower($entry)] ??= $entry;
+            }
+        }
+
+        return $this->caseIndex;
     }
 
     /** Collapse "." and ".." segments; null if the path climbs out of the root. */

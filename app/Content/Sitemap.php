@@ -64,7 +64,7 @@ final class Sitemap
     {
         $parts = [];
 
-        foreach ([__FILE__, dirname(__DIR__) . '/Core/Router.php', dirname(__DIR__) . '/Core/SourceMeta.php', dirname(__DIR__) . '/Core/Canonical.php'] as $source) {
+        foreach ([__FILE__, dirname(__DIR__) . '/Core/Router.php', dirname(__DIR__) . '/Core/SourceMeta.php', dirname(__DIR__) . '/Core/Canonical.php', __DIR__ . '/GuideEnhancements.php'] as $source) {
             $parts[] = is_file($source) ? (string) filemtime($source) : '0';
         }
 
@@ -115,11 +115,17 @@ final class Sitemap
             $relative = substr($file, strlen($this->baseDir) + 1);
             $relative = str_replace(DIRECTORY_SEPARATOR, '/', $relative);
 
-            if (preg_match(self::SKIP_FILE_PATTERN, $relative) === 1) {
+            // A "<slug>.html/feed.html" that is really the page (see
+            // Router::resolve()) is listed under the page's own address.
+            $pageInFeed = str_ends_with($relative, '.html/feed.html')
+                && !is_file(dirname($file) . '/index.html')
+                && Router::isPage($file);
+
+            if (!$pageInFeed && preg_match(self::SKIP_FILE_PATTERN, $relative) === 1) {
                 continue;
             }
 
-            $path = $this->publicPath($relative);
+            $path = $pageInFeed ? '/' . dirname($relative) : $this->publicPath($relative);
 
             // A "-comment-form" copy is listed under the post's own address,
             // which is where the Router serves it and where its own
@@ -139,6 +145,15 @@ final class Sitemap
             // own mtime is only the date of the last git checkout, which
             // would tell crawlers every page changed on every deploy.
             $modified = SourceMeta::read($file)['modified'];
+
+            // A guide whose content was revised here carries the date of
+            // that revision - the same date the page itself shows (see
+            // PageEnhancer) - so the page and the sitemap never disagree.
+            $revised = GuideEnhancements::for($path)['updated'] ?? '';
+
+            if ($revised !== '' && strtotime($revised) > (int) strtotime($modified)) {
+                $modified = $revised;
+            }
             $time = $modified !== '' ? strtotime($modified) : false;
             $found[$path] = $time === false ? null : $time;
         }

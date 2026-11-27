@@ -487,8 +487,15 @@ final class CategoryDirectory
             $path = $this->resolveRelative($path, $source);
         }
 
-        return $this->collapseIndex($path) . $tail;
+        // A guide reachable at more than one address is linked at its
+        // canonical one (see App\Core\Canonical), not at a duplicate that
+        // only redirects.
+        $this->siteLinks ??= new \App\Core\SiteLinks($this->baseDir);
+
+        return \App\Core\Canonical::path($this->collapseIndex($path), $this->siteLinks) . $tail;
     }
+
+    private ?\App\Core\SiteLinks $siteLinks = null;
 
     /** Resolve a homepage-relative link against the homepage's directory. */
     private function resolveRelative(string $href, string $source): string

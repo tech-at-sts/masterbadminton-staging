@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Content;
 
 use App\Core\AssetUrl;
+use App\Core\Canonical;
 use App\Core\Locale;
 use App\Core\SiteConfig;
 use App\Core\SiteLinks;
@@ -151,8 +152,10 @@ final class PageEnhancer
                 $this->addArticleFooter($dom, $body, $path, $locale, $copy);
             }
 
+            $this->cleanLegacyComments($xpath, $main);
             $this->fixImages($xpath, $main, $headline, $copy);
             $this->fixLinksToFiles($xpath, $main);
+            $this->upgradeInsecureUrls($xpath, $main);
         }
 
         // Dates: a reviewed guide carries the date it was reviewed; every
@@ -377,6 +380,110 @@ final class PageEnhancer
         return str_starts_with($url, '/') ? SiteConfig::siteUrl() . $url : $url;
     }
 
+    /**
+     * The reader comments carried over from the site's pre-WordPress Q&A
+     * pages. Most of them are spam - essay mills, supplements, escort and
+     * greeting-card sites - and a page that links out to that is a page
+     * search engines trust less. Comments that link to another site or
+     * read as advertising are removed; links in the comments that remain
+     * are marked rel="ugc nofollow". The "add your own comments" links go
+     * too: the comment system behind them no longer exists.
+     */
+    private function cleanLegacyComments(\DOMXPath $xpath, \DOMElement $main): void
+    {
+        $spam = '~\b(essays?|assignments?|homework|dissertation|research paper|term paper|escorts?|call girls?|casino|viagra|cialis|'
+            . 'crazy ?bulk|steroids?|weight loss|payday|loans?|seo services?|buy (cheap|online)|replica|happy new year|'
+            . 'merry christmas|greetings? message|wishes images|snoring|leather jackets?)\b~iu';
+
+        foreach (iterator_to_array($xpath->query('.//div[starts-with(@id, "comment_")]', $main)) as $comment) {
+            if (!$comment instanceof \DOMElement) {
+                continue;
+            }
+
+            $external = false;
+
+            foreach ($xpath->query('.//a[@href]', $comment) as $link) {
+                $host = strtolower((string) parse_url($link->getAttribute('href'), PHP_URL_HOST));
+
+                if ($host !== '' && !str_ends_with($host, 'masterbadminton.com')) {
+                    $external = true;
+                    break;
+                }
+            }
+
+            if ($external || preg_match($spam, $comment->textContent) === 1) {
+                // The comment sits in a wrapper <div id="<number>"> of its own.
+                $wrapper = $comment->parentNode;
+                $target = $wrapper instanceof \DOMElement && preg_match('~^\d+$~', $wrapper->getAttribute('id')) === 1 ? $wrapper : $comment;
+                $target->parentNode?->removeChild($target);
+                continue;
+            }
+
+            foreach ($xpath->query('.//a[@href]', $comment) as $link) {
+                if ($link instanceof \DOMElement) {
+                    $link->setAttribute('rel', 'ugc nofollow');
+                }
+            }
+        }
+
+        foreach (iterator_to_array($xpath->query('.//a[contains(@class, "old-comments") or contains(@href, "-comment-form.html")]', $main)) as $link) {
+            $paragraph = $link->parentNode;
+            $target = $paragraph instanceof \DOMElement && strtolower($paragraph->nodeName) === 'p' && trim($paragraph->textContent) === trim($link->textContent)
+                ? $paragraph
+                : $link;
+            $target->parentNode?->removeChild($target);
+        }
+
+        // A comments table with no comments left is just a heading and a
+        // star rating; drop it.
+        foreach (iterator_to_array($xpath->query('.//table[@id="comments"]', $main)) as $table) {
+            if ($table instanceof \DOMElement && $xpath->query('.//div[starts-with(@id, "comment_")]', $table)->length === 0) {
+                $table->parentNode?->removeChild($table);
+            }
+        }
+    }
+
+    /**
+     * Embedded resources (YouTube players, the AdSense loader, images) that
+     * the export references over plain http:// are blocked by browsers on
+     * an https page, so they are requested over https. Links to a few
+     * well-known sites that serve https are upgraded too; other outbound
+     * links are left as written, since not every old site supports https.
+     */
+    private function upgradeInsecureUrls(\DOMXPath $xpath, \DOMElement $main): void
+    {
+        foreach ($xpath->query('.//iframe[@src] | .//script[@src] | .//img[@src] | .//embed[@src] | .//source[@src] | .//video[@src] | .//audio[@src]', $main) as $node) {
+            if ($node instanceof \DOMElement && str_starts_with(strtolower($node->getAttribute('src')), 'http://')) {
+                $node->setAttribute('src', 'https://' . substr($node->getAttribute('src'), 7));
+            }
+        }
+
+        foreach ($xpath->query('.//object[@data] | .//param[@name="movie" and @value]', $main) as $node) {
+            if ($node instanceof \DOMElement) {
+                $attr = $node->hasAttribute('data') ? 'data' : 'value';
+
+                if (str_starts_with(strtolower($node->getAttribute($attr)), 'http://')) {
+                    $node->setAttribute($attr, 'https://' . substr($node->getAttribute($attr), 7));
+                }
+            }
+        }
+
+        $secureHosts = '~^(www\.)?(youtube\.com|youtu\.be|google\.[a-z.]+|facebook\.com|twitter\.com|pinterest\.com|instagram\.com|'
+            . 'wikipedia\.org|en\.wikipedia\.org|amazon\.[a-z.]+|bwfbadminton\.com|badmintonengland\.co\.uk|badminton\.org\.au)$~i';
+
+        foreach ($xpath->query('.//a[starts-with(@href, "http://")]', $main) as $link) {
+            if (!$link instanceof \DOMElement) {
+                continue;
+            }
+
+            $host = (string) parse_url($link->getAttribute('href'), PHP_URL_HOST);
+
+            if (preg_match($secureHosts, $host) === 1) {
+                $link->setAttribute('href', 'https://' . substr($link->getAttribute('href'), 7));
+            }
+        }
+    }
+
     /* -----------------------------------------------------------------
      * Guides and articles
      * -------------------------------------------------------------- */
@@ -446,9 +553,9 @@ final class PageEnhancer
         $related = [];
 
         foreach ($this->posts->related($neutral, 6) as $post) {
-            $target = $this->links->localized($post['path'], $locale);
+            $target = Canonical::path($this->links->localized($post['path'], $locale), $this->links);
 
-            if ($target === $path || !$this->links->exists($target) || count($related) >= 4) {
+            if ($target === $path || $target === Canonical::path($path, $this->links) || !$this->links->exists($target) || count($related) >= 4) {
                 continue;
             }
 

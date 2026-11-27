@@ -166,9 +166,10 @@ final class SeoHead
         }
 
         $gtm = SiteConfig::gtmId();
+        $consent = self::consentDefaults();
 
         if ($gtm !== '') {
-            return "<script>window.dataLayer=window.dataLayer||[];(function(w,d,s,l,i){w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});"
+            return $consent . "<script>window.dataLayer=window.dataLayer||[];(function(w,d,s,l,i){w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});"
                 . "var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;"
                 . "j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer',"
                 . json_encode($gtm) . ");</script>\n";
@@ -177,11 +178,36 @@ final class SeoHead
         $ga4 = SiteConfig::ga4Id();
 
         if ($ga4 !== '') {
-            return '<script async src="https://www.googletagmanager.com/gtag/js?id=' . htmlspecialchars($ga4, ENT_QUOTES, 'UTF-8') . '"></script>' . "\n"
+            return $consent . '<script async src="https://www.googletagmanager.com/gtag/js?id=' . htmlspecialchars($ga4, ENT_QUOTES, 'UTF-8') . '"></script>' . "\n"
                 . "\t<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config'," . json_encode($ga4) . ");</script>\n";
         }
 
         return '';
+    }
+
+    /**
+     * Google Consent Mode v2 defaults, set before any Google tag loads.
+     *
+     * Visitors in the EEA, the UK and Switzerland start with every storage
+     * type denied until a consent banner (the AdSense / Google "Privacy &
+     * messaging" CMP, or any Google-certified CMP added in Tag Manager)
+     * grants it; everyone else starts granted. Google requires this for
+     * ads personalisation and measurement of EEA/UK traffic. With storage
+     * denied, Google tags still send cookieless pings, so GA4 can model the
+     * missing data.
+     */
+    private static function consentDefaults(): string
+    {
+        $regions = [
+            'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU',
+            'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE', 'IS', 'LI', 'NO', 'GB', 'CH',
+        ];
+
+        return "<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}"
+            . "gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',wait_for_update:500,region:"
+            . json_encode($regions) . "});"
+            . "gtag('consent','default',{ad_storage:'granted',ad_user_data:'granted',ad_personalization:'granted',analytics_storage:'granted'});"
+            . "gtag('set','ads_data_redaction',true);</script>\n\t";
     }
 
     /** GTM's <noscript> fallback, placed right after <body>. */
