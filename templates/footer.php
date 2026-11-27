@@ -9,6 +9,9 @@
 
 declare(strict_types=1);
 
+use App\Core\AssetUrl;
+use App\Core\SiteConfig;
+
 $footerItems = [
 	['label' => 'Home', 'label_zh' => '首页', 'href' => '/'],
 	['label' => 'Blog', 'label_zh' => '博客', 'href' => '/how-to-play-badminton-blog.html'],
@@ -16,7 +19,28 @@ $footerItems = [
 	['label' => 'Disclaimer', 'label_zh' => '免责声明', 'href' => '/disclaimer'],
 	['label' => 'Privacy Policy', 'label_zh' => '隐私政策', 'href' => '/privacy-policy.html'],
 ];
+
+// The lead magnet: shown on the homepages and at the end of every article
+// once a newsletter provider is configured (NEWSLETTER_FORM_ENDPOINT).
+$newsletterEndpoint = SiteConfig::newsletterEndpoint();
+$showNewsletter = $newsletterEndpoint !== '' && ($isHome || $isPost);
 ?>
+	<?php if ($showNewsletter): ?>
+	<section class="newsletter-cta" aria-labelledby="newsletter-cta-heading">
+		<div class="newsletter-cta-inner">
+			<h2 id="newsletter-cta-heading"><?= $isChinese ? '免费领取 7 天羽毛球入门计划' : 'Get the free 7-day beginner badminton plan' ?></h2>
+			<p><?= $isChinese
+				? '每天一节简短课程：握拍、站位、步法、发球和基本击球，帮助你一周内打好基础。'
+				: 'One short lesson a day - grip, stance, footwork, serve and the basic shots - to build a solid foundation in a week. Plus new guides as they are published.' ?></p>
+			<form class="newsletter-form" method="post" action="<?= htmlspecialchars($newsletterEndpoint, ENT_QUOTES, 'UTF-8') ?>" data-track="newsletter-signup">
+				<label class="screen-reader-text" for="newsletter-email"><?= $isChinese ? '电子邮件地址' : 'Email address' ?></label>
+				<input id="newsletter-email" type="email" name="<?= htmlspecialchars(SiteConfig::newsletterEmailField(), ENT_QUOTES, 'UTF-8') ?>" required autocomplete="email" placeholder="<?= $isChinese ? '你的电子邮件' : 'Your email address' ?>" />
+				<button type="submit"><?= $isChinese ? '免费获取' : 'Send me the plan' ?></button>
+			</form>
+			<p class="newsletter-note"><?= $isChinese ? '不发垃圾邮件，可随时退订。' : 'No spam. Unsubscribe at any time.' ?></p>
+		</div>
+	</section>
+	<?php endif; ?>
 	</div><!-- #main .wrapper -->
 	<div class="clear"></div>
 
@@ -61,14 +85,17 @@ $footerItems = [
 	<a class="scroll-button" href="javascript:void(0)" title="<?= htmlspecialchars($chrome['top'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($chrome['top'], ENT_QUOTES, 'UTF-8') ?></a>
 </div>
 
-<script src="https://masterbadminto.wpenginepowered.com/wp-content/themes/gon/js/include_scripts.js"></script>
-<script src="https://masterbadminto.wpenginepowered.com/wp-content/themes/gon/js/main.js"></script>
-<script src="https://masterbadminto.wpenginepowered.com/wp-content/themes/gon/js/select2.min.js"></script>
+<?php /* Theme scripts: local once mirrored, WP Engine until then - see App\Core\AssetUrl. */ ?>
+<script src="<?= htmlspecialchars(AssetUrl::resolve('/wp-content/themes/gon/js/include_scripts.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+<script src="<?= htmlspecialchars(AssetUrl::resolve('/wp-content/themes/gon/js/main.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+<script src="<?= htmlspecialchars(AssetUrl::resolve('/wp-content/themes/gon/js/select2.min.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 <?php /* Stamped like the stylesheets - see $asset in templates/header.php. */ ?>
 <script src="<?= htmlspecialchars($asset('/assets/js/home-ui.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
 <script src="<?= htmlspecialchars($asset('/assets/js/category-page.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
 <?php if ($isPost): ?>
 <script src="<?= htmlspecialchars($asset('/assets/js/post-page.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
 <?php endif; ?>
+<?php /* Engagement events for GA4 / GTM: scroll depth, guide completion, outbound and affiliate clicks, form submissions. */ ?>
+<script src="<?= htmlspecialchars($asset('/assets/js/analytics-events.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
 </body>
 </html>

@@ -5,8 +5,11 @@ declare(strict_types=1);
 require __DIR__ . '/app/bootstrap.php';
 
 use App\Content\CategoryDirectory;
+use App\Content\Feed;
+use App\Content\PostIndex;
 use App\Content\SearchResults;
 use App\Content\Sitemap;
+use App\Core\AssetUrl;
 use App\Core\ContentCache;
 use App\Core\ContentExtractor;
 use App\Core\LinkRewriter;
@@ -14,6 +17,7 @@ use App\Core\Locale;
 use App\Core\PageContent;
 use App\Core\Request;
 use App\Core\Router;
+use App\Core\SiteConfig;
 use App\Core\SiteLinks;
 use App\Core\SiteVisibility;
 use App\Layout\Layout;
@@ -23,17 +27,83 @@ $router = new Router(__DIR__);
 $siteLinks = new SiteLinks(__DIR__);
 $layout = new Layout(__DIR__ . '/templates/header.php', __DIR__ . '/templates/footer.php');
 
+AssetUrl::setRoot(__DIR__);
+
+// The bare domain (and any other host listed in REDIRECT_HOSTS) is a second
+// address for the same pages. Cloudflare is meant to 301 it to www, but if
+// that rule is missing, or a request reaches Railway another way, the app
+// does it itself - path and query string kept - so search engines and
+// readers only ever see one copy of each page.
+$requestHost = strtolower((string) preg_replace('~:\d+$~', '', (string) ($_SERVER['HTTP_HOST'] ?? '')));
+
+if ($requestHost !== '' && in_array($requestHost, SiteConfig::redirectHosts(), true)) {
+    header('Location: ' . SiteConfig::siteUrl() . ($_SERVER['REQUEST_URI'] ?? '/'), true, 301);
+    header('Cache-Control: public, max-age=86400');
+    exit;
+}
+
+// Old URLs that have no page of their own any more, mapped to the page that
+// now answers the same need. Permanent, so the links and rankings they
+// earned pass to the new address.
+$legacyRedirects = [
+    // The "Ask a Question" page was never exported; the questions archive
+    // lists every reader question the site has answered.
+    '/badminton-questions.html' => '/category/questions.html',
+    '/zh/badminton-questions.html' => '/category/questions.html',
+];
+
+if (isset($legacyRedirects[$request->path()]) && $router->resolve($request->path()) === null) {
+    header('Location: ' . $legacyRedirects[$request->path()], true, 301);
+    exit;
+}
+
+// The export's "-comment-form" copies of a post are a second address for
+// it (see Router::resolve()); send them to the post's own URL.
+if (str_ends_with($request->path(), Router::COMMENT_FORM_SUFFIX)) {
+    $commentFormTarget = substr($request->path(), 0, -strlen(Router::COMMENT_FORM_SUFFIX)) . '.html';
+
+    if ($router->resolve($commentFormTarget) !== null) {
+        header('Location: ' . $commentFormTarget, true, 301);
+        exit;
+    }
+}
+
+// WordPress shortlinks - "/?p=72", "/index.html?p=72" - still turn up in
+// old backlinks and in the export's own <link rel="shortlink">. They used to
+// render the homepage under a second URL; now they go to the post they name.
+if (in_array($request->path(), ['/', '/index.html'], true) && isset($_GET['p']) && ctype_digit((string) $_GET['p'])) {
+    $shortlinkTarget = (new PostIndex(__DIR__))->pathForId((int) $_GET['p']);
+
+    if ($shortlinkTarget !== null && $siteLinks->exists($shortlinkTarget)) {
+        header('Location: ' . $shortlinkTarget, true, 301);
+        exit;
+    }
+}
+
 // robots.txt carries the same on/off switch as the <meta name="robots">
-// tag every page sends (see templates/header.php): while this deployment
-// isn't meant to be found yet, it disallows everything and says nothing
-// about the sitemap, rather than pointing crawlers at 1,000+ URLs it is
+// tag every page sends (see templates/header.php): on a host that isn't
+// meant to be found it disallows everything and says nothing about the
+// sitemap, rather than pointing crawlers at 1,000+ URLs it is
 // simultaneously asking them not to index.
 if ($request->path() === '/robots.txt') {
     $body = SiteVisibility::indexable()
-        ? "User-agent: *\nAllow: /\n\nSitemap: {$request->baseUrl()}/sitemap.xml\n"
+        ? "# Content signals - see https://contentsignals.org\n"
+            . "# search: may be indexed and shown in search results (including AI search answers that link back)\n"
+            . "# ai-input: may be used as grounding for AI answers\n"
+            . "# ai-train: may NOT be used to train AI models\n"
+            . "User-agent: *\n"
+            . "Content-Signal: search=yes, ai-input=yes, ai-train=no\n"
+            . "Allow: /\n"
+            . "Disallow: /search\n"
+            . "Disallow: /zh/search\n"
+            . "Disallow: /*?s=\n"
+            . "Disallow: /wp-json/\n"
+            . "\n"
+            . 'Sitemap: ' . SiteConfig::siteUrl() . "/sitemap.xml\n"
         : "User-agent: *\nDisallow: /\n";
 
     header('Content-Type: text/plain; charset=UTF-8');
+    header('Cache-Control: public, max-age=3600');
     echo $body;
     exit;
 }
@@ -43,12 +113,12 @@ if ($request->path() === '/robots.txt') {
 // Answered before anything else because it is not a page and takes none of
 // the page pipeline.
 if ($request->path() === '/sitemap.xml') {
-    $baseUrl = $request->baseUrl();
+    // Every <loc> is on the canonical host, whichever host the sitemap was
+    // fetched from: a sitemap is a list of the URLs that should be indexed,
+    // and only the www ones should.
+    $baseUrl = SiteConfig::siteUrl();
 
-    // Keyed on the host, not just on the path: <loc> values are absolute,
-    // so a copy built for the staging hostname must never be handed to a
-    // request that arrived on the production one.
-    $cacheFile = __DIR__ . '/storage/cache/sitemap-' . substr(sha1($baseUrl), 0, 12) . '.xml';
+    $cacheFile = __DIR__ . '/storage/cache/sitemap-' . substr(sha1($baseUrl . '|' . Sitemap::fingerprint()), 0, 12) . '.xml';
     $maxAge = 3600;
 
     if (is_file($cacheFile) && time() - (int) filemtime($cacheFile) < $maxAge) {
@@ -64,6 +134,20 @@ if ($request->path() === '/sitemap.xml') {
     header('Content-Type: application/xml; charset=UTF-8');
     header('Cache-Control: public, max-age=3600');
     echo $xml;
+    exit;
+}
+
+// The RSS feed WordPress used to serve at /feed. Readers and aggregators
+// that subscribed to it years ago still poll that address.
+if (in_array($request->path(), ['/feed', '/rss'], true)) {
+    if ($request->path() !== '/feed') {
+        header('Location: /feed/', true, 301);
+        exit;
+    }
+
+    header('Content-Type: application/rss+xml; charset=UTF-8');
+    header('Cache-Control: public, max-age=3600');
+    echo (new Feed(new PostIndex(__DIR__), $siteLinks))->build();
     exit;
 }
 
@@ -122,6 +206,16 @@ if (CategoryDirectory::handles($request->path())) {
 }
 
 $sourceFile = $router->resolve($request->path());
+
+// WordPress served archives and pages with a trailing slash
+// ("/category/questions/"); a few of them were exported only as a flat
+// "<path>.html" file. Rather than 404 the address that old links and search
+// results still use, send it to the file that holds the page.
+if ($sourceFile === null && $request->path() !== '/' && !str_ends_with($request->path(), '.html')
+    && $router->resolve($request->path() . '.html') !== null) {
+    header('Location: ' . $request->path() . '.html', true, 301);
+    exit;
+}
 
 if ($sourceFile === null) {
     $layout->render(

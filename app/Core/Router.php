@@ -34,6 +34,9 @@ final class Router
         'zh/techniques' => 'zh/category/badminton-techniques-shots-and-skills/index.html',
     ];
 
+    /** See resolve(). */
+    public const COMMENT_FORM_SUFFIX = '-comment-form.html';
+
     public function __construct(private readonly string $baseDir)
     {
     }
@@ -48,6 +51,16 @@ final class Router
 
         if (isset(self::ALIASES[$path])) {
             $candidates[] = self::ALIASES[$path];
+        }
+
+        // A handful of reader-question posts were exported only as
+        // "<slug>-comment-form.html" (the crawler followed the post's
+        // #comment-form link and saved that copy), with nothing at the
+        // post's own address - so the real URL 404ed. That copy is the
+        // whole post, so it supplies the content. The "-comment-form" URL
+        // itself is redirected to the real one in index.php.
+        if (str_ends_with($path, '.html') && !str_ends_with($path, self::COMMENT_FORM_SUFFIX)) {
+            $candidates[] = substr($path, 0, -strlen('.html')) . self::COMMENT_FORM_SUFFIX;
         }
 
         foreach ($candidates as $candidate) {

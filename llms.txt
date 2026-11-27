@@ -1,0 +1,47 @@
+# Master Badminton
+
+> Free badminton guides for players of every level, published since 2010 by David Tee: the rules and scoring system, court dimensions, technique (grips, footwork, serves, clears, drops, smashes, net play), singles and doubles tactics, and equipment buying advice for rackets, strings, shoes and shuttlecocks. Also available in Chinese under /zh/.
+
+Measurements and rules follow the BWF Laws of Badminton. Each core guide opens with a short direct answer and ends with a frequently-asked-questions section.
+
+## Rules and scoring
+
+- [Badminton rules](https://www.masterbadminton.com/badminton-rules.html): the basic rules for all levels - rally scoring to 21, serving, in and out, faults and lets
+- [Badminton scoring system](https://www.masterbadminton.com/badminton-scoring.html): 21-point rally scoring, deuce and the 30-point cap, which court to serve from
+- [Badminton court size](https://www.masterbadminton.com/badminton-court-size.html): every court dimension in metres and feet, net height, singles vs doubles boundaries
+- [Doubles rules](https://www.masterbadminton.com/badminton-rules-doubles.html): doubles service courts, serving order and boundaries
+- [Badminton faults](https://www.masterbadminton.com/badminton-fouls.html): the five most common faults and their penalty
+- [Badminton terms](https://www.masterbadminton.com/badminton-terms.html): glossary of common badminton words
+
+## Learn to play
+
+- [How to play badminton](https://www.masterbadminton.com/how-to-play-badminton.html): where to start as a beginner
+- [Badminton basics for beginners](https://www.masterbadminton.com/category/badminton-articles/badminton-basics.html): grip, stance, footwork and the serve
+- [Badminton footwork](https://www.masterbadminton.com/badminton-footwork.html): moving around the court efficiently
+- [Badminton serve](https://www.masterbadminton.com/badminton-serve.html): high, low and flick serves
+- [Badminton strokes](https://www.masterbadminton.com/badminton-strokes.html): forehand, backhand and overhead strokes
+- [Badminton techniques, shots and skills](https://www.masterbadminton.com/badminton-techniques.html): index of every shot guide
+- [Badminton smash](https://www.masterbadminton.com/badminton-smash.html): step-by-step forehand smash technique
+- [Badminton net play](https://www.masterbadminton.com/badminton-net-play.html): net shot, net kill and net lift
+- [Advanced badminton techniques](https://www.masterbadminton.com/advanced-badminton-techniques.html)
+
+## Tactics
+
+- [Badminton singles](https://www.masterbadminton.com/badminton-singles.html): fitness, mental strength and key singles shots
+- [Badminton doubles](https://www.masterbadminton.com/badminton-doubles.html): doubles strategy and formations
+
+## Equipment
+
+- [How to choose a badminton racket](https://www.masterbadminton.com/badminton-racket.html): weight, balance point, shaft stiffness and frame shape
+- [Badminton strings](https://www.masterbadminton.com/badminton-string.html): string diameter and tension
+- [Badminton shoes](https://www.masterbadminton.com/badminton-shoe.html): stability, cushioning and fit
+- [Badminton shuttlecocks](https://www.masterbadminton.com/badminton-shuttlecock.html): feather shuttle brands compared
+- [Badminton equipment guide](https://www.masterbadminton.com/badminton-equipment.html)
+
+## Optional
+
+- [Reader questions and answers](https://www.masterbadminton.com/category/questions.html)
+- [Badminton players](https://www.masterbadminton.com/badminton-players.html), [interviews](https://www.masterbadminton.com/professional-badminton-interview.html), [news](https://www.masterbadminton.com/badminton-news.html) and [videos](https://www.masterbadminton.com/badminton-videos.html)
+- [Where to play in Australia](https://www.masterbadminton.com/where-to-play-in-australia.html), [the UK](https://www.masterbadminton.com/uk-badminton-places-to-play.html) and [New York](https://www.masterbadminton.com/directory)
+- [Chinese edition](https://www.masterbadminton.com/zh)
+- [Sitemap](https://www.masterbadminton.com/sitemap.xml)
