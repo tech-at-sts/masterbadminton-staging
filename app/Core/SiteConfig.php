@@ -77,10 +77,20 @@ final class SiteConfig
         return array_values(array_unique($hosts));
     }
 
-    /** Google Tag Manager container, e.g. "GTM-XXXXXXX". */
+    /** The site's Google Tag Manager container. */
+    private const DEFAULT_GTM_ID = 'GTM-T3GSTNV';
+
+    /**
+     * Google Tag Manager container. Defaults to the site's own container;
+     * GTM_ID overrides it, and GTM_ID=off removes the tag entirely.
+     */
     public static function gtmId(): string
     {
-        return self::id('GTM_ID', '~^GTM-[A-Z0-9]+$~');
+        if (strtolower(self::env('GTM_ID')) === 'off') {
+            return '';
+        }
+
+        return self::id('GTM_ID', '~^GTM-[A-Z0-9]+$~') ?: self::DEFAULT_GTM_ID;
     }
 
     /**

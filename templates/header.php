@@ -285,6 +285,8 @@ $wp = static fn (string $path): string => htmlspecialchars(AssetUrl::resolve($pa
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<?php /* Google Tag Manager - as high in <head> as possible, as Google asks. */ ?>
+	<?= SeoHead::analyticsHead() ?>
 	<link rel="icon" href="<?= htmlspecialchars($asset('/favicon.ico'), ENT_QUOTES, 'UTF-8') ?>" sizes="any" />
 	<link rel="icon" type="image/png" sizes="32x32" href="<?= htmlspecialchars($asset('/assets/images/favicon-32.png'), ENT_QUOTES, 'UTF-8') ?>" />
 	<link rel="icon" type="image/png" sizes="192x192" href="<?= htmlspecialchars($asset('/assets/images/favicon-192.png'), ENT_QUOTES, 'UTF-8') ?>" />
@@ -298,7 +300,6 @@ $wp = static fn (string $path): string => htmlspecialchars(AssetUrl::resolve($pa
 	*/ ?>
 	<title><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?></title>
 	<?= $seoHead->render() ?>
-	<?= SeoHead::analyticsHead() ?>
 
 	<link rel="stylesheet" href="<?= $wp('/wp-content/themes/gon/css/reset.css') ?>" media="all" />
 	<link rel="stylesheet" href="<?= $wp('/wp-content/themes/gon/style.css') ?>" media="all" />

@@ -9,7 +9,7 @@ All are optional. Anything left unset is simply left out of the page.
 | `SITE_URL` | `https://www.masterbadminton.com` | Canonical address used for canonical tags, hreflang, Open Graph, structured data, sitemap and feed. Defaults to the www domain. |
 | `SITE_INDEXABLE` | `true` / `false` | Overrides the indexing switch. When unset, pages are indexable **only** on the `SITE_URL` host and `noindex` everywhere else (Railway preview URLs, staging). |
 | `REDIRECT_HOSTS` | `masterbadminton.com` | Extra hosts to 301 to `SITE_URL`. The bare domain is always redirected. |
-| `GTM_ID` | `GTM-XXXXXXX` | Google Tag Manager container (recommended: configure GA4, Google Ads and Meta Pixel inside it). |
+| `GTM_ID` | `GTM-T3GSTNV` | Google Tag Manager container. Defaults to `GTM-T3GSTNV`; set another ID to override, or `off` to remove the tag. Configure GA4, Google Ads and Meta Pixel inside the container. |
 | `GA4_MEASUREMENT_ID` | `G-XXXXXXXXXX` | GA4 via gtag.js, used only when `GTM_ID` is not set. |
 | `GOOGLE_SITE_VERIFICATION` | token | Search Console HTML-tag verification. |
 | `BING_SITE_VERIFICATION` | token | Bing Webmaster Tools verification. |
