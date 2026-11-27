@@ -116,6 +116,14 @@ final class AssetUrl
             return null;
         }
 
+        // The Chinese mirror's export prefixed asset paths with its own
+        // "/zh" ("/zh/wp-content/uploads/..."); there is only one copy of
+        // each file, at the site root.
+        // Some archive pages wrote them relative to their own address
+        // ("/zh/category/badminton-videos/wp-content/..."), so anything in
+        // front of the asset directory is dropped.
+        $path = (string) preg_replace('~^/(?:[^?#]*?/)?(?=wp-(content|includes)/)~', '/', $path);
+
         return preg_match('~^/(wp-content|wp-includes)/~', $path) === 1 ? $path : null;
     }
 

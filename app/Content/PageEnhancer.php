@@ -80,6 +80,13 @@ final class PageEnhancer
         ],
     ];
 
+    /** Attributes an <img> legitimately carries (data-* and aria-* are kept too). */
+    private const IMG_ATTRIBUTES = [
+        'src', 'srcset', 'sizes', 'alt', 'title', 'width', 'height', 'loading', 'decoding', 'fetchpriority',
+        'class', 'id', 'style', 'align', 'border', 'hspace', 'vspace', 'usemap', 'ismap', 'crossorigin',
+        'referrerpolicy', 'role', 'longdesc', 'itemprop', 'lang', 'dir',
+    ];
+
     /** Filename words that describe nothing. */
     private const JUNK_WORDS = [
         'img', 'image', 'images', 'pic', 'picture', 'photo', 'dsc', 'dscn', 'fotolia', 'shutterstock', 'istock',
@@ -137,6 +144,16 @@ final class PageEnhancer
 
             $body = $this->firstByClass($xpath, 'post-body', $main);
 
+            $notice = GuideEnhancements::notice($path);
+
+            if ($body !== null && $notice !== '') {
+                $noticeNode = $this->fragment($dom, $notice);
+
+                if ($noticeNode !== null) {
+                    $body->insertBefore($noticeNode, $body->firstChild);
+                }
+            }
+
             if ($body !== null && $guide !== []) {
                 $this->addGuide($dom, $body, $guide, $copy);
 
@@ -153,6 +170,9 @@ final class PageEnhancer
             }
 
             $this->cleanLegacyComments($xpath, $main);
+            $this->removeDeadForms($xpath, $main);
+            $this->removeArchiveJunk($xpath, $main);
+            $this->rootAssetPaths($xpath, $main);
             $this->fixImages($xpath, $main, $headline, $copy);
             $this->fixLinksToFiles($xpath, $main);
             $this->upgradeInsecureUrls($xpath, $main);
@@ -230,6 +250,29 @@ final class PageEnhancer
 
             $index++;
 
+            // ...and the same cut-off markup can spill stray attributes onto
+            // the image ("button-readmore", href="...") - drop anything an
+            // <img> does not take.
+            foreach (iterator_to_array($img->attributes) as $attribute) {
+                $name = strtolower($attribute->nodeName);
+
+                if (!str_starts_with($name, 'data-') && !str_starts_with($name, 'aria-')
+                    && !in_array($name, self::IMG_ATTRIBUTES, true)) {
+                    $img->removeAttribute($attribute->nodeName);
+                }
+            }
+
+            // Some excerpts were cut off mid-markup by the export, leaving an
+            // image's alt text holding the rest of the card's HTML ("Lee
+            // Chong </div> <!-- Blog Read More Button --> <a class=...").
+            // Keep the words before the markup, tidy the whitespace.
+            $alt = $img->getAttribute('alt');
+
+            if (str_contains($alt, '<') || preg_match('~\s{3,}~u', $alt) === 1) {
+                $clean = trim((string) preg_replace('~\s+~u', ' ', explode('<', $alt)[0]));
+                $img->setAttribute('alt', mb_strlen($clean) > 125 ? rtrim(mb_substr($clean, 0, 122)) . '...' : $clean);
+            }
+
             if (trim($img->getAttribute('alt')) === '' && !$this->isDecorative($img)) {
                 $img->setAttribute('alt', $this->altFor($xpath, $img, $headline, $index, $copy));
             } elseif (!$img->hasAttribute('alt')) {
@@ -247,6 +290,24 @@ final class PageEnhancer
             }
 
             $img->setAttribute('decoding', 'async');
+        }
+
+        // Share widgets carry the page's address for the share itself;
+        // point them at the canonical https://www address rather than the
+        // old http:// domain, which only reaches the page via a redirect.
+        foreach ($xpath->query('.//*[@data-link or @data-url or @data-href or @data-permalink]', $main) as $node) {
+            if (!$node instanceof \DOMElement) {
+                continue;
+            }
+
+            foreach (['data-link', 'data-url', 'data-href', 'data-permalink'] as $attr) {
+                $value = $node->getAttribute($attr);
+
+                if ($value !== '' && preg_match('~^(https?:)?//(www\.)?masterbadminton\.com(/.*)?$~i', $value, $m) === 1) {
+                    $sharePath = (string) parse_url(($m[3] ?? '') !== '' ? $m[3] : '/', PHP_URL_PATH);
+                    $node->setAttribute($attr, SiteConfig::siteUrl() . Canonical::path($sharePath, $this->links));
+                }
+            }
         }
 
         foreach ($xpath->query('.//source[@srcset]', $main) as $source) {
@@ -445,6 +506,133 @@ final class PageEnhancer
         foreach (iterator_to_array($xpath->query('.//table[@id="comments"]', $main)) as $table) {
             if ($table instanceof \DOMElement && $xpath->query('.//div[starts-with(@id, "comment_")]', $table)->length === 0) {
                 $table->parentNode?->removeChild($table);
+            }
+        }
+    }
+
+    /**
+     * WordPress's comment form posted to wp-comments-post.php on a server
+     * that no longer exists, so anything typed into it was lost. The form
+     * goes, together with the "Leave a comment" block that holds it.
+     */
+    private function removeDeadForms(\DOMXPath $xpath, \DOMElement $main): void
+    {
+        $query = './/form[contains(@action, "wp-comments-post") or contains(@data-trp-original-action, "wp-comments-post")]';
+
+        foreach (iterator_to_array($xpath->query($query, $main)) as $form) {
+            $block = $xpath->query('ancestor::*[@id="respond" or @id="comments" or @id="comment-wrapper"][last()]', $form)->item(0);
+            $target = $block instanceof \DOMElement ? $block : $form;
+            $target->parentNode?->removeChild($target);
+        }
+    }
+
+    /**
+     * Asset paths the export wrote relative to the page - "wp-content/...",
+     * "../wp-content/..." - or under the Chinese mirror ("/zh/wp-content/...").
+     * A browser resolves those against the page's own address
+     * (/zh/badminton-drive.html/wp-content/..., /category/blog/wp-content/...),
+     * where nothing exists. Every such file lives once, at /wp-content/ or
+     * /wp-includes/ at the site root, so the path is rooted there.
+     */
+    private function rootAssetPaths(\DOMXPath $xpath, \DOMElement $main): void
+    {
+        $root = static function (string $value): string {
+            $value = trim($value);
+
+            if ($value === '' || preg_match('~^(https?:)?//|^(data|mailto|javascript):~i', $value) === 1) {
+                return $value;
+            }
+
+            if (preg_match('~(?:^|/)(wp-(?:content|includes)/.*)$~', $value, $m) === 1) {
+                return AssetUrl::resolve('/' . $m[1]);
+            }
+
+            return $value;
+        };
+
+        $query = './/img | .//source | .//script[@src] | .//link[@href] | .//input[@src] | .//embed | .//video | .//audio'
+            . ' | .//a[contains(@href, "wp-content/") or contains(@href, "wp-includes/")]';
+
+        foreach ($xpath->query($query, $main) as $node) {
+            if (!$node instanceof \DOMElement) {
+                continue;
+            }
+
+            foreach (['src', 'href', 'data-src', 'data-lazy-src', 'poster'] as $attr) {
+                if ($node->hasAttribute($attr)) {
+                    $node->setAttribute($attr, $root($node->getAttribute($attr)));
+                }
+            }
+
+            foreach (['srcset', 'data-srcset'] as $attr) {
+                if (!$node->hasAttribute($attr)) {
+                    continue;
+                }
+
+                $parts = [];
+
+                foreach (explode(',', $node->getAttribute($attr)) as $part) {
+                    $pieces = preg_split('~\s+~', trim($part), 2) ?: [];
+
+                    if (($pieces[0] ?? '') !== '') {
+                        $pieces[0] = $root($pieces[0]);
+                        $parts[] = implode(' ', $pieces);
+                    }
+                }
+
+                $node->setAttribute($attr, implode(', ', $parts));
+            }
+        }
+    }
+
+    /**
+     * Leftovers from the archived copies some pages were restored from: an
+     * archive.org tracking pixel, a third-party badge, Google's old custom
+     * search stylesheet, PageSpeed "ssjs" bundles from the previous host and
+     * Cloudflare's email-obfuscation script. The exporter saved their URLs
+     * as local paths ("../trafeze.com/img/surf.gif", "web/2016...im_/...")
+     * that 404 here, and none of them does anything on this site.
+     */
+    private function removeArchiveJunk(\DOMXPath $xpath, \DOMElement $main): void
+    {
+        $junk = static function (string $url): bool {
+            $url = trim($url);
+
+            if ($url === '' || preg_match('~^(https?:)?//~i', $url) === 1) {
+                // Absolute: only the archive's own tracking URLs are junk.
+                return preg_match('~web\.archive\.org/web/|assoc-amazon\.com/e/ir|/cdn-cgi/~i', $url) === 1;
+            }
+
+            $path = (string) preg_replace('~^(\.\./|\./)+~', '', $url);
+
+            return preg_match('~^/?web/\d{8,}~', $path) === 1                         // archive.org snapshot path
+                || preg_match('~(^|/)ssjs/~', $path) === 1                             // old host's PageSpeed bundles
+                || preg_match('~(^|/)cdn-cgi/~', $path) === 1                          // Cloudflare email decode
+                // A mirrored copy of another host: "trafeze.com/img/...",
+                // "cse.google.com/...", "pagead2.googlesyndication.com/...".
+                || preg_match('~^/?[a-z0-9-]+(\.[a-z0-9-]+)*\.(com|net|org|info|biz|io|co|uk|au|my|sg|in)(/|$)~i', $path) === 1;
+        };
+
+        $query = './/img[@src] | .//script[@src] | .//link[@href] | .//iframe[@src] | .//embed[@src] | .//input[@type="image"]';
+
+        foreach (iterator_to_array($xpath->query($query, $main)) as $node) {
+            if (!$node instanceof \DOMElement) {
+                continue;
+            }
+
+            $url = $node->getAttribute($node->hasAttribute('src') ? 'src' : 'href');
+
+            if (!$junk($url)) {
+                continue;
+            }
+
+            // A badge or pixel is usually the only thing inside its link.
+            $parent = $node->parentNode;
+            $node->parentNode?->removeChild($node);
+
+            if ($parent instanceof \DOMElement && strtolower($parent->nodeName) === 'a' && trim($parent->textContent) === ''
+                && $xpath->query('.//img', $parent)->length === 0) {
+                $parent->parentNode?->removeChild($parent);
             }
         }
     }

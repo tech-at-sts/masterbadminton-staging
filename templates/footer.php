@@ -25,6 +25,7 @@ $footerItems = [
 $newsletterEndpoint = SiteConfig::newsletterEndpoint();
 $showNewsletter = $newsletterEndpoint !== '' && ($isHome || $isPost);
 ?>
+	</main>
 	<?php if ($showNewsletter): ?>
 	<section class="newsletter-cta" aria-labelledby="newsletter-cta-heading">
 		<div class="newsletter-cta-inner">
@@ -86,9 +87,9 @@ $showNewsletter = $newsletterEndpoint !== '' && ($isHome || $isPost);
 </div>
 
 <?php /* Theme scripts: local once mirrored, WP Engine until then - see App\Core\AssetUrl. */ ?>
-<script src="<?= htmlspecialchars(AssetUrl::resolve('/wp-content/themes/gon/js/include_scripts.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
-<script src="<?= htmlspecialchars(AssetUrl::resolve('/wp-content/themes/gon/js/main.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
-<script src="<?= htmlspecialchars(AssetUrl::resolve('/wp-content/themes/gon/js/select2.min.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+<script src="<?= htmlspecialchars(AssetUrl::resolve('/wp-content/themes/gon/js/include_scripts.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
+<script src="<?= htmlspecialchars(AssetUrl::resolve('/wp-content/themes/gon/js/main.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
+<script src="<?= htmlspecialchars(AssetUrl::resolve('/wp-content/themes/gon/js/select2.min.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
 <?php /* Stamped like the stylesheets - see $asset in templates/header.php. */ ?>
 <script src="<?= htmlspecialchars($asset('/assets/js/home-ui.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
 <script src="<?= htmlspecialchars($asset('/assets/js/category-page.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>

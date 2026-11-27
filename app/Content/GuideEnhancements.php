@@ -48,11 +48,51 @@ final class GuideEnhancements
     }
 
     /**
+     * A notice shown at the top of the pages whose rules change with the
+     * BWF's 3x15 scoring system (approved at the BWF AGM on 25 April 2026,
+     * in use from January 2027), in the page's own language, linking to the
+     * explainer. Empty for every other page.
+     */
+    public static function notice(string $path): string
+    {
+        $english = ['/badminton-scoring.html', '/badminton-rules.html', '/badminton-rules-doubles.html'];
+        $chinese = ['/zh/badminton-scoring.html', '/zh/badminton-rules.html', '/zh/badminton-rules-doubles.html'];
+
+        if (in_array($path, $english, true)) {
+            return '<div class="guide-notice" role="note"><p class="guide-notice-label">Scoring changes in 2027</p>'
+                . '<p>From January 2027, BWF tournaments switch to <strong>3x15 scoring</strong>: games to 15, a two-point lead needed from 14-14, '
+                . 'and a cap at 21. The rules on this page describe the current 21-point system. '
+                . '<a href="/badminton-scoring-3x15.html">See how 3x15 scoring works</a>.</p></div>';
+        }
+
+        if (in_array($path, $chinese, true)) {
+            return '<div class="guide-notice" role="note"><p class="guide-notice-label">2027 年计分制改革</p>'
+                . '<p>从 2027 年 1 月起，世界羽联赛事改用 <strong>3x15 计分制</strong>：每局 15 分，14 平后须领先 2 分，最高 21 分。'
+                . '本页介绍的是现行的 21 分制。<a href="/zh/badminton-scoring-3x15.html">了解 3x15 计分制</a>。</p></div>';
+        }
+
+        return '';
+    }
+
+    /**
      * @return array<string, array{summary?: string, facts?: string, faq?: list<array{0: string, 1: string}>}>
      */
     private static function guides(): array
     {
+        $changing2027 = ['Is badminton scoring changing in 2027?', 'Yes. At its Annual General Meeting on 25 April 2026, the Badminton World Federation approved a 3x15 scoring system for use from January 2027: games to 15 points, a two-point lead needed from 14-14, and a cap at 21. Matches stay best of three games.'];
+
         return [
+            '/badminton-scoring-3x15.html' => [
+                'summary' => 'From <strong>January 2027</strong>, BWF tournaments use <strong>3x15 scoring</strong>: matches are still the best of three games, but each game is played to <strong>15 points</strong>. From 14-14 a side needs a two-point lead, and the game is capped at <strong>21</strong>, so at 20-20 the next point wins. The BWF approved the change at its Annual General Meeting on 25 April 2026.',
+                'faq' => [
+                    ['When does badminton change to 15-point scoring?', 'From January 2027. Members of the Badminton World Federation voted for the 3x15 system at the BWF Annual General Meeting in Horsens, Denmark, on 25 April 2026, and it applies from the 2027 BWF World Tour season.'],
+                    ['How does 3x15 scoring work in badminton?', 'A match is the best of three games. Each game is played to 15 points with rally scoring, so every rally wins a point. From 14-14 a side must lead by two points, up to a maximum of 21.'],
+                    ['What happens at 14-14 under the new scoring?', 'Play continues until one side leads by two points, for example 16-14 or 18-16. If the score reaches 20-20, the side that wins the next point wins the game 21-20.'],
+                    ['What is the highest score possible in a 3x15 game?', '21. The game is capped at 21 points, so a 20-20 game is decided by the next rally.'],
+                    ['Do club players have to switch to 15 points?', 'The BWF vote sets the rules for BWF tournaments. Clubs, leagues and local events follow their own association and organisers, and many social games will keep playing to 21 for some time. Check the format before a match.'],
+                ],
+            ],
+
             '/badminton-court-size.html' => [
                 'summary' => 'A badminton court is <strong>13.40 m (44 ft) long</strong> and <strong>6.10 m (20 ft) wide</strong> for doubles. Singles uses the same length but a narrower <strong>5.18 m (17 ft)</strong> width. The net is <strong>1.55 m (5 ft 1 in)</strong> high at the posts and <strong>1.524 m (5 ft)</strong> at the centre.',
                 'facts' => self::courtSizeFacts(),
@@ -82,6 +122,7 @@ final class GuideEnhancements
                     'Badminton rules at a glance',
                 ),
                 'faq' => [
+                    $changing2027,
                     ['How many points is a badminton game?', 'A game is played to 21 points. If the score reaches 20-20, a side must win by two clear points, up to a maximum of 30 - at 29-29 the side that scores the 30th point wins.'],
                     ['How many games are in a badminton match?', 'A match is the best of three games, so the first side to win two games wins the match.'],
                     ['Is the line in or out in badminton?', 'The line is in. A shuttle that lands on any part of the boundary line counts as landing inside the court.'],
@@ -108,6 +149,7 @@ final class GuideEnhancements
                     'Badminton scoring at a glance',
                 ),
                 'faq' => [
+                    $changing2027,
                     ['How does scoring work in badminton?', 'Badminton uses rally scoring: a point is won on every rally, regardless of who served. The side that wins the rally adds a point and serves next. The first side to 21 wins the game.'],
                     ['What happens at 20-20 in badminton?', 'At 20-all, the game continues until one side leads by two points (for example 22-20). If it reaches 29-all, the side that wins the next rally wins the game 30-29.'],
                     ['Which side do you serve from in badminton?', 'Serve from the right service court when your score is even (0, 2, 4...) and from the left service court when it is odd (1, 3, 5...).'],
@@ -119,6 +161,7 @@ final class GuideEnhancements
             '/badminton-rules-doubles.html' => [
                 'summary' => 'In doubles the full 6.10 m-wide court is in play during a rally, but the <strong>service court is short and wide</strong>: it runs from the short service line to the doubles long service line, 0.76 m inside the back boundary. Each side has <strong>one serve</strong>, and partners only swap service courts when their side wins a point on their own serve.',
                 'faq' => [
+                    $changing2027,
                     ['What are the boundaries in badminton doubles?', 'During a rally the doubles court is the full 13.40 m x 6.10 m. On the serve the receiving service court is shorter: it ends at the doubles long service line, 0.76 m inside the back boundary, and uses the outer (doubles) sideline.'],
                     ['How does serving work in doubles badminton?', 'Each side has a single serve. The server serves from the right court when their side\'s score is even and from the left when it is odd. When the serving side wins a point, the same player serves again from the other court; when it loses, the serve passes to the opponents.'],
                     ['Who receives the serve in doubles?', 'The player standing in the service court diagonally opposite the server. Only that player may return the serve; if their partner hits it, it is a fault.'],
